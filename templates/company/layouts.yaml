@@ -1,0 +1,37 @@
+meta:
+  name: "Layout Mapping"
+  version: "0.1"
+  notes: >
+    Map logical layout types to PPT slide_layout indices.
+    Indices are template-dependent. Validate by rendering and adjust.
+
+layout_map:
+  # Logical layout name -> PPT slide_layout index fallback
+  # Common defaults for many templates:
+  # 0: Title Slide, 1: Title and Content, 5: Title Only (varies by template)
+  cover:
+    slide_layout_index: 0
+    placeholders:
+      title: "TITLE"
+      subtitle: "SUBTITLE"
+
+  exec_summary:
+    slide_layout_index: 1
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+
+  two_column:
+    slide_layout_index: 1
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+    render_strategy:
+      type: "two_column_text"
+      left_heading: "Analysis"
+      right_heading: "Implications"
+
+  section_divider:
+    slide_layout_index: 4
+    placeholders:
+      title: "TITLE"

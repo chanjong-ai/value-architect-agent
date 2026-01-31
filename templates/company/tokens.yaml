@@ -1,0 +1,48 @@
+meta:
+  name: "Company Consulting Deck Tokens"
+  version: "0.1"
+  notes: >
+    Design tokens enforced by the renderer. Update these to match the official template.
+    Font names must match the exact font names recognized by PowerPoint.
+
+fonts:
+  title:
+    name: "Noto Sans KR"
+    bold: true
+    size_pt: 24
+  governing:
+    name: "Noto Sans KR"
+    bold: true
+    size_pt: 16
+  body:
+    name: "Noto Sans KR"
+    bold: false
+    size_pt: 12
+  footnote:
+    name: "Noto Sans KR"
+    bold: false
+    size_pt: 10
+
+colors:
+  # Use SAP-like blue tones or company approved blues only.
+  # Values are hex RGB without '#'
+  primary_blue: "0A6ED1"
+  dark_blue: "084E8A"
+  light_blue: "D6EAFB"
+  text_dark: "1A1A1A"
+  text_muted: "4D4D4D"
+  divider_gray: "D9D9D9"
+  background: "FFFFFF"
+
+spacing:
+  slide_margin_in:
+    left: 0.6
+    right: 0.6
+    top: 0.4
+    bottom: 0.4
+
+density_rules:
+  bullets_min: 3
+  bullets_max: 6
+  prefer_single_line: true
+  max_lines_per_bullet: 2
