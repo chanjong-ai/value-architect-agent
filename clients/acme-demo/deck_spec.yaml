@@ -1,0 +1,43 @@
+client_meta:
+  client_name: "ACME Demo"
+  industry: "Manufacturing"
+  date: "2026-01-31"
+  audience: "C-level"
+  objective: "ERP + AI transformation value case and roadmap"
+  language: "ko"
+
+assumptions:
+  - "Public information is used for market/competitor analysis unless client provides internal data."
+  - "Slide count target: 10–12."
+
+sources_ref:
+  - "sources.md#market"
+  - "sources.md#competitors"
+  - "sources.md#tech-trends"
+
+slides:
+  - layout: "cover"
+    title: "ACME: Value-driven Transformation Deck"
+    governing_message: "AI와 클라우드 ERP 전환을 통해 운영 안정성과 수익성 가시성을 동시에 확보해야 합니다."
+    bullets: []
+    notes: "Cover slide. Confirm client name and date."
+
+  - layout: "exec_summary"
+    title: "Executive Summary"
+    governing_message: "핵심은 ‘표준화된 운영 기반’ 위에 ‘AI 기반 의사결정’과 ‘확장 가능한 플랫폼’을 얹는 것입니다."
+    bullets:
+      - "운영: 표준 프로세스/데이터로 운영 리스크를 구조적으로 축소"
+      - "가치: 수익성/원가/재고의 단일 지표 체계로 경영 의사결정 속도 향상"
+      - "확장: 통합 플랫폼으로 신규 사업/채널 확장 비용을 절감"
+      - "실행: 3단계(기반 정비→핵심 전환→AI 내재화) 로드맵 제안"
+    notes: "Keep bullets crisp, one line each where possible."
+
+  - layout: "two_column"
+    title: "Industry & Technology Context"
+    governing_message: "산업은 공급망 변동성과 비용 압력에 대응하기 위해 데이터 기반 운영 전환이 가속화되고 있습니다."
+    bullets:
+      - "[Left] 산업 동인: 수요 변동성, 원가/환율/리드타임 불확실성"
+      - "[Left] 디지털 전환: 실시간 가시성, 계획-실행의 폐루프 운영"
+      - "[Right] 시사점: 데이터 표준화 없이는 AI 활용 효과가 제한됨"
+      - "[Right] 시사점: 핵심 KPI(서비스레벨/재고/원가/수익성)의 단일화가 선행 조건"
+    notes: "Render strategy may split bullets into left/right blocks (tunable)."

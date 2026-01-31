@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Build / Output
+outputs/
+clients/*/outputs/
+clients/*/research/
+*.pptx
+*.log
+
+# Secrets / Local memory
+CLAUDE.local.md
+.env
+.env.*
+
+# Temporary
+tmp/
