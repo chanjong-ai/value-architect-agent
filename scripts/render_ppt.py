@@ -1,22 +1,29 @@
 #!/usr/bin/env python3
 """
-render_ppt.py - 고도화된 PPTX 렌더러
+render_ppt.py - 고도화된 PPTX 렌더러 v2.1
 
 기능:
 - 레이아웃별 렌더링 전략
 - 컬럼 기반 레이아웃 지원
 - 구조화된 불릿 (레벨, 강조) 지원
+- content_blocks 지원 (bullets, table, chart, image, quote, kpi, callout)
+- table/kpi/quote/image 최소 렌더링 (placeholder + caption)
 - 차트/이미지 플레이스홀더 지원
 - 디자인 토큰 기반 스타일 적용
+
+개선사항 (v2.1):
+- content_blocks 지원: bullets/table/chart/image/quote/kpi 등 블록 타입 렌더 분기
+- table/kpi/quote/image에 대한 최소 렌더링 (placeholder+caption) 구현
+- layouts.yaml의 render_strategy 참조 (문서화 목적, 실제 렌더링은 코드에서 처리)
 """
 
 import sys
 from pathlib import Path
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict
 
 import yaml
 from pptx import Presentation
-from pptx.util import Pt
+from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
@@ -40,7 +47,7 @@ def hex_to_rgb(hex_str: str) -> RGBColor:
 
 
 class DeckRenderer:
-    """PPTX 렌더러 클래스"""
+    """PPTX 렌더러 클래스 v2.1"""
 
     def __init__(self, tokens: dict, layouts: dict):
         self.tokens = tokens
@@ -49,13 +56,31 @@ class DeckRenderer:
         self.prs: Optional[Presentation] = None
 
     def _get_font_config(self, font_key: str) -> dict:
-        """폰트 설정 가져오기"""
+        """
+        폰트 설정 가져오기
+        개선: name/size_pt 구조 및 레거시 family/size 호환
+        """
         fonts = self.tokens.get("fonts", {})
-        return fonts.get(font_key, {
+        font_info = fonts.get(font_key, {})
+
+        if isinstance(font_info, dict):
+            return {
+                "name": font_info.get("name") or font_info.get("family", "Noto Sans KR"),
+                "size_pt": font_info.get("size_pt") or font_info.get("size", 12),
+                "bold": font_info.get("bold", False)
+            }
+        elif isinstance(font_info, str):
+            return {
+                "name": font_info,
+                "size_pt": 12,
+                "bold": False
+            }
+
+        return {
             "name": "Noto Sans KR",
             "size_pt": 12,
             "bold": False
-        })
+        }
 
     def _get_color(self, color_key: str) -> str:
         """색상 가져오기"""
@@ -186,6 +211,27 @@ class DeckRenderer:
         tf = notes_slide.notes_text_frame
         tf.text = notes
 
+    def _add_footnotes(self, slide, footnotes: List[dict], bottom_pt: int = 490):
+        """각주 추가"""
+        if not footnotes:
+            return
+
+        tx = slide.shapes.add_textbox(Pt(43), Pt(bottom_pt), Pt(860), Pt(30))
+        tf = tx.text_frame
+
+        for i, fn in enumerate(footnotes):
+            marker = fn.get("marker", f"*{i+1}")
+            text = fn.get("text", "")
+
+            if i == 0:
+                p = tf.paragraphs[0]
+            else:
+                p = tf.add_paragraph()
+
+            p.text = f"{marker} {text}"
+
+        self._apply_text_style(tf, "footnote", "text_muted")
+
     def _pick_layout(self, layout_name: str):
         """레이아웃 선택"""
         layout_cfg = self.layout_map.get(layout_name, {"slide_layout_index": 1})
@@ -196,6 +242,316 @@ class DeckRenderer:
             return self.prs.slide_layouts[1] if len(self.prs.slide_layouts) > 1 else self.prs.slide_layouts[0]
 
         return self.prs.slide_layouts[layout_index]
+
+    # =========================================================================
+    # content_blocks 렌더링 메서드 (v2.1 신규)
+    # =========================================================================
+
+    def _render_content_blocks(self, slide, content_blocks: List[dict], start_top_pt: int = 130):
+        """
+        content_blocks 배열 렌더링
+        지원 타입: bullets, table, chart, image, quote, kpi, callout, text
+        """
+        if not content_blocks:
+            return
+
+        current_top = start_top_pt
+
+        for block in content_blocks:
+            block_type = block.get("type", "bullets")
+            position = block.get("position", "main")
+
+            # 위치에 따른 좌표 조정
+            if position == "left":
+                left_pt, width_pt = 43, 400
+            elif position == "right":
+                left_pt, width_pt = 480, 400
+            elif position == "sidebar":
+                left_pt, width_pt = 700, 200
+            else:  # main
+                left_pt, width_pt = 43, 860
+
+            # 타입별 렌더링
+            if block_type == "bullets":
+                bullets = block.get("bullets", [])
+                self._add_bullets(slide, bullets, left_pt, current_top, width_pt, 300)
+                current_top += 300 + 20  # 다음 블록 위치
+
+            elif block_type == "table":
+                table_def = block.get("table", {})
+                self._render_table_placeholder(slide, table_def, left_pt, current_top, width_pt)
+                current_top += 200 + 20
+
+            elif block_type == "chart":
+                chart_def = block.get("chart", {})
+                self._render_chart_placeholder(slide, chart_def, left_pt, current_top, width_pt)
+                current_top += 250 + 20
+
+            elif block_type == "image":
+                image_def = block.get("image", {})
+                self._render_image_placeholder(slide, image_def, left_pt, current_top, width_pt)
+                current_top += 250 + 20
+
+            elif block_type == "quote":
+                quote_def = block.get("quote", {})
+                self._render_quote(slide, quote_def, left_pt, current_top, width_pt)
+                current_top += 120 + 20
+
+            elif block_type == "kpi":
+                kpi_def = block.get("kpi", {})
+                self._render_kpi(slide, kpi_def, left_pt, current_top, width_pt)
+                current_top += 80 + 20
+
+            elif block_type == "callout":
+                callout_def = block.get("callout", {})
+                self._render_callout(slide, callout_def, left_pt, current_top, width_pt)
+                current_top += 80 + 20
+
+            elif block_type == "text":
+                text = block.get("text", "")
+                self._render_text_block(slide, text, left_pt, current_top, width_pt)
+                current_top += 60 + 20
+
+    def _render_table_placeholder(self, slide, table_def: dict, left_pt: int, top_pt: int, width_pt: int):
+        """
+        테이블 렌더링 (실제 테이블 또는 플레이스홀더)
+        """
+        headers = table_def.get("headers", [])
+        rows = table_def.get("rows", [])
+        style = table_def.get("style", "default")
+
+        if headers and rows:
+            # 실제 테이블 생성
+            num_rows = len(rows) + 1  # 헤더 포함
+            num_cols = len(headers)
+
+            table = slide.shapes.add_table(
+                num_rows, num_cols,
+                Pt(left_pt), Pt(top_pt),
+                Pt(width_pt), Pt(min(30 * num_rows, 200))
+            ).table
+
+            # 헤더 설정
+            for col_idx, header in enumerate(headers):
+                cell = table.cell(0, col_idx)
+                cell.text = header
+                # 헤더 스타일
+                for para in cell.text_frame.paragraphs:
+                    para.font.bold = True
+                    para.font.size = Pt(10)
+                    para.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+
+            # 데이터 행 설정
+            for row_idx, row in enumerate(rows):
+                for col_idx, cell_text in enumerate(row):
+                    if col_idx < num_cols:
+                        cell = table.cell(row_idx + 1, col_idx)
+                        cell.text = str(cell_text)
+                        for para in cell.text_frame.paragraphs:
+                            para.font.size = Pt(9)
+                            para.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+        else:
+            # 플레이스홀더로 테이블 영역 표시
+            shape = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(150)
+            )
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+            shape.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+
+            tf = shape.text_frame
+            tf.text = "[TABLE]\n테이블 데이터 필요"
+            for para in tf.paragraphs:
+                para.alignment = PP_ALIGN.CENTER
+            self._apply_text_style(tf, "body", "text_muted", PP_ALIGN.CENTER)
+
+    def _render_chart_placeholder(self, slide, chart_def: dict, left_pt: int, top_pt: int, width_pt: int):
+        """
+        차트 플레이스홀더 렌더링
+        실제 차트 생성은 python-pptx의 제한으로 플레이스홀더로 대체
+        """
+        chart_type = chart_def.get("type", "bar_chart")
+        title = chart_def.get("title", "")
+        caption = chart_def.get("caption", "")
+
+        # 플레이스홀더 박스
+        shape = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(200)
+        )
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+        shape.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+
+        # 플레이스홀더 텍스트
+        tf = shape.text_frame
+        tf.text = f"[CHART: {chart_type}]\n{title}" if title else f"[CHART: {chart_type}]"
+        for para in tf.paragraphs:
+            para.alignment = PP_ALIGN.CENTER
+        self._apply_text_style(tf, "body", "text_muted", PP_ALIGN.CENTER)
+
+        # 캡션
+        if caption:
+            tx_cap = slide.shapes.add_textbox(Pt(left_pt), Pt(top_pt + 205), Pt(width_pt), Pt(25))
+            tx_cap.text_frame.text = caption
+            self._apply_text_style(tx_cap.text_frame, "footnote", "text_muted")
+
+    def _render_image_placeholder(self, slide, image_def: dict, left_pt: int, top_pt: int, width_pt: int):
+        """
+        이미지 플레이스홀더 렌더링
+        image_path가 있으면 실제 이미지 삽입 시도, 없으면 플레이스홀더
+        """
+        image_path = image_def.get("image_path", "")
+        title = image_def.get("title", "")
+        caption = image_def.get("caption", "")
+
+        if image_path and Path(image_path).exists():
+            # 실제 이미지 삽입
+            try:
+                slide.shapes.add_picture(
+                    str(image_path),
+                    Pt(left_pt), Pt(top_pt),
+                    width=Pt(width_pt)
+                )
+            except Exception:
+                # 실패 시 플레이스홀더로 폴백
+                self._render_image_placeholder_box(slide, title, left_pt, top_pt, width_pt)
+        else:
+            self._render_image_placeholder_box(slide, title, left_pt, top_pt, width_pt)
+
+        # 캡션
+        if caption:
+            tx_cap = slide.shapes.add_textbox(Pt(left_pt), Pt(top_pt + 205), Pt(width_pt), Pt(25))
+            tx_cap.text_frame.text = caption
+            self._apply_text_style(tx_cap.text_frame, "footnote", "text_muted")
+
+    def _render_image_placeholder_box(self, slide, title: str, left_pt: int, top_pt: int, width_pt: int):
+        """이미지 플레이스홀더 박스"""
+        shape = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(200)
+        )
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+        shape.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+
+        tf = shape.text_frame
+        tf.text = f"[IMAGE]\n{title}" if title else "[IMAGE]\n이미지 경로 필요"
+        for para in tf.paragraphs:
+            para.alignment = PP_ALIGN.CENTER
+        self._apply_text_style(tf, "body", "text_muted", PP_ALIGN.CENTER)
+
+    def _render_quote(self, slide, quote_def: dict, left_pt: int, top_pt: int, width_pt: int):
+        """인용문 렌더링"""
+        text = quote_def.get("text", "")
+        author = quote_def.get("author", "")
+        role = quote_def.get("role", "")
+        style = quote_def.get("style", "standard")
+
+        # 인용문 박스
+        shape = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE,
+            Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(100)
+        )
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+        shape.line.fill.background()
+
+        # 인용문 텍스트
+        tf = shape.text_frame
+        tf.word_wrap = True
+        quote_text = f'"{text}"'
+        if author:
+            attribution = f"— {author}"
+            if role:
+                attribution += f", {role}"
+            quote_text += f"\n{attribution}"
+
+        tf.text = quote_text
+        self._apply_text_style(tf, "governing" if style == "large" else "body", "text_dark", PP_ALIGN.CENTER)
+
+    def _render_kpi(self, slide, kpi_def: dict, left_pt: int, top_pt: int, width_pt: int):
+        """KPI/지표 렌더링"""
+        label = kpi_def.get("label", "KPI")
+        value = kpi_def.get("value", "0")
+        unit = kpi_def.get("unit", "")
+        trend = kpi_def.get("trend", "neutral")
+        comparison = kpi_def.get("comparison", "")
+
+        # KPI 박스
+        shape = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE,
+            Pt(left_pt), Pt(top_pt), Pt(min(width_pt, 200)), Pt(70)
+        )
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("primary_blue"))
+        shape.line.fill.background()
+
+        # KPI 텍스트
+        tf = shape.text_frame
+
+        # 값 + 단위
+        value_text = f"{value}{unit}"
+        if trend == "up":
+            value_text = f"↑ {value_text}"
+        elif trend == "down":
+            value_text = f"↓ {value_text}"
+
+        tf.text = f"{label}\n{value_text}"
+        if comparison:
+            tf.text += f"\n{comparison}"
+
+        for para in tf.paragraphs:
+            para.alignment = PP_ALIGN.CENTER
+            for run in para.runs:
+                run.font.color.rgb = hex_to_rgb(self._get_color("background"))
+                run.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+                run.font.size = Pt(12)
+                run.font.bold = True
+
+    def _render_callout(self, slide, callout_def: dict, left_pt: int, top_pt: int, width_pt: int):
+        """콜아웃 렌더링"""
+        text = callout_def.get("text", "")
+        callout_type = callout_def.get("type", "info")
+
+        # 타입별 색상
+        type_colors = {
+            "info": "primary_blue",
+            "warning": "text_muted",
+            "success": "primary_blue",
+            "highlight": "dark_blue",
+            "key_insight": "dark_blue"
+        }
+        bg_color = type_colors.get(callout_type, "primary_blue")
+
+        # 콜아웃 박스
+        shape = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE,
+            Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(60)
+        )
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color(bg_color))
+        shape.line.fill.background()
+
+        tf = shape.text_frame
+        tf.text = text
+        tf.word_wrap = True
+
+        for para in tf.paragraphs:
+            para.alignment = PP_ALIGN.LEFT
+            for run in para.runs:
+                run.font.color.rgb = hex_to_rgb(self._get_color("background"))
+                run.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+                run.font.size = Pt(11)
+
+    def _render_text_block(self, slide, text: str, left_pt: int, top_pt: int, width_pt: int):
+        """일반 텍스트 블록 렌더링"""
+        tx = slide.shapes.add_textbox(Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(50))
+        tf = tx.text_frame
+        tf.text = text
+        tf.word_wrap = True
+        self._apply_text_style(tf, "body", "text_dark")
 
     # =========================================================================
     # 레이아웃별 렌더링 메서드
@@ -243,14 +599,28 @@ class DeckRenderer:
         """Executive Summary 슬라이드 렌더링"""
         self._set_title(slide, slide_data.get("title", ""))
         self._add_governing_message(slide, slide_data.get("governing_message", ""))
-        self._add_bullets(slide, slide_data.get("bullets", []))
+
+        # content_blocks 우선, 없으면 bullets
+        if slide_data.get("content_blocks"):
+            self._render_content_blocks(slide, slide_data["content_blocks"])
+        else:
+            self._add_bullets(slide, slide_data.get("bullets", []))
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_content(self, slide, slide_data: dict):
         """일반 컨텐츠 슬라이드 렌더링"""
         self._set_title(slide, slide_data.get("title", ""))
         self._add_governing_message(slide, slide_data.get("governing_message", ""))
-        self._add_bullets(slide, slide_data.get("bullets", []))
+
+        # content_blocks 우선, 없으면 bullets
+        if slide_data.get("content_blocks"):
+            self._render_content_blocks(slide, slide_data["content_blocks"])
+        else:
+            self._add_bullets(slide, slide_data.get("bullets", []))
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_two_column(self, slide, slide_data: dict):
@@ -271,12 +641,15 @@ class DeckRenderer:
             tf.text = left_col.get("heading", "")
             self._apply_text_style(tf, "governing", "primary_blue")
 
-            # 왼쪽 컬럼 불릿
-            self._add_bullets(
-                slide,
-                left_col.get("bullets", []),
-                left_pt=43, top_pt=160, width_pt=400, height_pt=300
-            )
+            # 왼쪽 컬럼: content_blocks 또는 bullets
+            if left_col.get("content_blocks"):
+                self._render_content_blocks(slide, left_col["content_blocks"], start_top_pt=160)
+            else:
+                self._add_bullets(
+                    slide,
+                    left_col.get("bullets", []),
+                    left_pt=43, top_pt=160, width_pt=400, height_pt=300
+                )
 
             # 오른쪽 컬럼 헤딩
             tx_right_head = slide.shapes.add_textbox(Pt(480), Pt(125), Pt(400), Pt(30))
@@ -284,12 +657,18 @@ class DeckRenderer:
             tf.text = right_col.get("heading", "")
             self._apply_text_style(tf, "governing", "primary_blue")
 
-            # 오른쪽 컬럼 불릿
-            self._add_bullets(
-                slide,
-                right_col.get("bullets", []),
-                left_pt=480, top_pt=160, width_pt=400, height_pt=300
-            )
+            # 오른쪽 컬럼: content_blocks 또는 bullets
+            if right_col.get("content_blocks"):
+                # 위치 조정 필요
+                for block in right_col["content_blocks"]:
+                    block["position"] = "right"
+                self._render_content_blocks(slide, right_col["content_blocks"], start_top_pt=160)
+            else:
+                self._add_bullets(
+                    slide,
+                    right_col.get("bullets", []),
+                    left_pt=480, top_pt=160, width_pt=400, height_pt=300
+                )
         else:
             # columns가 없으면 bullets에서 [Left]/[Right] 파싱
             bullets = slide_data.get("bullets", [])
@@ -314,6 +693,7 @@ class DeckRenderer:
                 left_pt=480, top_pt=130, width_pt=400, height_pt=330
             )
 
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_three_column(self, slide, slide_data: dict):
@@ -344,6 +724,7 @@ class DeckRenderer:
                 width_pt=col_width, height_pt=300
             )
 
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_comparison(self, slide, slide_data: dict):
@@ -401,6 +782,7 @@ class DeckRenderer:
                 left_pt=490, top_pt=175, width_pt=380, height_pt=280
             )
 
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_chart_focus(self, slide, slide_data: dict):
@@ -412,29 +794,7 @@ class DeckRenderer:
 
         if visuals:
             visual = visuals[0]
-            visual_type = visual.get("type", "placeholder")
-
-            # 플레이스홀더로 차트 영역 표시
-            shape = slide.shapes.add_shape(
-                MSO_SHAPE.RECTANGLE,
-                Pt(43), Pt(130), Pt(600), Pt(330)
-            )
-            shape.fill.solid()
-            shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
-            shape.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
-
-            # 플레이스홀더 텍스트
-            tf = shape.text_frame
-            tf.text = f"[{visual_type}]\n{visual.get('title', '')}"
-            tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-
-            # 캡션
-            caption = visual.get("caption", "")
-            if caption:
-                tx_cap = slide.shapes.add_textbox(Pt(43), Pt(465), Pt(600), Pt(25))
-                tf = tx_cap.text_frame
-                tf.text = caption
-                self._apply_text_style(tf, "footnote", "text_muted")
+            self._render_chart_placeholder(slide, visual, 43, 130, 600)
 
         # 오른쪽 불릿 (선택적)
         bullets = slide_data.get("bullets", [])
@@ -443,6 +803,60 @@ class DeckRenderer:
                 slide, bullets,
                 left_pt=670, top_pt=130, width_pt=250, height_pt=330
             )
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
+        self._add_notes(slide, slide_data.get("notes", ""))
+
+    def _render_image_focus(self, slide, slide_data: dict):
+        """이미지 중심 슬라이드 렌더링"""
+        self._set_title(slide, slide_data.get("title", ""))
+        self._add_governing_message(slide, slide_data.get("governing_message", ""))
+
+        visuals = slide_data.get("visuals", [])
+
+        if visuals:
+            visual = visuals[0]
+            self._render_image_placeholder(slide, visual, 43, 130, 600)
+
+        # 오른쪽 불릿 (선택적)
+        bullets = slide_data.get("bullets", [])
+        if bullets:
+            self._add_bullets(
+                slide, bullets,
+                left_pt=670, top_pt=130, width_pt=250, height_pt=330
+            )
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
+        self._add_notes(slide, slide_data.get("notes", ""))
+
+    def _render_quote_layout(self, slide, slide_data: dict):
+        """인용문 레이아웃 렌더링"""
+        title = slide_data.get("title", "")
+        governing = slide_data.get("governing_message", "")
+
+        # content_blocks에서 quote 찾기
+        content_blocks = slide_data.get("content_blocks", [])
+        quote_block = None
+        for block in content_blocks:
+            if block.get("type") == "quote":
+                quote_block = block.get("quote", {})
+                break
+
+        # 중앙 제목
+        if title:
+            tx = slide.shapes.add_textbox(Pt(43), Pt(150), Pt(860), Pt(50))
+            tf = tx.text_frame
+            tf.text = title
+            tf.word_wrap = True
+            self._apply_text_style(tf, "title", "primary_blue", PP_ALIGN.CENTER)
+
+        # 인용문
+        if quote_block:
+            self._render_quote(slide, quote_block, 100, 230, 750)
+        elif governing:
+            # governing을 인용문처럼 표시
+            quote_def = {"text": governing}
+            self._render_quote(slide, quote_def, 100, 230, 750)
 
         self._add_notes(slide, slide_data.get("notes", ""))
 
@@ -477,6 +891,7 @@ class DeckRenderer:
                 tf.word_wrap = True
                 self._apply_text_style(tf, "body", "text_dark", PP_ALIGN.CENTER)
 
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_thank_you(self, slide, slide_data: dict):
@@ -546,8 +961,8 @@ class DeckRenderer:
             "timeline": self._render_timeline,
             "process_flow": self._render_timeline,  # 재사용
             "chart_focus": self._render_chart_focus,
-            "image_focus": self._render_chart_focus,  # 재사용
-            "quote": self._render_section_divider,  # 재사용
+            "image_focus": self._render_image_focus,
+            "quote": self._render_quote_layout,
             "appendix": self._render_appendix,
             "thank_you": self._render_thank_you,
         }

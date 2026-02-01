@@ -408,8 +408,8 @@
         {
           "type": "string",
           "minLength": 1,
-          "maxLength": 150,
-          "description": "단순 불릿 텍스트"
+          "maxLength": 100,
+          "description": "단순 불릿 텍스트 (최대 100자, global_constraints로 오버라이드 가능)"
         },
         {
           "type": "object",
@@ -419,7 +419,8 @@
             "text": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 150
+              "maxLength": 100,
+              "description": "불릿 텍스트 (최대 100자, global_constraints로 오버라이드 가능)"
             },
             "level": {
               "type": "integer",

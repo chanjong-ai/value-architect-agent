@@ -1,10 +1,14 @@
 meta:
   name: "Layout Mapping"
-  version: "1.0"
+  version: "2.0"
   notes: >
     Map logical layout types to PPT slide_layout indices.
     Indices are template-dependent. Validate by rendering and adjust.
     Common defaults: 0=Title Slide, 1=Title and Content, 5=Title Only
+
+    NOTE: render_hints는 문서화 목적으로만 제공됩니다.
+    실제 렌더링 로직은 render_ppt.py에서 처리합니다.
+    이 필드는 에이전트가 각 레이아웃의 의도를 이해하는 데 도움이 됩니다.
 
 layout_map:
   # =========================================================================
@@ -16,18 +20,27 @@ layout_map:
     placeholders:
       title: "TITLE"
       subtitle: "SUBTITLE"
+    render_hints:
+      bullets_expected: false
+      centered: true
 
   section_divider:
     slide_layout_index: 5
     description: "섹션 구분 슬라이드 (큰 제목 중앙 정렬)"
     placeholders:
       title: "TITLE"
+    render_hints:
+      bullets_expected: false
+      centered: true
 
   thank_you:
     slide_layout_index: 5
     description: "마무리/감사 슬라이드"
     placeholders:
       title: "TITLE"
+    render_hints:
+      bullets_expected: false
+      centered: true
 
   # =========================================================================
   # 컨텐츠 레이아웃
@@ -38,6 +51,9 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
+    render_hints:
+      bullets_expected: true
+      bullets_range: [3, 6]
 
   content:
     slide_layout_index: 1
@@ -45,6 +61,10 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
+    render_hints:
+      bullets_expected: true
+      bullets_range: [3, 6]
+      supports_content_blocks: true
 
   appendix:
     slide_layout_index: 1
@@ -52,6 +72,9 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
+    render_hints:
+      bullets_expected: true
+      bullets_range: [3, 6]
 
   # =========================================================================
   # 컬럼 기반 레이아웃
@@ -62,10 +85,11 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
-    render_strategy:
-      type: "two_column_text"
-      default_left_heading: "분석"
-      default_right_heading: "시사점"
+    render_hints:
+      columns: 2
+      default_headings: ["분석", "시사점"]
+      bullets_per_column: [2, 4]
+      supports_content_blocks: true
 
   three_column:
     slide_layout_index: 1
@@ -73,8 +97,9 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
-    render_strategy:
-      type: "three_column_text"
+    render_hints:
+      columns: 3
+      bullets_per_column: [2, 3]
 
   comparison:
     slide_layout_index: 1
@@ -82,10 +107,11 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
-    render_strategy:
-      type: "comparison_boxes"
-      default_left_heading: "As-Is"
-      default_right_heading: "To-Be"
+    render_hints:
+      columns: 2
+      default_headings: ["As-Is", "To-Be"]
+      styled_boxes: true
+      bullets_per_column: [2, 4]
 
   # =========================================================================
   # 시각화 중심 레이아웃
@@ -96,10 +122,11 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
-    render_strategy:
-      type: "chart_with_bullets"
-      chart_position: "left"
-      chart_width_ratio: 0.65
+    render_hints:
+      visual_position: "left"
+      visual_width_ratio: 0.65
+      bullets_position: "right"
+      bullets_range: [0, 4]
 
   image_focus:
     slide_layout_index: 1
@@ -107,9 +134,10 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
-    render_strategy:
-      type: "image_with_bullets"
-      image_position: "center"
+    render_hints:
+      visual_position: "center"
+      bullets_position: "right"
+      bullets_range: [0, 4]
 
   # =========================================================================
   # 프로세스/타임라인 레이아웃
@@ -120,9 +148,10 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
-    render_strategy:
-      type: "horizontal_timeline"
+    render_hints:
+      orientation: "horizontal"
       show_phases: true
+      bullets_as_phases: true
 
   process_flow:
     slide_layout_index: 1
@@ -130,8 +159,10 @@ layout_map:
     placeholders:
       title: "TITLE"
       body: "BODY"
-    render_strategy:
-      type: "horizontal_flow"
+    render_hints:
+      orientation: "horizontal"
+      show_arrows: true
+      bullets_as_steps: true
 
   # =========================================================================
   # 특수 레이아웃
@@ -141,5 +172,7 @@ layout_map:
     description: "인용문 슬라이드"
     placeholders:
       title: "TITLE"
-    render_strategy:
-      type: "centered_quote"
+    render_hints:
+      bullets_expected: false
+      centered: true
+      use_quote_styling: true
