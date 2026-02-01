@@ -524,6 +524,12 @@ class DeckRenderer:
         # 프레젠테이션 로드/생성
         if template_path.exists():
             self.prs = Presentation(str(template_path))
+            # 기존 슬라이드 제거 (템플릿의 슬라이드 마스터/레이아웃만 유지)
+            # 슬라이드는 역순으로 제거해야 인덱스 문제 방지
+            while len(self.prs.slides) > 0:
+                rId = self.prs.slides._sldIdLst[0].rId
+                self.prs.part.drop_rel(rId)
+                del self.prs.slides._sldIdLst[0]
         else:
             self.prs = Presentation()
             print(f"Warning: 템플릿 없음, 빈 프레젠테이션 사용: {template_path}")

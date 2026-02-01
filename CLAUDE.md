@@ -9,6 +9,7 @@
 - 경영진용 스토리라인 구축 (MECE, 피라미드 원칙)
 - 검증된 Deck Spec 생성
 - 회사 템플릿과 디자인 토큰으로 PPTX 렌더링
+- 자동 QA 검사 및 품질 보증
 - 클라이언트별 아티팩트와 학습 내용 보존
 
 ---
@@ -21,9 +22,9 @@
 2. `/intake` 스킬로 클라이언트 팩 생성
 3. brief.md 작성을 위한 정보 수집
 
-### 덱 생성 워크플로우
+### 덱 생성 워크플로우 (v2.0)
 ```
-[1] Intake → [2] Research → [3] Storyline → [4] Slidespec → [5] Render → [6] QA → [7] Lessons
+[1] Intake → [2] Research → [3] Storyline → [4] Slidespec → [5] Render → [6] QA → [7] Polish → [8] Lessons
 ```
 
 각 단계별 스킬:
@@ -34,7 +35,8 @@
 - `/storyline <client>`: 스토리라인 구축
 - `/slidespec <client>`: Deck Spec 생성
 - `/render <client>`: PPTX 렌더링
-- `/qa <client>`: 품질 검증
+- `/qa <client>`: 품질 검증 (v2.0)
+- `/polish <client>`: 미세 편집 (v2.0)
 - `/lessons <client>`: 학습 기록
 
 ### CLI 명령어
@@ -54,8 +56,14 @@ python scripts/deck_cli.py validate <client-name>
 # 렌더링
 python scripts/deck_cli.py render <client-name>
 
-# 전체 파이프라인 (검증 + 렌더링)
+# QA 검사 (v2.0)
+python scripts/deck_cli.py qa <client-name>
+
+# 기본 파이프라인 (검증 + 렌더링)
 python scripts/deck_cli.py pipeline <client-name>
+
+# 전체 파이프라인 (검증 + 렌더링 + QA) (v2.0)
+python scripts/deck_cli.py full-pipeline <client-name>
 ```
 
 ---
@@ -88,6 +96,7 @@ python scripts/deck_cli.py pipeline <client-name>
 - 리서치 출처는 `clients/<client>/sources.md`에 기록
 - 인사이트 도출 시 출처 명시 (섹션 앵커 사용)
 - 사실과 가정 명확히 구분
+- v2.0: 각 불릿에 evidence 필드로 출처 직접 연결 가능
 
 ### 6. Per-Client Traceability (클라이언트별 추적성)
 모든 클라이언트에 대해 유지:
@@ -108,10 +117,11 @@ value-architect-agent/
 ├── scripts/
 │   ├── deck_cli.py             # 통합 CLI
 │   ├── render_ppt.py           # PPTX 렌더러
+│   ├── qa_ppt.py               # QA 자동 검사기 (v2.0)
 │   ├── validate_spec.py        # 스키마 검증
 │   └── new_client.py           # 클라이언트 생성
 ├── schema/
-│   └── deck_spec.schema.json   # Deck Spec 스키마
+│   └── deck_spec.schema.json   # Deck Spec 스키마 v2.0
 ├── templates/company/
 │   ├── base-template.pptx      # 베이스 템플릿
 │   ├── tokens.yaml             # 디자인 토큰
@@ -124,7 +134,7 @@ value-architect-agent/
 │   ├── slides/                 # 프리셋 슬라이드
 │   └── lessons/                # 학습 내용
 └── .claude/
-    ├── skills/                 # 스킬 정의
+    ├── skills/                 # 스킬 정의 (10개)
     └── subagents/              # 서브에이전트 정의
 ```
 
@@ -141,8 +151,12 @@ value-architect-agent/
 | `three_column` | 3분할 | columns 사용 |
 | `comparison` | As-Is/To-Be | columns 사용 |
 | `timeline` | 로드맵/타임라인 | 단계별 |
+| `process_flow` | 프로세스 흐름 | 단계별 |
 | `chart_focus` | 차트 중심 | 0-4개 |
+| `image_focus` | 이미지 중심 | 0-4개 |
+| `quote` | 인용문 | 0개 |
 | `section_divider` | 섹션 구분 | 0개 |
+| `appendix` | 부록 | 3-6개 |
 | `thank_you` | 마무리 | 0개 |
 
 ---
@@ -156,6 +170,28 @@ value-architect-agent/
 - ✅ 폰트/크기/색상 규칙 준수
 - ✅ Deck Spec이 스키마 검증 통과
 - ✅ 주장에 출처 명시
+- ✅ QA 검사 통과 (오류 0개)
+
+---
+
+## v2.0 신규 기능
+
+### 2층 스펙 구조
+- **콘텐츠 스펙**: content_blocks로 bullets/table/chart/kpi 등 타입별 분리
+- **레이아웃 스펙**: layout_intent로 렌더러에 구체적 지시
+- **근거 연결**: evidence 필드로 sources.md 앵커와 직접 연결
+- **슬라이드별 제약**: slide_constraints로 로컬 규칙 적용
+
+### 자동 QA 검사
+- 불릿 개수/길이 검증
+- 폰트/사이즈 규칙 준수 확인
+- 콘텐츠 밀도 분석
+- 금지어 검사
+- JSON/Markdown 보고서 출력
+
+### 하이브리드 렌더 워크플로우
+- 1단계: Spec → PPTX 자동 생성 (구조/레이아웃 강제)
+- 2단계: /polish 스킬로 미세 편집 (문장 다듬기, 정렬 보정)
 
 ---
 
@@ -184,6 +220,11 @@ value-architect-agent/
 ### 불릿 밀도 경고
 1. 6개 초과 시 슬라이드 분할 고려
 2. 3개 미만 시 내용 보강 또는 다른 슬라이드와 통합
+
+### QA 검사 실패
+1. QA 보고서에서 이슈 확인
+2. deck_spec.yaml 수정
+3. 재렌더링 후 QA 재실행
 
 ---
 
@@ -218,4 +259,4 @@ Claude: 정보 확인했습니다. brief.md를 작성하겠습니다.
 - 스킬 정의: `.claude/skills/*/SKILL.md`
 - 서브에이전트: `.claude/subagents/*.md`
 - 스키마: `schema/deck_spec.schema.json`
-- 예시 스펙: `schema/deck_spec.example.yaml`
+- 예시 스펙: `clients/acme-demo/deck_spec.yaml`

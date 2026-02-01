@@ -11,15 +11,16 @@
 3. [시스템 요구사항](#시스템-요구사항)
 4. [설치 방법](#설치-방법)
 5. [빠른 시작](#빠른-시작)
-6. [프로젝트 구조](#프로젝트-구조)
-7. [워크플로우](#워크플로우)
-8. [CLI 사용법](#cli-사용법)
-9. [대화형 스킬](#대화형-스킬)
-10. [Deck Spec v2.0 작성 가이드](#deck-spec-v20-작성-가이드)
-11. [레이아웃 유형](#레이아웃-유형)
-12. [디자인 토큰](#디자인-토큰)
-13. [품질 관리 (QA)](#품질-관리-qa)
-14. [문제 해결](#문제-해결)
+6. [Claude Code로 사용하기](#claude-code로-사용하기)
+7. [프로젝트 구조](#프로젝트-구조)
+8. [워크플로우](#워크플로우)
+9. [CLI 사용법](#cli-사용법)
+10. [대화형 스킬](#대화형-스킬)
+11. [Deck Spec v2.0 작성 가이드](#deck-spec-v20-작성-가이드)
+12. [레이아웃 유형](#레이아웃-유형)
+13. [디자인 토큰](#디자인-토큰)
+14. [품질 관리 (QA)](#품질-관리-qa)
+15. [문제 해결](#문제-해결)
 
 ---
 
@@ -93,6 +94,7 @@ deck_spec.yaml → validate → render → qa → polish → output.pptx
 
 ### 필수 환경
 - **Python**: 3.9 이상
+- **Claude Code**: 최신 버전 설치
 - **운영체제**: macOS, Linux, Windows
 
 ### 필수 패키지
@@ -160,21 +162,225 @@ python scripts/deck_cli.py status samsung-ai-strategy
 python scripts/deck_cli.py full-pipeline acme-demo
 ```
 
-### 예제 3: Claude Code와 대화하며 작업
+---
+
+## Claude Code로 사용하기
+
+이 에이전트는 Claude Code와 대화하며 사용하도록 설계되었습니다.
+
+### 1. Claude Code에서 프로젝트 열기
+
+```bash
+# 터미널에서 프로젝트 디렉토리로 이동
+cd value-architect-agent
+
+# Claude Code 실행
+claude
+```
+
+### 2. 대화 예시: 처음부터 덱 만들기
 
 ```
 사용자: 삼성전자 AI 전환 전략 덱 만들어줘
 
-Claude: 새 프로젝트를 시작하겠습니다.
-        클라이언트 팩을 생성하고 몇 가지 정보를 확인하겠습니다.
+Claude: 새 프로젝트를 시작하겠습니다. 먼저 몇 가지 정보를 확인하겠습니다.
 
-        - 대상 청중은 누구인가요? (예: C-level, 사업부장)
-        - 예상 슬라이드 수는 몇 장인가요?
-        - 발표 시간은 어느 정도인가요?
+1. 클라이언트명: samsung-ai-strategy로 생성할까요?
+2. 대상 청중은 누구인가요? (예: C-level, 사업부장)
+3. 예상 슬라이드 수는 몇 장인가요?
+4. 발표 시간은 어느 정도인가요?
 
-사용자: C-level 대상, 15장 내외, 30분 발표야
+사용자: 그래, C-level 대상이고 15장 내외, 30분 발표야
 
-Claude: brief.md를 작성하고 리서치를 진행하겠습니다...
+Claude: 정보 확인했습니다.
+
+[1] 클라이언트 팩 생성...
+(python scripts/deck_cli.py new samsung-ai-strategy 실행)
+
+[2] brief.md 작성 중...
+(clients/samsung-ai-strategy/brief.md 생성)
+
+클라이언트 팩이 생성되었습니다.
+
+다음 단계:
+- 리서치가 필요하면 "/research samsung-ai-strategy" 사용
+- 스토리라인 구축은 "/storyline samsung-ai-strategy" 사용
+- 이미 내용이 있으면 공유해주세요
+
+사용자: AI 기반 품질검사, 예측 정비, 수요 예측 3가지를 중심으로 해줘
+
+Claude: 3가지 핵심 주제를 바탕으로 스토리라인을 구축하겠습니다.
+
+[deck_outline.md 작성 중...]
+
+스토리라인 완성:
+1. Cover - 삼성전자 AI 전환 전략
+2. Executive Summary - 3대 AI 이니셔티브
+3. 산업 배경 - AI 기반 제조 혁신 트렌드
+4. 현황 분석 - 삼성전자 디지털 성숙도
+5. AI 품질검사 - 비전 AI로 불량률 50% 감소
+6. 예측 정비 - 설비 가동률 15% 향상
+7. 수요 예측 - 재고 비용 20% 절감
+...
+
+스펙을 생성할까요?
+
+사용자: 응
+
+Claude: deck_spec.yaml을 생성하겠습니다...
+(clients/samsung-ai-strategy/deck_spec.yaml 작성)
+
+스키마 검증 중...
+✓ 검증 통과
+
+렌더링하시겠습니까?
+
+사용자: full-pipeline으로 돌려줘
+
+Claude: 전체 파이프라인을 실행하겠습니다.
+
+=== Full Pipeline 시작 ===
+
+[1/3] 스키마 검증 중...
+✓ 검증 통과
+
+[2/3] PPTX 렌더링 중...
+✓ 완료: clients/samsung-ai-strategy/outputs/samsung-ai-strategy_20260201.pptx
+
+[3/3] QA 검사 중...
+✅ 통과 (경고: 2, 참고: 1)
+
+=== Full Pipeline 완료 ===
+
+PPTX 파일이 생성되었습니다:
+clients/samsung-ai-strategy/outputs/samsung-ai-strategy_20260201.pptx
+```
+
+### 3. 스킬 사용하기
+
+Claude Code에서 슬래시 명령어로 스킬을 호출할 수 있습니다:
+
+```
+/intake samsung-ai    # 새 프로젝트 시작
+/research samsung-ai  # 리서치 수행
+/storyline samsung-ai # 스토리라인 구축
+/slidespec samsung-ai # Deck Spec 생성
+/render samsung-ai    # PPTX 렌더링
+/qa samsung-ai        # QA 검사
+/polish samsung-ai    # 미세 편집
+```
+
+### 4. 자연어로 요청하기
+
+스킬을 명시적으로 호출하지 않아도 자연어로 요청할 수 있습니다:
+
+```
+사용자: acme-demo 덱 렌더링 해줘
+Claude: (자동으로 /render acme-demo 실행)
+
+사용자: QA 검사 결과 보여줘
+Claude: (자동으로 /qa acme-demo 실행)
+
+사용자: 슬라이드 3의 불릿을 좀 더 간결하게 수정해줘
+Claude: deck_spec.yaml을 수정하고 재렌더링...
+```
+
+### 5. 단계별 워크플로우
+
+#### 완전 자동 모드
+```
+사용자: 현대자동차 EV 전략 덱을 처음부터 끝까지 만들어줘
+
+Claude:
+1. 클라이언트 팩 생성
+2. 리서치 및 sources.md 작성
+3. 스토리라인 구축
+4. deck_spec.yaml 생성
+5. 렌더링 + QA
+6. 결과물 전달
+```
+
+#### 단계별 수동 모드
+```
+사용자: /intake hyundai-ev
+(정보 수집 후)
+
+사용자: /research hyundai-ev
+(리서치 완료 후)
+
+사용자: /storyline hyundai-ev
+(스토리라인 검토 후)
+
+사용자: /slidespec hyundai-ev
+(스펙 검증 후)
+
+사용자: /render hyundai-ev
+(렌더링 결과 확인)
+
+사용자: /qa hyundai-ev
+(품질 검증)
+```
+
+### 6. 기존 자료 활용하기
+
+```
+사용자: 여기 리서치 자료 있어 (파일 첨부 또는 텍스트)
+
+Claude:
+제공해주신 자료를 sources.md에 정리하겠습니다.
+(sources.md 작성)
+
+이 내용을 바탕으로 스토리라인을 구축할까요?
+
+사용자: 응, 그리고 이 PPT 구조를 참고해줘 (기존 PPT 구조 설명)
+
+Claude:
+기존 구조를 참고하여 deck_outline.md를 작성하겠습니다...
+```
+
+### 7. 수정 및 반복
+
+```
+사용자: 슬라이드 5번에 경쟁사 비교 내용 추가해줘
+
+Claude:
+deck_spec.yaml의 5번 슬라이드를 수정하겠습니다.
+(comparison 레이아웃으로 변경, 경쟁사 비교 내용 추가)
+
+재렌더링하시겠습니까?
+
+사용자: full-pipeline으로 다시 돌려
+
+Claude:
+=== Full Pipeline 시작 ===
+...
+=== Full Pipeline 완료 ===
+```
+
+### 8. 품질 개선 사이클
+
+```
+사용자: QA 리포트 보여줘
+
+Claude:
+# PPT QA 보고서
+
+**결과**: ✅ 통과
+
+## 상세 이슈
+### 슬라이드 5
+- 🟡 **[불릿 개수]** 불릿이 6개를 초과합니다 (8개)
+
+권고: 슬라이드 5의 불릿을 6개로 줄이거나 분할을 권장합니다.
+
+사용자: 슬라이드 5 분할해줘
+
+Claude:
+슬라이드 5를 두 개로 분할하겠습니다:
+- 5a: 운영 측면 개선점
+- 5b: 기술 측면 개선점
+
+(deck_spec.yaml 수정 후 재렌더링)
 ```
 
 ---
@@ -422,46 +628,6 @@ slides:
           trend: "up"
 ```
 
-### 레이아웃 의도 (v2.0)
-
-```yaml
-- layout: "chart_focus"
-  title: "매출 추이 분석"
-  governing_message: "3년 연속 두 자릿수 성장"
-
-  # 레이아웃 의도 지정
-  layout_intent:
-    emphasis: "visual"           # content, visual, balanced
-    visual_position: "left"      # left, right, center
-    content_density: "sparse"    # sparse, normal, dense
-```
-
-### 근거 연결 (Evidence) (v2.0)
-
-```yaml
-bullets:
-  - text: "글로벌 시장 점유율 23%"
-    evidence:
-      source_anchor: "sources.md#market-share"
-      source_type: "primary"     # primary, secondary, assumption
-      confidence: "high"         # high, medium, low
-      citation: "IDC, 2026 Q1 Report"
-```
-
-### 슬라이드별 제약조건 (v2.0)
-
-```yaml
-- layout: "exec_summary"
-  title: "핵심 요약"
-  governing_message: "3가지 전략 방향 제안"
-
-  # 이 슬라이드만의 제약
-  slide_constraints:
-    max_bullets: 5
-    max_chars_per_bullet: 80
-    required_elements: ["visual"]
-```
-
 ### 컬럼 레이아웃 작성
 
 ```yaml
@@ -659,6 +825,7 @@ python scripts/deck_cli.py qa <client>
 - 자동 QA 검사 시스템
 - 하이브리드 렌더 워크플로우 (Polish 스킬)
 - 전역/슬라이드별 제약조건 지원
+- 렌더러 버그 수정 (템플릿 기존 슬라이드 제거)
 
 ### v1.0.0 (2026-01-15)
 - 최초 릴리스
