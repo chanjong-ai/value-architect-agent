@@ -1,37 +1,145 @@
 meta:
   name: "Layout Mapping"
-  version: "0.1"
+  version: "1.0"
   notes: >
     Map logical layout types to PPT slide_layout indices.
     Indices are template-dependent. Validate by rendering and adjust.
+    Common defaults: 0=Title Slide, 1=Title and Content, 5=Title Only
 
 layout_map:
-  # Logical layout name -> PPT slide_layout index fallback
-  # Common defaults for many templates:
-  # 0: Title Slide, 1: Title and Content, 5: Title Only (varies by template)
+  # =========================================================================
+  # 커버 & 섹션 레이아웃
+  # =========================================================================
   cover:
     slide_layout_index: 0
+    description: "덱 표지 슬라이드"
     placeholders:
       title: "TITLE"
       subtitle: "SUBTITLE"
 
+  section_divider:
+    slide_layout_index: 5
+    description: "섹션 구분 슬라이드 (큰 제목 중앙 정렬)"
+    placeholders:
+      title: "TITLE"
+
+  thank_you:
+    slide_layout_index: 5
+    description: "마무리/감사 슬라이드"
+    placeholders:
+      title: "TITLE"
+
+  # =========================================================================
+  # 컨텐츠 레이아웃
+  # =========================================================================
   exec_summary:
     slide_layout_index: 1
+    description: "Executive Summary - 제목 + 거버닝 메시지 + 불릿"
     placeholders:
       title: "TITLE"
       body: "BODY"
 
+  content:
+    slide_layout_index: 1
+    description: "일반 컨텐츠 슬라이드"
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+
+  appendix:
+    slide_layout_index: 1
+    description: "부록 슬라이드"
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+
+  # =========================================================================
+  # 컬럼 기반 레이아웃
+  # =========================================================================
   two_column:
     slide_layout_index: 1
+    description: "2컬럼 레이아웃 (좌우 분할)"
     placeholders:
       title: "TITLE"
       body: "BODY"
     render_strategy:
       type: "two_column_text"
-      left_heading: "Analysis"
-      right_heading: "Implications"
+      default_left_heading: "분석"
+      default_right_heading: "시사점"
 
-  section_divider:
-    slide_layout_index: 4
+  three_column:
+    slide_layout_index: 1
+    description: "3컬럼 레이아웃"
     placeholders:
       title: "TITLE"
+      body: "BODY"
+    render_strategy:
+      type: "three_column_text"
+
+  comparison:
+    slide_layout_index: 1
+    description: "비교 레이아웃 (As-Is / To-Be)"
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+    render_strategy:
+      type: "comparison_boxes"
+      default_left_heading: "As-Is"
+      default_right_heading: "To-Be"
+
+  # =========================================================================
+  # 시각화 중심 레이아웃
+  # =========================================================================
+  chart_focus:
+    slide_layout_index: 1
+    description: "차트 중심 슬라이드 (왼쪽 차트 + 오른쪽 불릿)"
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+    render_strategy:
+      type: "chart_with_bullets"
+      chart_position: "left"
+      chart_width_ratio: 0.65
+
+  image_focus:
+    slide_layout_index: 1
+    description: "이미지 중심 슬라이드"
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+    render_strategy:
+      type: "image_with_bullets"
+      image_position: "center"
+
+  # =========================================================================
+  # 프로세스/타임라인 레이아웃
+  # =========================================================================
+  timeline:
+    slide_layout_index: 1
+    description: "타임라인/로드맵 슬라이드"
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+    render_strategy:
+      type: "horizontal_timeline"
+      show_phases: true
+
+  process_flow:
+    slide_layout_index: 1
+    description: "프로세스 플로우 슬라이드"
+    placeholders:
+      title: "TITLE"
+      body: "BODY"
+    render_strategy:
+      type: "horizontal_flow"
+
+  # =========================================================================
+  # 특수 레이아웃
+  # =========================================================================
+  quote:
+    slide_layout_index: 5
+    description: "인용문 슬라이드"
+    placeholders:
+      title: "TITLE"
+    render_strategy:
+      type: "centered_quote"

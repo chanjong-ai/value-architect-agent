@@ -17,6 +17,7 @@ outputs/
 clients/*/outputs/
 clients/*/research/
 *.pptx
+*.potx
 *.log
 
 # Secrets / Local memory
