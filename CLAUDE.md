@@ -123,9 +123,10 @@ value-architect-agent/
 ├── schema/
 │   └── deck_spec.schema.json   # Deck Spec 스키마 v2.0
 ├── templates/company/
-│   ├── base-template.pptx      # 베이스 템플릿
-│   ├── tokens.yaml             # 디자인 토큰
-│   └── layouts.yaml            # 레이아웃 매핑
+│   ├── base-template.pptx       # 베이스 템플릿 (회사 표준)
+│   ├── additional-template.pptx # 타사 보고서 사례 (80페이지, 참고용)
+│   ├── tokens.yaml              # 디자인 토큰
+│   └── layouts.yaml             # 레이아웃 매핑
 ├── clients/
 │   ├── _template/              # 클라이언트 템플릿
 │   └── <client>/               # 클라이언트별 작업 영역
