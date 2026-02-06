@@ -22,9 +22,9 @@
 2. `/intake` 스킬로 클라이언트 팩 생성
 3. brief.md 작성을 위한 정보 수집
 
-### 덱 생성 워크플로우 (v2.0)
+### 덱 생성 워크플로우 (v2.2)
 ```
-[1] Intake → [2] Research → [3] Storyline → [4] Slidespec → [5] Render → [6] QA → [7] Polish → [8] Lessons
+[1] Intake → [2] Research → [3] Storyline → [4] Slidespec → [5] Analyze → [6] Sync-Layout → [7] Enrich-Evidence → [8] Render → [9] QA → [10] Polish → [11] Lessons
 ```
 
 각 단계별 스킬:
@@ -34,6 +34,9 @@
 - `/competitors <client>`: 경쟁사 분석
 - `/storyline <client>`: 스토리라인 구축
 - `/slidespec <client>`: Deck Spec 생성
+- `/analyze <client>`: 고객사 분석 전략/갭 리포트 생성 (v2.2)
+- `/sync-layout <client>`: 고객 선호 레이아웃을 deck_spec에 반영 (v2.2)
+- `/enrich-evidence <client>`: 불릿 evidence/source_anchor 자동 보강 (v2.2)
 - `/render <client>`: PPTX 렌더링
 - `/qa <client>`: 품질 검증 (v2.0)
 - `/polish <client>`: 미세 편집 (v2.0)
@@ -62,6 +65,18 @@ python scripts/deck_cli.py qa <client-name>
 # 미세 편집 (v2.1)
 python scripts/deck_cli.py polish <client-name>
 
+# 고객사 분석 리포트 (v2.2)
+python scripts/deck_cli.py analyze <client-name>
+
+# 전체 고객사 분석 요약 (v2.2)
+python scripts/deck_cli.py analyze --all
+
+# 레이아웃 선호 반영 (v2.2)
+python scripts/deck_cli.py sync-layout <client-name>
+
+# evidence 자동 보강 (v2.2)
+python scripts/deck_cli.py enrich-evidence <client-name>
+
 # 기본 파이프라인 (검증 + 렌더링)
 python scripts/deck_cli.py pipeline <client-name>
 
@@ -70,6 +85,9 @@ python scripts/deck_cli.py full-pipeline <client-name>
 
 # 전체 파이프라인 + 미세 편집 (v2.1)
 python scripts/deck_cli.py full-pipeline <client-name> --polish
+
+# 실무 권장 파이프라인 (v2.2)
+python scripts/deck_cli.py full-pipeline <client-name> --sync-layout --enrich-evidence --polish
 ```
 
 ---
@@ -122,6 +140,9 @@ value-architect-agent/
 ├── CLAUDE.md                    # 이 파일 (프로젝트 규칙)
 ├── scripts/
 │   ├── deck_cli.py             # 통합 CLI
+│   ├── analyze_client.py       # 고객사 분석 전략/준비도 리포터 (v2.2)
+│   ├── layout_sync.py          # layout_preferences -> deck_spec 동기화 (v2.2)
+│   ├── enrich_evidence.py      # 불릿 evidence/source_anchor 자동 보강 (v2.2)
 │   ├── render_ppt.py           # PPTX 렌더러
 │   ├── qa_ppt.py               # QA 자동 검사기 (v2.0)
 │   ├── polish_ppt.py           # 미세 편집기 (v2.1)
@@ -142,7 +163,7 @@ value-architect-agent/
 │   ├── slides/                 # 프리셋 슬라이드
 │   └── lessons/                # 학습 내용
 └── .claude/
-    ├── skills/                 # 스킬 정의 (10개)
+    ├── skills/                 # 스킬 정의 (13개)
     └── subagents/              # 서브에이전트 정의
 ```
 

@@ -15,12 +15,13 @@
 7. [프로젝트 구조](#프로젝트-구조)
 8. [워크플로우](#워크플로우)
 9. [CLI 사용법](#cli-사용법)
-10. [대화형 스킬](#대화형-스킬)
-11. [Deck Spec v2.0 작성 가이드](#deck-spec-v20-작성-가이드)
-12. [레이아웃 유형](#레이아웃-유형)
-13. [디자인 토큰](#디자인-토큰)
-14. [품질 관리 (QA)](#품질-관리-qa)
-15. [문제 해결](#문제-해결)
+10. [고객사 분석 리포트](#고객사-분석-리포트)
+11. [대화형 스킬](#대화형-스킬)
+12. [Deck Spec v2.0 작성 가이드](#deck-spec-v20-작성-가이드)
+13. [레이아웃 유형](#레이아웃-유형)
+14. [디자인 토큰](#디자인-토큰)
+15. [품질 관리 (QA)](#품질-관리-qa)
+16. [문제 해결](#문제-해결)
 
 ---
 
@@ -34,7 +35,7 @@ Value Architect Agent는 Claude Code와 대화하며 컨설팅 수준의 PowerPo
 
 ```
 [Stage 1: Thinking - 텍스트 아티팩트]
-brief.md → research → sources.md → deck_outline.md → deck_spec.yaml
+brief.md → research → sources.md → deck_outline.md → deck_spec.yaml → analysis_report.md
 
 [Stage 2: Making - 렌더링 결과물]
 deck_spec.yaml → validate → render → qa → polish → output.pptx
@@ -89,6 +90,12 @@ deck_spec.yaml → validate → render → qa → polish → output.pptx
 - 14개의 사전 정의된 레이아웃
 - 컬럼 기반 레이아웃 (2단, 3단, 비교)
 - 타임라인, 차트 중심 등 특수 레이아웃
+
+### 고객사 분석 리포트 (v2.2)
+- 고객사별 준비도 점수(Brief/Sources/Storyline/Spec/Execution) 자동 산출
+- 산업별 분석 모듈 추천(예: 제조/리테일/금융/헬스케어)
+- 분석 단계 → PPT 레이아웃 매핑 자동 생성
+- 갭/리스크 및 즉시 실행 액션 아이템 파일 출력
 
 ---
 
@@ -267,6 +274,8 @@ Claude Code에서 슬래시 명령어로 스킬을 호출할 수 있습니다:
 /research samsung-ai  # 리서치 수행
 /storyline samsung-ai # 스토리라인 구축
 /slidespec samsung-ai # Deck Spec 생성
+/sync-layout samsung-ai # 레이아웃 선호 반영
+/enrich-evidence samsung-ai # evidence 자동 보강
 /render samsung-ai    # PPTX 렌더링
 /qa samsung-ai        # QA 검사
 /polish samsung-ai    # 미세 편집
@@ -397,6 +406,9 @@ value-architect-agent/
 │
 ├── scripts/                     # CLI 스크립트
 │   ├── deck_cli.py             # 통합 CLI (메인 진입점)
+│   ├── analyze_client.py       # 고객사 분석 전략/준비도 리포터 (v2.2)
+│   ├── layout_sync.py          # layout_preferences -> deck_spec 동기화 (v2.2)
+│   ├── enrich_evidence.py      # 불릿 evidence/source_anchor 자동 보강 (v2.2)
 │   ├── render_ppt.py           # PPTX 렌더러
 │   ├── qa_ppt.py               # QA 자동 검사기 (v2.0)
 │   ├── polish_ppt.py           # PPTX 미세 편집기 (v2.1)
@@ -430,6 +442,9 @@ value-architect-agent/
     │   ├── competitors/
     │   ├── storyline/
     │   ├── slidespec/
+    │   ├── analyze/            # 고객사 분석 전략/갭 리포트 (v2.2)
+    │   ├── sync-layout/        # 레이아웃 선호 반영 (v2.2)
+    │   ├── enrich-evidence/    # evidence 자동 보강 (v2.2)
     │   ├── render/
     │   ├── qa/
     │   ├── polish/             # 하이브리드 렌더용 (v2.0)
@@ -442,17 +457,18 @@ value-architect-agent/
 
 ## 워크플로우
 
-### 전체 프로세스 (v2.0 하이브리드 렌더)
+### 전체 프로세스 (v2.2 하이브리드 렌더)
 
 ```
 [1] Intake     → 클라이언트 정보 수집, 프로젝트 설정
 [2] Research   → 산업, 경쟁사, 기술 트렌드 리서치
 [3] Storyline  → 피라미드 원칙 기반 스토리라인 구축
 [4] Slidespec  → deck_outline.md를 deck_spec.yaml로 변환
-[5] Render     → PPTX 파일 생성 (1차 렌더)
-[6] QA         → 자동 품질 검증 및 보고서 생성
-[7] Polish     → 미세 편집 (문장 다듬기, 정렬 보정)
-[8] Lessons    → 학습 내용 기록 및 라이브러리 업데이트
+[5] Analyze    → 고객사별 분석 전략/갭/실행계획 리포트 생성
+[6] Render     → PPTX 파일 생성 (1차 렌더)
+[7] QA         → 자동 품질 검증 및 보고서 생성
+[8] Polish     → 미세 편집 (문장 다듬기, 정렬 보정)
+[9] Lessons    → 학습 내용 기록 및 라이브러리 업데이트
 ```
 
 ### 파이프라인 명령어
@@ -466,6 +482,9 @@ python scripts/deck_cli.py full-pipeline <client>
 
 # 전체 파이프라인 + polish (validate → render → qa → polish)
 python scripts/deck_cli.py full-pipeline <client> --polish
+
+# 레이아웃 선호 + evidence 보강 + 품질 파이프라인 (권장)
+python scripts/deck_cli.py full-pipeline <client> --sync-layout --enrich-evidence --polish
 
 # QA 경고 무시하고 진행
 python scripts/deck_cli.py full-pipeline <client> --ignore-qa-errors
@@ -502,6 +521,18 @@ python scripts/deck_cli.py qa <client-name>
 # 미세 편집 (v2.1)
 python scripts/deck_cli.py polish <client-name>
 
+# 고객사 분석 리포트 (v2.2)
+python scripts/deck_cli.py analyze <client-name>
+
+# 전체 고객사 분석 요약 (v2.2)
+python scripts/deck_cli.py analyze --all
+
+# 레이아웃 선호 반영 (v2.2)
+python scripts/deck_cli.py sync-layout <client-name>
+
+# evidence 자동 보강 (v2.2)
+python scripts/deck_cli.py enrich-evidence <client-name>
+
 # 기본 파이프라인 (validate → render)
 python scripts/deck_cli.py pipeline <client-name>
 
@@ -510,6 +541,9 @@ python scripts/deck_cli.py full-pipeline <client-name>
 
 # 전체 파이프라인 + 미세 편집 (v2.1)
 python scripts/deck_cli.py full-pipeline <client-name> --polish
+
+# 실무 권장 파이프라인 (v2.2)
+python scripts/deck_cli.py full-pipeline <client-name> --sync-layout --enrich-evidence --polish
 ```
 
 ### 사용 예시
@@ -524,7 +558,8 @@ $ python scripts/deck_cli.py new hyundai-ev-strategy
   2. constraints.md 확인
   3. 리서치 후 sources.md 업데이트
   4. deck_outline.md → deck_spec.yaml 작성
-  5. python scripts/deck_cli.py full-pipeline hyundai-ev-strategy
+  5. python scripts/deck_cli.py analyze hyundai-ev-strategy
+  6. python scripts/deck_cli.py full-pipeline hyundai-ev-strategy --sync-layout --enrich-evidence --polish
 
 # 2. 전체 파이프라인 실행
 $ python scripts/deck_cli.py full-pipeline acme-demo
@@ -550,6 +585,50 @@ $ python scripts/deck_cli.py qa acme-demo
 
 ---
 
+## 고객사 분석 리포트
+
+`analyze` 명령은 고객사별로 **어떤 분석을 통해 PPT를 구성해야 하는지**를 자동으로 진단합니다.
+
+### 생성 파일
+
+- `clients/<client>/analysis_report.md`
+- `clients/<client>/analysis_report.json`
+- (전체 실행 시) `reports/client_analysis_summary_*.md`, `reports/client_analysis_summary_*.json`
+
+### 단일 고객 분석
+
+```bash
+python scripts/deck_cli.py analyze <client-name>
+```
+
+### 전체 고객 분석
+
+```bash
+python scripts/deck_cli.py analyze --all
+```
+
+### 권장 실행 순서 (실제 고객 프로젝트)
+
+```bash
+# 1) 고객 맞춤 레이아웃 반영
+python scripts/deck_cli.py sync-layout <client-name>
+
+# 2) 불릿-출처 연결 자동 보강
+python scripts/deck_cli.py enrich-evidence <client-name>
+
+# 3) 품질 파이프라인 실행
+python scripts/deck_cli.py full-pipeline <client-name> --sync-layout --enrich-evidence --polish
+```
+
+### 리포트 포함 항목
+
+- 준비도 점수: Brief / Sources / Storyline / Spec / Execution
+- 산업별 분석 모듈 추천: 분석 목적, 방법론, 필요 데이터, 슬라이드 매핑
+- 갭/리스크: 누락 파일, 근거 연결률, QA 상태
+- 실행 액션: 어떤 파일을 어떻게 보강할지 즉시 실행 가능한 체크리스트
+
+---
+
 ## 대화형 스킬
 
 Claude Code와 대화할 때 사용할 수 있는 스킬입니다.
@@ -562,6 +641,9 @@ Claude Code와 대화할 때 사용할 수 있는 스킬입니다.
 | `/competitors <client>` | 경쟁사 분석 | `/competitors samsung-ai` |
 | `/storyline <client>` | 스토리라인 구축 | `/storyline samsung-ai` |
 | `/slidespec <client>` | Deck Spec 생성 | `/slidespec samsung-ai` |
+| `/analyze <client>` | 고객사 분석 전략/갭 리포트 | `/analyze samsung-ai` |
+| `/sync-layout <client>` | 레이아웃 선호 반영 | `/sync-layout samsung-ai` |
+| `/enrich-evidence <client>` | evidence/source_anchor 자동 보강 | `/enrich-evidence samsung-ai` |
 | `/render <client>` | PPTX 렌더링 | `/render samsung-ai` |
 | `/qa <client>` | 품질 검증 | `/qa samsung-ai` |
 | `/polish <client>` | 미세 편집 (v2.0) | `/polish samsung-ai` |
@@ -847,6 +929,21 @@ python scripts/deck_cli.py qa <client>
 ---
 
 ## 변경 이력
+
+### v2.2.1 (2026-02-06)
+- `enrich-evidence` 명령 추가: deck_spec 불릿에 `evidence.source_anchor` 자동 보강
+- `full-pipeline` 옵션 확장:
+  - `--sync-layout` (layout_preferences 반영)
+  - `--enrich-evidence` (근거 자동 보강)
+  - `--evidence-confidence`, `--overwrite-evidence`
+- `layout_preferences.yaml`에 `title_keyword_overrides` 추가 (슬라이드 제목 키워드 기반 레이아웃 강제)
+- 준비도 점수 로직 강화: evidence 연결률 80% 미만 시 품질 게이트 실패로 판정
+
+### v2.2.0 (2026-02-06)
+- `analyze` 명령 추가: 고객사별 분석 전략/준비도 리포트 자동 생성
+- 산업/데이터 가용성 기반 분석 모듈 추천 및 PPT 매핑 제공
+- 전체 고객사 분석 요약 리포트(`reports/`) 자동 생성
+- 고객사 샘플에 `analysis_report.md/json` 생성 흐름 반영
 
 ### v2.1.2 (2026-02-06)
 - 불릿 규칙을 레이아웃별 최소/최대 기준으로 통합 (`validate`/`qa` 동일 로직)

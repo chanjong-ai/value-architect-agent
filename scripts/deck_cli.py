@@ -4,6 +4,9 @@ deck_cli.py - 통합 CLI for Value Architect Agent
 
 워크플로우 오케스트레이션:
   - new: 새 클라이언트 팩 생성
+  - analyze: 고객사 분석 전략/준비도 리포트 생성
+  - sync-layout: 고객 지정 레이아웃 선호를 deck_spec에 반영
+  - enrich-evidence: 불릿 evidence/source_anchor 자동 보강
   - validate: Deck Spec 스키마 검증
   - render: PPTX 렌더링
   - qa: 렌더링된 PPTX QA 검사
@@ -161,7 +164,8 @@ def cmd_new(args) -> int:
     print(f"  2. constraints.md 확인: {dest / 'constraints.md'}")
     print(f"  3. 리서치 후 sources.md 업데이트")
     print(f"  4. deck_outline.md → deck_spec.yaml 작성")
-    print(f"  5. python scripts/deck_cli.py pipeline {client_name}")
+    print(f"  5. python scripts/deck_cli.py analyze {client_name}")
+    print(f"  6. python scripts/deck_cli.py full-pipeline {client_name} --sync-layout --enrich-evidence --polish")
 
     return 0
 
@@ -595,26 +599,68 @@ def cmd_full_pipeline(args) -> int:
 
     print(f"=== Full Pipeline 시작: {client_name} ===\n")
 
-    # Step 1: Validate
-    print("[1/3] 스키마 검증 중...")
+    pre_steps = []
+    if getattr(args, "sync_layout", False):
+        pre_steps.append("sync_layout")
+    if getattr(args, "enrich_evidence", False):
+        pre_steps.append("enrich_evidence")
+
+    total_steps = 3 + len(pre_steps) + (1 if getattr(args, "polish", False) else 0)
+    current_step = 1
+
+    for step_name in pre_steps:
+        if step_name == "sync_layout":
+            print(f"[{current_step}/{total_steps}] 레이아웃 선호 반영 중...")
+            sync_args = argparse.Namespace(
+                client_name=client_name,
+                pref=None,
+                output=None,
+                dry_run=False,
+            )
+            if cmd_sync_layout(sync_args) != 0:
+                print("\n✗ 레이아웃 반영 실패. 파이프라인 중단.")
+                return 1
+
+        elif step_name == "enrich_evidence":
+            print(f"\n[{current_step}/{total_steps}] evidence 자동 보강 중...")
+            enrich_args = argparse.Namespace(
+                client_name=client_name,
+                spec=None,
+                sources=None,
+                output=None,
+                confidence=getattr(args, "evidence_confidence", "medium"),
+                overwrite=getattr(args, "overwrite_evidence", False),
+                dry_run=False,
+            )
+            if cmd_enrich_evidence(enrich_args) != 0:
+                print("\n✗ evidence 보강 실패. 파이프라인 중단.")
+                return 1
+
+        current_step += 1
+
+    # Step: Validate
+    print(f"\n[{current_step}/{total_steps}] 스키마 검증 중...")
     args.schema = None
     if cmd_validate(args) != 0:
         print("\n✗ 검증 실패. 파이프라인 중단.")
         return 1
+    current_step += 1
 
-    # Step 2: Render
-    print("\n[2/3] PPTX 렌더링 중...")
+    # Step: Render
+    print(f"\n[{current_step}/{total_steps}] PPTX 렌더링 중...")
     args.output = None
     args.template = None
     if cmd_render(args) != 0:
         print("\n✗ 렌더링 실패. 파이프라인 중단.")
         return 1
+    current_step += 1
 
-    # Step 3: QA
-    print("\n[3/3] QA 검사 중...")
+    # Step: QA
+    print(f"\n[{current_step}/{total_steps}] QA 검사 중...")
     args.pptx = None  # 가장 최근 파일 사용
     args.output = None
     qa_result = cmd_qa(args)
+    current_step += 1
 
     if qa_result != 0:
         print("\n⚠ QA 검사에서 이슈가 발견되었습니다.")
@@ -627,7 +673,7 @@ def cmd_full_pipeline(args) -> int:
 
     # Step 4 (optional): Polish
     if getattr(args, "polish", False):
-        print("\n[4/4] PPT 미세 편집 중...")
+        print(f"\n[{current_step}/{total_steps}] PPT 미세 편집 중...")
         # 최근 원본 결과물을 대상으로 polish 실행
         args.pptx = None
         args.output = None
@@ -637,6 +683,223 @@ def cmd_full_pipeline(args) -> int:
             return 1
 
     print(f"\n=== Full Pipeline 완료: {client_name} ===")
+    return 0
+
+
+# =============================================================================
+# Command: status
+# =============================================================================
+def cmd_analyze(args) -> int:
+    """고객사 분석 전략/준비도 리포트 생성"""
+    target_all = getattr(args, "all", False)
+    client_name = getattr(args, "client_name", None)
+
+    try:
+        from analyze_client import analyze_client, write_reports
+    except ImportError:
+        print("Error: analyze_client 모듈을 불러올 수 없습니다.")
+        return 1
+
+    if target_all:
+        clients = get_all_clients()
+        if not clients:
+            print("분석할 클라이언트가 없습니다.")
+            return 1
+
+        reports = []
+        for name in sorted(clients):
+            try:
+                report = analyze_client(name)
+            except FileNotFoundError as exc:
+                print(f"⚠ 건너뜀: {exc}")
+                continue
+
+            client_dir = get_client_dir(name)
+            md_path = client_dir / "analysis_report.md"
+            json_path = client_dir / "analysis_report.json"
+            write_reports(report, md_path, json_path)
+            reports.append(report)
+            print(f"✓ {name}: {md_path}")
+
+        if not reports:
+            print("생성된 리포트가 없습니다.")
+            return 1
+
+        summary_dir = REPO_ROOT / "reports"
+        summary_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        md_summary_path = summary_dir / f"client_analysis_summary_{timestamp}.md"
+        json_summary_path = summary_dir / f"client_analysis_summary_{timestamp}.json"
+
+        lines = [
+            "# Client Analysis Summary",
+            "",
+            f"- Generated at: {datetime.now().isoformat(timespec='seconds')}",
+            f"- Clients analyzed: {len(reports)}",
+            "",
+            "| Client | Readiness | Maturity | Spec Errors | Spec Warnings | Gap Count |",
+            "|---|---:|---|---:|---:|---:|",
+        ]
+
+        for report in reports:
+            readiness = report.get("readiness", {})
+            spec_v = report.get("spec_validation", {})
+            lines.append(
+                f"| {report['client_name']} | {readiness.get('overall_score', 0)} | "
+                f"{readiness.get('maturity', 'N/A')} | {spec_v.get('errors', 0)} | "
+                f"{spec_v.get('warnings', 0)} | {len(report.get('gaps', []))} |"
+            )
+
+        md_summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        json_summary_path.write_text(json.dumps(reports, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        print(f"\n✓ 전체 요약 리포트: {md_summary_path}")
+        print(f"✓ 전체 요약 JSON: {json_summary_path}")
+        return 0
+
+    if not client_name:
+        print("Error: client_name 또는 --all 중 하나를 지정하세요.")
+        return 1
+
+    if not client_exists(client_name):
+        print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
+        return 1
+
+    report = analyze_client(client_name)
+    client_dir = get_client_dir(client_name)
+    md_path = Path(args.output).resolve() if getattr(args, "output", None) else (client_dir / "analysis_report.md")
+    json_path = Path(args.json).resolve() if getattr(args, "json", None) else (client_dir / "analysis_report.json")
+    write_reports(report, md_path, json_path)
+
+    readiness = report["readiness"]
+    print(f"✓ 분석 리포트 생성: {md_path}")
+    print(f"✓ JSON 리포트 생성: {json_path}")
+    print(f"  - Readiness: {readiness['overall_score']}/100 ({readiness['maturity']})")
+
+    if report.get("gaps"):
+        print("\n주요 갭:")
+        for gap in report["gaps"][:5]:
+            print(f"  - [{gap['severity']}] {gap['item']}")
+
+    return 0
+
+
+# =============================================================================
+# Command: sync-layout
+# =============================================================================
+def cmd_sync_layout(args) -> int:
+    """layout_preferences를 deck_spec.yaml에 동기화"""
+    client_name = args.client_name
+
+    if not client_exists(client_name):
+        print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
+        return 1
+
+    client_dir = get_client_dir(client_name)
+    spec_path = client_dir / "deck_spec.yaml"
+    pref_path = Path(args.pref).resolve() if args.pref else (client_dir / "layout_preferences.yaml")
+
+    if not spec_path.exists():
+        print(f"Error: deck_spec.yaml이 없습니다: {spec_path}")
+        return 1
+    if not pref_path.exists():
+        print(f"Error: layout preferences 파일이 없습니다: {pref_path}")
+        return 1
+
+    try:
+        from layout_sync import load_yaml as load_layout_yaml, save_yaml as save_layout_yaml, apply_layout_preferences
+    except ImportError:
+        print("Error: layout_sync 모듈을 불러올 수 없습니다.")
+        return 1
+
+    spec = load_layout_yaml(spec_path)
+    pref = load_layout_yaml(pref_path)
+    updated_spec, changes, warnings = apply_layout_preferences(spec, pref)
+
+    for w in warnings:
+        print(f"⚠ {w}")
+
+    if not changes:
+        print("✓ 적용할 레이아웃 변경사항이 없습니다.")
+        return 0
+
+    print(f"✓ 레이아웃 변경사항 {len(changes)}건")
+    for line in changes[:30]:
+        print(f"  - {line}")
+
+    if args.dry_run:
+        print("\n(dry-run) 파일 저장 없이 종료")
+        return 0
+
+    output_path = Path(args.output).resolve() if args.output else spec_path
+    save_layout_yaml(output_path, updated_spec)
+    print(f"✓ 저장 완료: {output_path}")
+    return 0
+
+
+# =============================================================================
+# Command: enrich-evidence
+# =============================================================================
+def cmd_enrich_evidence(args) -> int:
+    """deck_spec 불릿 evidence 자동 보강"""
+    client_name = args.client_name
+
+    if not client_exists(client_name):
+        print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
+        return 1
+
+    client_dir = get_client_dir(client_name)
+    spec_path = Path(args.spec).resolve() if getattr(args, "spec", None) else (client_dir / "deck_spec.yaml")
+    sources_path = Path(args.sources).resolve() if getattr(args, "sources", None) else (client_dir / "sources.md")
+
+    if not spec_path.exists():
+        print(f"Error: deck_spec.yaml이 없습니다: {spec_path}")
+        return 1
+    if not sources_path.exists():
+        print(f"Error: sources.md가 없습니다: {sources_path}")
+        return 1
+
+    try:
+        from enrich_evidence import load_yaml as load_enrich_yaml, save_yaml as save_enrich_yaml
+        from enrich_evidence import parse_anchors_from_sources, enrich_spec
+    except ImportError:
+        print("Error: enrich_evidence 모듈을 불러올 수 없습니다.")
+        return 1
+
+    spec = load_enrich_yaml(spec_path)
+    anchors = parse_anchors_from_sources(sources_path)
+    if not anchors:
+        print("Error: sources.md에서 사용 가능한 앵커를 찾지 못했습니다.")
+        return 1
+
+    updated_spec, stats = enrich_spec(
+        spec=spec,
+        anchors=anchors,
+        confidence=getattr(args, "confidence", "medium"),
+        overwrite=getattr(args, "overwrite", False),
+    )
+
+    print(f"✓ anchors: {len(anchors)}개")
+    print(
+        "✓ bullets total: {total}, updated: {updated}".format(
+            total=stats.get("bullets_total", 0),
+            updated=stats.get("bullets_updated", 0),
+        )
+    )
+    if stats.get("slides_without_anchor", 0) > 0:
+        print(f"⚠ 기본 앵커 추론 실패 슬라이드: {stats['slides_without_anchor']}개")
+
+    if stats.get("bullets_updated", 0) == 0:
+        print("✓ evidence 보강할 불릿이 없습니다.")
+        return 0
+
+    if getattr(args, "dry_run", False):
+        print("(dry-run) 파일 저장 없이 종료")
+        return 0
+
+    output_path = Path(args.output).resolve() if getattr(args, "output", None) else spec_path
+    save_enrich_yaml(output_path, updated_spec)
+    print(f"✓ 저장 완료: {output_path}")
     return 0
 
 
@@ -662,6 +925,8 @@ def cmd_status(args) -> int:
         ("sources.md", "출처 목록"),
         ("deck_outline.md", "덱 아웃라인"),
         ("deck_spec.yaml", "덱 스펙"),
+        ("layout_preferences.yaml", "레이아웃 선호 설정"),
+        ("analysis_report.md", "고객사 분석 리포트"),
         ("lessons.md", "학습 내용"),
     ]
 
@@ -751,6 +1016,10 @@ def main():
         epilog="""
 예시:
   %(prog)s new my-client           # 새 클라이언트 생성
+  %(prog)s analyze my-client       # 고객사 분석 전략/준비도 리포트
+  %(prog)s sync-layout my-client   # 레이아웃 선호를 deck_spec에 반영
+  %(prog)s enrich-evidence my-client # 불릿 evidence 자동 보강
+  %(prog)s analyze --all           # 전체 고객사 분석 요약
   %(prog)s status my-client        # 상태 확인
   %(prog)s validate my-client      # 스키마 검증
   %(prog)s render my-client        # PPTX 렌더링
@@ -795,6 +1064,33 @@ def main():
     p_polish.add_argument("--report", help="편집 로그(JSON) 출력 경로")
     p_polish.set_defaults(func=cmd_polish)
 
+    # analyze
+    p_analyze = subparsers.add_parser("analyze", help="고객사 분석 전략/준비도 리포트 생성")
+    p_analyze.add_argument("client_name", nargs="?", help="클라이언트 이름")
+    p_analyze.add_argument("--all", action="store_true", help="모든 클라이언트 분석")
+    p_analyze.add_argument("--output", "-o", help="분석 리포트(Markdown) 출력 경로")
+    p_analyze.add_argument("--json", help="분석 리포트(JSON) 출력 경로")
+    p_analyze.set_defaults(func=cmd_analyze)
+
+    # sync-layout
+    p_sync = subparsers.add_parser("sync-layout", help="layout_preferences를 deck_spec에 반영")
+    p_sync.add_argument("client_name", help="클라이언트 이름")
+    p_sync.add_argument("--pref", help="layout_preferences.yaml 경로 (기본: clients/<client>/layout_preferences.yaml)")
+    p_sync.add_argument("--output", "-o", help="적용 결과 출력 경로 (기본: deck_spec.yaml 덮어쓰기)")
+    p_sync.add_argument("--dry-run", action="store_true", help="변경사항만 확인하고 저장하지 않음")
+    p_sync.set_defaults(func=cmd_sync_layout)
+
+    # enrich-evidence
+    p_enrich = subparsers.add_parser("enrich-evidence", help="deck_spec 불릿 evidence 자동 보강")
+    p_enrich.add_argument("client_name", help="클라이언트 이름")
+    p_enrich.add_argument("--spec", help="deck_spec.yaml 경로 (기본: clients/<client>/deck_spec.yaml)")
+    p_enrich.add_argument("--sources", help="sources.md 경로 (기본: clients/<client>/sources.md)")
+    p_enrich.add_argument("--output", "-o", help="출력 경로 (기본: deck_spec.yaml 덮어쓰기)")
+    p_enrich.add_argument("--confidence", default="medium", help="evidence confidence 기본값")
+    p_enrich.add_argument("--overwrite", action="store_true", help="기존 evidence도 덮어쓰기")
+    p_enrich.add_argument("--dry-run", action="store_true", help="변경사항만 확인하고 저장하지 않음")
+    p_enrich.set_defaults(func=cmd_enrich_evidence)
+
     # pipeline
     p_pipeline = subparsers.add_parser("pipeline", help="전체 파이프라인 (validate → render)")
     p_pipeline.add_argument("client_name", help="클라이언트 이름")
@@ -803,6 +1099,10 @@ def main():
     # full-pipeline
     p_full = subparsers.add_parser("full-pipeline", help="전체 파이프라인 + QA (+optional polish)")
     p_full.add_argument("client_name", help="클라이언트 이름")
+    p_full.add_argument("--sync-layout", action="store_true", help="검증 전 layout_preferences를 deck_spec에 반영")
+    p_full.add_argument("--enrich-evidence", action="store_true", help="검증 전 evidence/source_anchor 자동 보강")
+    p_full.add_argument("--evidence-confidence", default="medium", help="--enrich-evidence 시 기본 confidence")
+    p_full.add_argument("--overwrite-evidence", action="store_true", help="--enrich-evidence 시 기존 evidence도 덮어쓰기")
     p_full.add_argument("--ignore-qa-errors", action="store_true", help="QA 오류 무시하고 계속 진행")
     p_full.add_argument("--polish", action="store_true", help="QA 후 미세 편집까지 수행")
     p_full.set_defaults(func=cmd_full_pipeline)
