@@ -42,6 +42,7 @@ client_meta:
 - `bullets`: 불릿 목록 (최대 8개)
 - `columns`: 컬럼 데이터 (two_column, three_column, comparison용)
 - `visuals`: 시각 자료 정의
+- `layout_intent`: visual_position/emphasis/content_density 등 레이아웃 힌트
 - `notes`: 발표자 노트
 - `metadata`: 추가 메타데이터
 
@@ -63,9 +64,10 @@ client_meta:
 
 ### 불릿 규칙
 - 일반 슬라이드: 3-6개 불릿
-- cover/section_divider: 0개 불릿
+- chart_focus/image_focus: 0-4개 불릿
+- cover/section_divider/thank_you/quote: 0개 불릿
 - 한 불릿당 1줄 권장 (최대 2줄)
-- 불릿 최대 길이: 80자 권장
+- 불릿 최대 길이: 100자 (80자 권장)
 
 ### 구조화된 불릿
 ```yaml
@@ -126,8 +128,8 @@ deck_outline.md의 각 슬라이드를 YAML 객체로 변환합니다:
 4. notes에 출처 참조 추가
 
 ### Step 4: 밀도 검증
-- 불릿 수 확인 (3-6개)
-- 불릿 길이 확인 (80자 이내)
+- 레이아웃별 불릿 수 확인 (일반 3-6개, chart/image 0-4개, no-bullet 0개)
+- 불릿 길이 확인 (100자 이내)
 - 거버닝 메시지 길이 확인
 
 ### Step 5: 스키마 검증

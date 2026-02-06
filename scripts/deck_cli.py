@@ -7,8 +7,9 @@ deck_cli.py - 통합 CLI for Value Architect Agent
   - validate: Deck Spec 스키마 검증
   - render: PPTX 렌더링
   - qa: 렌더링된 PPTX QA 검사
+  - polish: 렌더링된 PPTX 미세 편집
   - pipeline: 전체 파이프라인 (validate → render)
-  - full-pipeline: 전체 파이프라인 + QA (validate → render → qa)
+  - full-pipeline: 전체 파이프라인 + QA (+ optional polish)
   - status: 클라이언트 상태 확인
   - list: 모든 클라이언트 목록
 """
@@ -19,7 +20,7 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 import yaml
 
@@ -68,6 +69,51 @@ def get_all_clients() -> list:
         d.name for d in CLIENTS_DIR.iterdir()
         if d.is_dir() and d.name != "_template" and not d.name.startswith(".")
     ]
+
+
+def _bullet_text(item) -> str:
+    """불릿 항목에서 텍스트를 추출"""
+    if isinstance(item, str):
+        return item
+    if isinstance(item, dict):
+        return str(item.get("text", ""))
+    return ""
+
+
+def _collect_slide_bullets(slide: dict) -> List[str]:
+    """슬라이드의 bullets/columns/content_blocks에서 불릿 텍스트를 수집"""
+    texts: List[str] = []
+
+    # Top-level bullets
+    for bullet in slide.get("bullets", []):
+        text = _bullet_text(bullet).strip()
+        if text:
+            texts.append(text)
+
+    # Columns bullets
+    for column in slide.get("columns", []):
+        for bullet in column.get("bullets", []):
+            text = _bullet_text(bullet).strip()
+            if text:
+                texts.append(text)
+
+        # Column-level content_blocks bullets
+        for block in column.get("content_blocks", []):
+            if block.get("type") == "bullets":
+                for bullet in block.get("bullets", []):
+                    text = _bullet_text(bullet).strip()
+                    if text:
+                        texts.append(text)
+
+    # Slide-level content_blocks bullets
+    for block in slide.get("content_blocks", []):
+        if block.get("type") == "bullets":
+            for bullet in block.get("bullets", []):
+                text = _bullet_text(bullet).strip()
+                if text:
+                    texts.append(text)
+
+    return texts
 
 
 # =============================================================================
@@ -163,14 +209,56 @@ def cmd_validate(args) -> int:
         return 2
 
     # 추가 비즈니스 검증
-    warnings = validate_business_rules(spec)
+    try:
+        from validate_spec import (
+            validate_business_rules as validate_business_rules_v2,
+            parse_sources_anchors,
+            validate_evidence_existence
+        )
+    except ImportError:
+        validate_business_rules_v2 = None
+        parse_sources_anchors = None
+        validate_evidence_existence = None
+
+    warnings = []
+    infos = []
+    if validate_business_rules_v2:
+        business_issues = validate_business_rules_v2(spec)
+        errors = [i for i in business_issues if i.severity == "error"]
+        warnings = [i for i in business_issues if i.severity == "warning"]
+        infos = [i for i in business_issues if i.severity == "info"]
+
+        if errors:
+            print(f"✗ Deck Spec 검증 실패: {spec_path}")
+            for issue in errors:
+                print(f"  - {issue.path}: {issue.message}")
+            return 2
+
+        # sources.md가 있으면 Evidence 앵커 존재 검사 추가
+        if parse_sources_anchors and validate_evidence_existence:
+            sources_path = client_dir / "sources.md"
+            if sources_path.exists():
+                source_anchors = parse_sources_anchors(sources_path)
+                existence_issues = validate_evidence_existence(spec, source_anchors)
+                warnings.extend([i for i in existence_issues if i.severity == "warning"])
+                infos.extend([i for i in existence_issues if i.severity == "info"])
+    else:
+        warnings = validate_business_rules(spec)
 
     print(f"✓ Deck Spec 검증 통과: {spec_path}")
 
     if warnings:
         print(f"\n경고 ({len(warnings)}개):")
         for w in warnings:
-            print(f"  ⚠ {w}")
+            if isinstance(w, str):
+                print(f"  ⚠ {w}")
+            else:
+                print(f"  ⚠ {w.path}: {w.message}")
+
+    if infos:
+        print(f"\n참고 ({len(infos)}개):")
+        for info in infos:
+            print(f"  ℹ {info.path}: {info.message}")
 
     # 슬라이드 요약 출력
     slides = spec.get("slides", [])
@@ -178,7 +266,7 @@ def cmd_validate(args) -> int:
     for i, slide in enumerate(slides, 1):
         layout = slide.get("layout", "unknown")
         title = slide.get("title", "Untitled")[:40]
-        bullets = len(slide.get("bullets", []))
+        bullets = len(_collect_slide_bullets(slide))
         print(f"  {i:2}. [{layout:15}] {title}... (bullets: {bullets})")
 
     return 0
@@ -187,29 +275,55 @@ def cmd_validate(args) -> int:
 def validate_business_rules(spec: dict) -> list:
     """비즈니스 규칙 검증 (경고 반환)"""
     warnings = []
+    global_constraints = spec.get("global_constraints", {})
+    no_bullet_layouts = {"cover", "section_divider", "thank_you", "quote"}
+    visual_bullet_layouts = {"chart_focus", "image_focus"}
+    chars_per_line = 42
 
     slides = spec.get("slides", [])
 
     for i, slide in enumerate(slides, 1):
-        bullets = slide.get("bullets", [])
+        bullet_texts = _collect_slide_bullets(slide)
         layout = slide.get("layout", "")
+        slide_constraints = slide.get("slide_constraints", {})
+
+        max_bullets = slide_constraints.get(
+            "max_bullets",
+            global_constraints.get("default_max_bullets", 6)
+        )
+        max_chars = slide_constraints.get(
+            "max_chars_per_bullet",
+            global_constraints.get("default_max_chars_per_bullet", 100)
+        )
+
+        if layout in no_bullet_layouts:
+            min_bullets, max_bullets = 0, 0
+        elif layout in visual_bullet_layouts:
+            min_bullets, max_bullets = 0, min(max_bullets, 4)
+        else:
+            min_bullets = 3
 
         # 불릿 수 검증 (cover, section_divider 제외)
-        if layout not in ("cover", "section_divider"):
-            if len(bullets) > 6:
-                warnings.append(f"슬라이드 {i}: 불릿이 6개를 초과합니다 ({len(bullets)}개)")
-            elif len(bullets) < 3 and len(bullets) > 0:
-                warnings.append(f"슬라이드 {i}: 불릿이 3개 미만입니다 ({len(bullets)}개)")
+        if len(bullet_texts) > max_bullets:
+            if max_bullets == 0:
+                warnings.append(f"슬라이드 {i}: {layout} 레이아웃에는 불릿이 없어야 합니다 ({len(bullet_texts)}개)")
+            else:
+                warnings.append(f"슬라이드 {i}: 불릿이 {max_bullets}개를 초과합니다 ({len(bullet_texts)}개)")
+        elif len(bullet_texts) < min_bullets:
+            warnings.append(f"슬라이드 {i}: 불릿이 {min_bullets}개 미만입니다 ({len(bullet_texts)}개)")
 
         # 불릿 길이 검증
-        for j, bullet in enumerate(bullets, 1):
-            if len(bullet) > 80:
-                warnings.append(f"슬라이드 {i}, 불릿 {j}: 80자 초과 ({len(bullet)}자)")
+        for j, text in enumerate(bullet_texts, 1):
+            if len(text) > max_chars:
+                warnings.append(f"슬라이드 {i}, 불릿 {j}: {max_chars}자 초과 ({len(text)}자)")
+            estimated_lines = max(1, (len(text) - 1) // chars_per_line + 1)
+            if estimated_lines > 2:
+                warnings.append(f"슬라이드 {i}, 불릿 {j}: 2줄 초과 가능성 (추정 {estimated_lines}줄)")
 
         # governing_message 길이 검증
         gm = slide.get("governing_message", "")
-        if len(gm) > 100:
-            warnings.append(f"슬라이드 {i}: governing_message가 100자 초과 ({len(gm)}자)")
+        if len(gm) > 200:
+            warnings.append(f"슬라이드 {i}: governing_message가 200자 초과 ({len(gm)}자)")
 
     return warnings
 
@@ -309,8 +423,10 @@ def cmd_qa(args) -> int:
             print(f"Error: PPTX 파일이 없습니다: {outputs_dir}")
             return 1
 
-        # 가장 최근 파일 선택
-        pptx_path = max(pptx_files, key=lambda x: x.stat().st_mtime)
+        # 기본은 가장 최근 원본 파일(_polished 제외), 없으면 전체에서 최근 파일
+        raw_files = [f for f in pptx_files if "_polished" not in f.stem]
+        candidate_files = raw_files if raw_files else pptx_files
+        pptx_path = max(candidate_files, key=lambda x: x.stat().st_mtime)
 
     if not pptx_path.exists():
         print(f"Error: 파일을 찾을 수 없습니다: {pptx_path}")
@@ -318,6 +434,7 @@ def cmd_qa(args) -> int:
 
     spec_path = client_dir / "deck_spec.yaml"
     tokens_path = TEMPLATES_DIR / "tokens.yaml"
+    sources_path = client_dir / "sources.md"
 
     # QA 실행
     try:
@@ -325,7 +442,8 @@ def cmd_qa(args) -> int:
         checker = PPTQAChecker(
             pptx_path=str(pptx_path),
             spec_path=str(spec_path) if spec_path.exists() else None,
-            tokens_path=str(tokens_path) if tokens_path.exists() else None
+            tokens_path=str(tokens_path) if tokens_path.exists() else None,
+            sources_path=str(sources_path) if sources_path.exists() else None
         )
         report = checker.run_all_checks()
 
@@ -348,16 +466,94 @@ def cmd_qa(args) -> int:
     except ImportError:
         # qa_ppt.py를 직접 import할 수 없는 경우 subprocess로 실행
         import subprocess
-        cmd = [
-            sys.executable,
-            str(SCRIPT_DIR / "qa_ppt.py"),
-            str(pptx_path),
-            "--spec", str(spec_path) if spec_path.exists() else "",
-            "--tokens", str(tokens_path) if tokens_path.exists() else "",
-        ]
-        # 빈 문자열 제거
-        cmd = [c for c in cmd if c]
+        cmd = [sys.executable, str(SCRIPT_DIR / "qa_ppt.py"), str(pptx_path)]
+        if spec_path.exists():
+            cmd.extend(["--spec", str(spec_path)])
+        if tokens_path.exists():
+            cmd.extend(["--tokens", str(tokens_path)])
+        if sources_path.exists():
+            cmd.extend(["--sources", str(sources_path)])
+        if args.output:
+            cmd.extend(["--output", str(args.output)])
 
+        result = subprocess.run(cmd, capture_output=False, text=True)
+        return result.returncode
+
+
+# =============================================================================
+# Command: polish
+# =============================================================================
+def cmd_polish(args) -> int:
+    """렌더링된 PPTX 미세 편집"""
+    client_name = args.client_name
+
+    if not client_exists(client_name):
+        print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
+        return 1
+
+    client_dir = get_client_dir(client_name)
+    outputs_dir = client_dir / "outputs"
+
+    # 입력 PPTX 결정
+    input_pptx = getattr(args, "pptx", None)
+    if input_pptx:
+        pptx_path = Path(input_pptx)
+    else:
+        if not outputs_dir.exists():
+            print(f"Error: 출력 폴더가 없습니다: {outputs_dir}")
+            return 1
+        pptx_files = list(outputs_dir.glob("*.pptx"))
+        # 이미 polished인 파일은 제외해 원본 최신 파일 선택
+        pptx_files = [f for f in pptx_files if "_polished" not in f.stem]
+        if not pptx_files:
+            print(f"Error: 원본 PPTX 파일이 없습니다: {outputs_dir}")
+            return 1
+        pptx_path = max(pptx_files, key=lambda x: x.stat().st_mtime)
+
+    if not pptx_path.exists():
+        print(f"Error: 파일을 찾을 수 없습니다: {pptx_path}")
+        return 1
+
+    # 출력 경로
+    output_arg = getattr(args, "output", None)
+    report_arg = getattr(args, "report", None)
+    if output_arg:
+        output_path = Path(output_arg).resolve()
+    else:
+        output_path = pptx_path.with_name(f"{pptx_path.stem}_polished.pptx")
+
+    if report_arg:
+        report_path = Path(report_arg).resolve()
+    else:
+        report_path = output_path.with_suffix(".polish.json")
+
+    tokens_path = TEMPLATES_DIR / "tokens.yaml"
+
+    try:
+        from polish_ppt import polish_ppt
+        result = polish_ppt(
+            input_pptx=pptx_path,
+            output_pptx=output_path,
+            tokens_path=tokens_path if tokens_path.exists() else None,
+            report_path=report_path
+        )
+        stats = result.get("stats", {})
+        print(f"✓ PPTX 미세 편집 완료: {output_path}")
+        print(
+            "  - 폰트 변경: {font_updates}, 텍스트 정리: {text_normalizations}, 줄간격 조정: {line_spacing_updates}".format(
+                font_updates=stats.get("font_updates", 0),
+                text_normalizations=stats.get("text_normalizations", 0),
+                line_spacing_updates=stats.get("line_spacing_updates", 0),
+            )
+        )
+        print(f"  - 편집 로그: {report_path}")
+        return 0
+    except ImportError:
+        import subprocess
+        cmd = [sys.executable, str(SCRIPT_DIR / "polish_ppt.py"), str(pptx_path), "--output", str(output_path)]
+        if tokens_path.exists():
+            cmd.extend(["--tokens", str(tokens_path)])
+        cmd.extend(["--report", str(report_path)])
         result = subprocess.run(cmd, capture_output=False, text=True)
         return result.returncode
 
@@ -394,7 +590,7 @@ def cmd_pipeline(args) -> int:
 # Command: full-pipeline (validate → render → qa)
 # =============================================================================
 def cmd_full_pipeline(args) -> int:
-    """전체 파이프라인 + QA 실행 (validate → render → qa)"""
+    """전체 파이프라인 + QA (+ optional polish) 실행"""
     client_name = args.client_name
 
     print(f"=== Full Pipeline 시작: {client_name} ===\n")
@@ -428,6 +624,17 @@ def cmd_full_pipeline(args) -> int:
             return 1
         else:
             print("  - QA 오류 무시 모드로 계속 진행")
+
+    # Step 4 (optional): Polish
+    if getattr(args, "polish", False):
+        print("\n[4/4] PPT 미세 편집 중...")
+        # 최근 원본 결과물을 대상으로 polish 실행
+        args.pptx = None
+        args.output = None
+        args.report = None
+        if cmd_polish(args) != 0:
+            print("\n✗ 미세 편집 실패.")
+            return 1
 
     print(f"\n=== Full Pipeline 완료: {client_name} ===")
     return 0
@@ -547,6 +754,7 @@ def main():
   %(prog)s status my-client        # 상태 확인
   %(prog)s validate my-client      # 스키마 검증
   %(prog)s render my-client        # PPTX 렌더링
+  %(prog)s polish my-client        # PPTX 미세 편집
   %(prog)s pipeline my-client      # 전체 파이프라인
   %(prog)s list                    # 클라이언트 목록
         """
@@ -579,15 +787,24 @@ def main():
     p_qa.add_argument("--output", "-o", help="QA 보고서 출력 경로")
     p_qa.set_defaults(func=cmd_qa)
 
+    # polish
+    p_polish = subparsers.add_parser("polish", help="렌더링된 PPTX 미세 편집")
+    p_polish.add_argument("client_name", help="클라이언트 이름")
+    p_polish.add_argument("--pptx", help="편집할 PPTX 파일 (기본: 최근 원본)")
+    p_polish.add_argument("--output", "-o", help="편집된 PPTX 출력 경로")
+    p_polish.add_argument("--report", help="편집 로그(JSON) 출력 경로")
+    p_polish.set_defaults(func=cmd_polish)
+
     # pipeline
     p_pipeline = subparsers.add_parser("pipeline", help="전체 파이프라인 (validate → render)")
     p_pipeline.add_argument("client_name", help="클라이언트 이름")
     p_pipeline.set_defaults(func=cmd_pipeline)
 
     # full-pipeline
-    p_full = subparsers.add_parser("full-pipeline", help="전체 파이프라인 + QA (validate → render → qa)")
+    p_full = subparsers.add_parser("full-pipeline", help="전체 파이프라인 + QA (+optional polish)")
     p_full.add_argument("client_name", help="클라이언트 이름")
     p_full.add_argument("--ignore-qa-errors", action="store_true", help="QA 오류 무시하고 계속 진행")
+    p_full.add_argument("--polish", action="store_true", help="QA 후 미세 편집까지 수행")
     p_full.set_defaults(func=cmd_full_pipeline)
 
     # status

@@ -76,11 +76,13 @@ deck_spec.yaml → validate → render → qa → polish → output.pptx
 ### 자동 QA 시스템 (v2.0)
 - 렌더 후 자동 품질 검사
 - 불릿 개수/길이, 폰트/사이즈, 콘텐츠 밀도 검증
+- Evidence 앵커 포맷 및 sources.md 존재 여부 검증
 - JSON/Markdown 보고서 출력
 - 자동 수정 가능 이슈 표시
 
 ### 하이브리드 렌더 워크플로우 (v2.0)
 - **1단계**: Spec → PPTX 자동 생성 (구조/레이아웃 강제)
+- `chart.data_inline` 또는 `chart.data_path` 제공 시 실제 차트 렌더링 지원 (미제공 시 플레이스홀더 폴백)
 - **2단계**: Polish 스킬로 미세 편집 (문장 다듬기, 정렬 보정)
 
 ### 다양한 레이아웃 지원
@@ -397,6 +399,7 @@ value-architect-agent/
 │   ├── deck_cli.py             # 통합 CLI (메인 진입점)
 │   ├── render_ppt.py           # PPTX 렌더러
 │   ├── qa_ppt.py               # QA 자동 검사기 (v2.0)
+│   ├── polish_ppt.py           # PPTX 미세 편집기 (v2.1)
 │   ├── validate_spec.py        # 스키마 검증기
 │   └── new_client.py           # 클라이언트 생성기
 │
@@ -461,6 +464,9 @@ python scripts/deck_cli.py pipeline <client>
 # 전체 파이프라인 (validate → render → qa)
 python scripts/deck_cli.py full-pipeline <client>
 
+# 전체 파이프라인 + polish (validate → render → qa → polish)
+python scripts/deck_cli.py full-pipeline <client> --polish
+
 # QA 경고 무시하고 진행
 python scripts/deck_cli.py full-pipeline <client> --ignore-qa-errors
 ```
@@ -493,11 +499,17 @@ python scripts/deck_cli.py render <client-name>
 # QA 검사 (v2.0)
 python scripts/deck_cli.py qa <client-name>
 
+# 미세 편집 (v2.1)
+python scripts/deck_cli.py polish <client-name>
+
 # 기본 파이프라인 (validate → render)
 python scripts/deck_cli.py pipeline <client-name>
 
 # 전체 파이프라인 (validate → render → qa) (v2.0)
 python scripts/deck_cli.py full-pipeline <client-name>
+
+# 전체 파이프라인 + 미세 편집 (v2.1)
+python scripts/deck_cli.py full-pipeline <client-name> --polish
 ```
 
 ### 사용 예시
@@ -629,6 +641,18 @@ slides:
           trend: "up"
 ```
 
+### 레이아웃 의도 지정 (layout_intent)
+
+```yaml
+- layout: "chart_focus"
+  title: "Value Case"
+  governing_message: "핵심 KPI 개선 효과가 2년차부터 가시화됩니다"
+  layout_intent:
+    emphasis: "balanced"      # content | visual | balanced
+    visual_position: "right"  # left | right | center
+    content_density: "normal" # sparse | normal | dense
+```
+
 ### 컬럼 레이아웃 작성
 
 ```yaml
@@ -675,8 +699,8 @@ slides:
 |----------|------|------|
 | `timeline` | 로드맵 | 시간순 단계 표시 |
 | `process_flow` | 프로세스 | 단계별 흐름 표시 |
-| `chart_focus` | 차트 중심 | 좌측 차트 + 우측 불릿 |
-| `image_focus` | 이미지 중심 | 이미지 플레이스홀더 |
+| `chart_focus` | 차트 중심 | 좌측 차트 + 우측 불릿 (`data_inline`/`data_path` 지원) |
+| `image_focus` | 이미지 중심 | `image_path`가 있으면 실제 이미지, 없으면 플레이스홀더 |
 | `quote` | 인용문 | 중앙 정렬 인용 |
 | `appendix` | 부록 | 상세 데이터 |
 
@@ -709,7 +733,7 @@ slides:
 
 | 항목 | 기준 | 설명 |
 |------|------|------|
-| 슬라이드당 불릿 수 | 3-6개 | cover/divider 제외, global_constraints로 오버라이드 가능 |
+| 슬라이드당 불릿 수 | 기본 3-6개 | cover/divider/thank_you/quote는 0개, chart_focus/image_focus는 0-4개 |
 | 불릿당 줄 수 | 1-2줄 | 1줄 권장, 최대 2줄 |
 | 불릿 최대 길이 | 100자 | 80자 권장, global_constraints로 오버라이드 가능 |
 | 거버닝 메시지 길이 | 200자 | 100자 이내 권장 |
@@ -722,13 +746,17 @@ slides:
 
 | 카테고리 | 검사 항목 | 심각도 |
 |----------|----------|--------|
+| 불릿 개수 | 슬라이드 최소 불릿 미달 | ⚠ 경고 |
 | 불릿 개수 | 슬라이드당 6개 초과 | ⚠ 경고 |
 | 불릿 길이 | 100자 초과 | ⚠ 경고 |
+| 불릿 줄 수 | 2줄 초과 가능성 | ⚠ 경고 |
 | 폰트 | 허용되지 않은 폰트 사용 | ⚠ 경고 |
 | 폰트 크기 | 비정상적 크기 (8pt 미만, 30pt 초과) | ℹ 참고 |
 | 콘텐츠 밀도 | 800자 초과 (과밀) | ⚠ 경고 |
 | 콘텐츠 밀도 | 50자 미만 (부족) | ℹ 참고 |
 | 금지어 | 금지 단어 발견 | ❌ 오류 |
+| Evidence 포맷 | `sources.md#...` 형식 불일치 | ⚠ 경고 |
+| Evidence 참조 | `sources.md` 앵커 미존재 | ℹ 참고 |
 | Spec 일치 | 제목이 Spec과 불일치 | ℹ 참고 |
 
 ### QA 보고서 형식
@@ -819,6 +847,21 @@ python scripts/deck_cli.py qa <client>
 ---
 
 ## 변경 이력
+
+### v2.1.2 (2026-02-06)
+- 불릿 규칙을 레이아웃별 최소/최대 기준으로 통합 (`validate`/`qa` 동일 로직)
+- `chart_focus`/`image_focus` 구조 누락 감지 강화 (필수 시각 요소 경고)
+- `chart.data_path`(JSON/CSV) 기반 실제 차트 렌더링 지원
+- `layout_intent.visual_position` 반영 (chart/image focus 좌/우/중앙 배치)
+- QA 중복 이슈 적재 제거 및 evidence 타입 안전성 강화
+
+### v2.1.1 (2026-02-06)
+- QA 불릿 카운트 오탐 제거 (spec 기반 집계 우선)
+- Evidence 검사 범위 확장 (sources_ref/visuals/content_blocks/footnotes)
+- comparison 레이아웃 우측 불릿 가독성 개선 (흰색 텍스트)
+- 이미지 상대경로 해석 개선 (spec 경로 기준)
+- `chart.data_inline` 실제 차트 렌더링 지원
+- validate/qa/cli 간 비즈니스 규칙 정합성 강화
 
 ### v2.0.0 (2026-02-01)
 - 2층 스펙 구조 (콘텐츠 스펙 + 레이아웃 스펙)

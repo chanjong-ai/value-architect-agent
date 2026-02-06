@@ -8,7 +8,7 @@ render_ppt.py - 고도화된 PPTX 렌더러 v2.1
 - 구조화된 불릿 (레벨, 강조) 지원
 - content_blocks 지원 (bullets, table, chart, image, quote, kpi, callout)
 - table/kpi/quote/image 최소 렌더링 (placeholder + caption)
-- 차트/이미지 플레이스홀더 지원
+- 차트/이미지 플레이스홀더 지원 (chart.data_inline/data_path 시 실제 차트 렌더)
 - 디자인 토큰 기반 스타일 적용
 
 개선사항 (v2.1):
@@ -18,13 +18,17 @@ render_ppt.py - 고도화된 PPTX 렌더러 v2.1
 """
 
 import sys
+import csv
+import json
 from pathlib import Path
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Union
 
 import yaml
 from pptx import Presentation
-from pptx.util import Pt, Inches
+from pptx.chart.data import ChartData
+from pptx.util import Pt
 from pptx.dml.color import RGBColor
+from pptx.enum.chart import XL_CHART_TYPE
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
@@ -54,6 +58,91 @@ class DeckRenderer:
         self.layouts = layouts
         self.layout_map = layouts.get("layout_map", {})
         self.prs: Optional[Presentation] = None
+        self.asset_base_dir: Optional[Path] = None
+
+    def _resolve_asset_path(self, raw_path: str) -> Optional[Path]:
+        """spec 기준 상대경로를 실제 파일 경로로 해석"""
+        if not raw_path:
+            return None
+
+        resolved = Path(raw_path).expanduser()
+        if not resolved.is_absolute() and self.asset_base_dir:
+            resolved = (self.asset_base_dir / resolved).resolve()
+        return resolved
+
+    @staticmethod
+    def _to_number(value):
+        """문자열/숫자를 chart용 숫자로 변환"""
+        if isinstance(value, (int, float)):
+            return value
+        try:
+            normalized = str(value).strip().replace(",", "")
+            if not normalized:
+                return 0
+            return float(normalized)
+        except (TypeError, ValueError):
+            return 0
+
+    def _load_chart_data_from_path(self, data_path: str) -> dict:
+        """
+        data_path(JSON/CSV)에서 차트 데이터 로드.
+        지원 포맷:
+        - JSON: {"labels":[...], "values":[...]} 또는 {"labels":[...], "series":[{"name":"...", "values":[...]}]}
+        - CSV : 첫 열=labels, 이후 열=시리즈 (헤더 필수)
+        """
+        resolved_path = self._resolve_asset_path(data_path)
+        if not resolved_path or not resolved_path.exists():
+            return {}
+
+        suffix = resolved_path.suffix.lower()
+
+        try:
+            if suffix == ".json":
+                payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+                if isinstance(payload, dict):
+                    labels = payload.get("labels", [])
+                    values = payload.get("values", [])
+                    series = payload.get("series", [])
+                    if labels and (values or series):
+                        return {"labels": labels, "values": values, "series": series}
+
+            if suffix == ".csv":
+                with resolved_path.open("r", encoding="utf-8-sig", newline="") as f:
+                    rows = list(csv.reader(f))
+
+                if len(rows) < 2:
+                    return {}
+
+                headers = rows[0]
+                if len(headers) < 2:
+                    return {}
+
+                labels = [row[0] for row in rows[1:] if row]
+                if not labels:
+                    return {}
+
+                # 단일 시리즈
+                if len(headers) == 2:
+                    values = [
+                        self._to_number(row[1]) if len(row) > 1 else 0
+                        for row in rows[1:]
+                    ]
+                    return {"labels": labels, "values": values}
+
+                # 다중 시리즈
+                series = []
+                for col_idx in range(1, len(headers)):
+                    series_name = headers[col_idx] or f"Series {col_idx}"
+                    series_values = [
+                        self._to_number(row[col_idx]) if len(row) > col_idx else 0
+                        for row in rows[1:]
+                    ]
+                    series.append({"name": series_name, "values": series_values})
+                return {"labels": labels, "series": series}
+        except Exception:
+            return {}
+
+        return {}
 
     def _get_font_config(self, font_key: str) -> dict:
         """
@@ -141,7 +230,8 @@ class DeckRenderer:
         left_pt: int = 43,
         top_pt: int = 130,
         width_pt: int = 860,
-        height_pt: int = 350
+        height_pt: int = 350,
+        color_key: str = "text_dark"
     ):
         """불릿 포인트 추가"""
         if not bullets:
@@ -177,7 +267,7 @@ class DeckRenderer:
 
             # 스타일 적용
             font_cfg = self._get_font_config("body")
-            color = self._get_color("text_dark")
+            color = self._get_color(color_key)
 
             for run in p.runs if p.runs else [p.add_run()]:
                 if not p.runs:
@@ -247,6 +337,22 @@ class DeckRenderer:
     # content_blocks 렌더링 메서드 (v2.1 신규)
     # =========================================================================
 
+    def _estimate_bullet_block_height(self, bullets: List[Union[str, dict]]) -> int:
+        """불릿 수/길이를 기반으로 불릿 블록 높이를 추정"""
+        if not bullets:
+            return 100
+
+        total_lines = 0
+        for bullet in bullets:
+            text = bullet if isinstance(bullet, str) else str(bullet.get("text", ""))
+            # 1줄 권장, 길면 2줄까지 허용
+            lines = max(1, min(2, (len(text) // 42) + 1))
+            total_lines += lines
+
+        # 라인당 약 22pt + 상하 여백
+        estimated = 28 + (total_lines * 22)
+        return max(90, min(estimated, 320))
+
     def _render_content_blocks(self, slide, content_blocks: List[dict], start_top_pt: int = 130):
         """
         content_blocks 배열 렌더링
@@ -255,11 +361,20 @@ class DeckRenderer:
         if not content_blocks:
             return
 
-        current_top = start_top_pt
+        lane_tops = {
+            "main": start_top_pt,
+            "left": start_top_pt,
+            "right": start_top_pt,
+            "sidebar": start_top_pt,
+            "top": start_top_pt,
+            "bottom": start_top_pt,
+        }
 
         for block in content_blocks:
             block_type = block.get("type", "bullets")
             position = block.get("position", "main")
+            lane = position if position in lane_tops else "main"
+            current_top = lane_tops[lane]
 
             # 위치에 따른 좌표 조정
             if position == "left":
@@ -274,43 +389,58 @@ class DeckRenderer:
             # 타입별 렌더링
             if block_type == "bullets":
                 bullets = block.get("bullets", [])
-                self._add_bullets(slide, bullets, left_pt, current_top, width_pt, 300)
-                current_top += 300 + 20  # 다음 블록 위치
+                block_height = self._estimate_bullet_block_height(bullets)
+                self._add_bullets(slide, bullets, left_pt, current_top, width_pt, block_height)
+                lane_tops[lane] = current_top + block_height + 18  # 다음 블록 위치
 
             elif block_type == "table":
                 table_def = block.get("table", {})
+                rows = table_def.get("rows", [])
+                block_height = max(120, min(220, 35 + (len(rows) * 28)))
                 self._render_table_placeholder(slide, table_def, left_pt, current_top, width_pt)
-                current_top += 200 + 20
+                lane_tops[lane] = current_top + block_height + 18
 
             elif block_type == "chart":
                 chart_def = block.get("chart", {})
+                block_height = 230
                 self._render_chart_placeholder(slide, chart_def, left_pt, current_top, width_pt)
-                current_top += 250 + 20
+                lane_tops[lane] = current_top + block_height + 18
 
             elif block_type == "image":
                 image_def = block.get("image", {})
+                block_height = 230
                 self._render_image_placeholder(slide, image_def, left_pt, current_top, width_pt)
-                current_top += 250 + 20
+                lane_tops[lane] = current_top + block_height + 18
 
             elif block_type == "quote":
                 quote_def = block.get("quote", {})
+                block_height = 120
                 self._render_quote(slide, quote_def, left_pt, current_top, width_pt)
-                current_top += 120 + 20
+                lane_tops[lane] = current_top + block_height + 18
 
             elif block_type == "kpi":
                 kpi_def = block.get("kpi", {})
+                block_height = 90
                 self._render_kpi(slide, kpi_def, left_pt, current_top, width_pt)
-                current_top += 80 + 20
+                lane_tops[lane] = current_top + block_height + 18
 
             elif block_type == "callout":
                 callout_def = block.get("callout", {})
+                block_height = 80
                 self._render_callout(slide, callout_def, left_pt, current_top, width_pt)
-                current_top += 80 + 20
+                lane_tops[lane] = current_top + block_height + 18
 
             elif block_type == "text":
                 text = block.get("text", "")
+                block_height = 70
                 self._render_text_block(slide, text, left_pt, current_top, width_pt)
-                current_top += 60 + 20
+                lane_tops[lane] = current_top + block_height + 18
+
+            # main lane 블록은 전체 기준선을 함께 이동
+            if lane == "main":
+                baseline = lane_tops["main"]
+                for key in ("left", "right", "sidebar", "top", "bottom"):
+                    lane_tops[key] = max(lane_tops[key], baseline)
 
     def _render_table_placeholder(self, slide, table_def: dict, left_pt: int, top_pt: int, width_pt: int):
         """
@@ -368,28 +498,80 @@ class DeckRenderer:
 
     def _render_chart_placeholder(self, slide, chart_def: dict, left_pt: int, top_pt: int, width_pt: int):
         """
-        차트 플레이스홀더 렌더링
-        실제 차트 생성은 python-pptx의 제한으로 플레이스홀더로 대체
+        차트 렌더링 (data_inline/data_path가 있으면 실제 차트, 없으면 플레이스홀더)
         """
         chart_type = chart_def.get("type", "bar_chart")
         title = chart_def.get("title", "")
         caption = chart_def.get("caption", "")
+        data_inline = chart_def.get("data_inline", {})
+        data_path = chart_def.get("data_path", "")
+        rendered = False
 
-        # 플레이스홀더 박스
-        shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE,
-            Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(200)
-        )
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
-        shape.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+        # data_path가 주어지고 data_inline이 비어있으면 파일 로드
+        if not data_inline and data_path:
+            data_inline = self._load_chart_data_from_path(data_path)
 
-        # 플레이스홀더 텍스트
-        tf = shape.text_frame
-        tf.text = f"[CHART: {chart_type}]\n{title}" if title else f"[CHART: {chart_type}]"
-        for para in tf.paragraphs:
-            para.alignment = PP_ALIGN.CENTER
-        self._apply_text_style(tf, "body", "text_muted", PP_ALIGN.CENTER)
+        # 차트 생성 시도
+        if data_inline:
+            labels = data_inline.get("labels", [])
+            values = data_inline.get("values", [])
+            series = data_inline.get("series", [])
+
+            if labels and (values or series):
+                try:
+                    chart_data = ChartData()
+                    chart_data.categories = labels
+
+                    if series:
+                        for series_item in series:
+                            series_name = series_item.get("name", "Series")
+                            series_values = [
+                                self._to_number(v) for v in series_item.get("values", [])
+                            ]
+                            chart_data.add_series(series_name, series_values)
+                    else:
+                        series_name = title if title else "Series"
+                        chart_data.add_series(series_name, [self._to_number(v) for v in values])
+
+                    chart_type_map = {
+                        "bar_chart": XL_CHART_TYPE.BAR_CLUSTERED,
+                        "line_chart": XL_CHART_TYPE.LINE_MARKERS,
+                        "pie_chart": XL_CHART_TYPE.PIE,
+                        "stacked_bar": XL_CHART_TYPE.BAR_STACKED,
+                        "scatter": XL_CHART_TYPE.XY_SCATTER,
+                    }
+                    chart_kind = chart_type_map.get(chart_type, XL_CHART_TYPE.COLUMN_CLUSTERED)
+
+                    chart_shape = slide.shapes.add_chart(
+                        chart_kind,
+                        Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(200),
+                        chart_data
+                    )
+                    chart = chart_shape.chart
+                    chart.has_title = bool(title)
+                    if title:
+                        chart.chart_title.text_frame.text = title
+                    rendered = True
+                except Exception:
+                    # 차트 생성 실패 시 플레이스홀더로 폴백
+                    rendered = False
+
+        if not rendered:
+            # 플레이스홀더 박스
+            shape = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(200)
+            )
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+            shape.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+
+            # 플레이스홀더 텍스트
+            tf = shape.text_frame
+            tf.text = f"[CHART: {chart_type}]\n{title}" if title else f"[CHART: {chart_type}]"
+            for para in tf.paragraphs:
+                para.alignment = PP_ALIGN.CENTER
+            self._apply_text_style(tf, "body", "text_muted", PP_ALIGN.CENTER)
 
         # 캡션
         if caption:
@@ -406,11 +588,13 @@ class DeckRenderer:
         title = image_def.get("title", "")
         caption = image_def.get("caption", "")
 
-        if image_path and Path(image_path).exists():
+        resolved_image_path = self._resolve_asset_path(image_path)
+
+        if resolved_image_path and resolved_image_path.exists():
             # 실제 이미지 삽입
             try:
                 slide.shapes.add_picture(
-                    str(image_path),
+                    str(resolved_image_path),
                     Pt(left_pt), Pt(top_pt),
                     width=Pt(width_pt)
                 )
@@ -553,6 +737,40 @@ class DeckRenderer:
         tf.word_wrap = True
         self._apply_text_style(tf, "body", "text_dark")
 
+    def _extract_chart_visual(self, slide_data: dict) -> Optional[dict]:
+        """chart_focus용 차트 정의 추출 (visuals 우선, content_blocks 폴백)"""
+        chart_like_types = {"chart", "bar_chart", "line_chart", "pie_chart", "stacked_bar", "scatter"}
+
+        for visual in slide_data.get("visuals", []):
+            if not isinstance(visual, dict):
+                continue
+            v_type = str(visual.get("type", "")).strip().lower()
+            if v_type in chart_like_types or visual.get("data_inline") or visual.get("data_path"):
+                return visual
+
+        for block in slide_data.get("content_blocks", []):
+            if isinstance(block, dict) and block.get("type") == "chart" and isinstance(block.get("chart"), dict):
+                return block.get("chart")
+
+        return None
+
+    def _extract_image_visual(self, slide_data: dict) -> Optional[dict]:
+        """image_focus용 이미지 정의 추출 (visuals 우선, content_blocks 폴백)"""
+        image_like_types = {"image", "photo", "illustration"}
+
+        for visual in slide_data.get("visuals", []):
+            if not isinstance(visual, dict):
+                continue
+            v_type = str(visual.get("type", "")).strip().lower()
+            if v_type in image_like_types or visual.get("image_path"):
+                return visual
+
+        for block in slide_data.get("content_blocks", []):
+            if isinstance(block, dict) and block.get("type") == "image" and isinstance(block.get("image"), dict):
+                return block.get("image")
+
+        return None
+
     # =========================================================================
     # 레이아웃별 렌더링 메서드
     # =========================================================================
@@ -643,7 +861,12 @@ class DeckRenderer:
 
             # 왼쪽 컬럼: content_blocks 또는 bullets
             if left_col.get("content_blocks"):
-                self._render_content_blocks(slide, left_col["content_blocks"], start_top_pt=160)
+                left_blocks = []
+                for block in left_col["content_blocks"]:
+                    left_block = dict(block)
+                    left_block["position"] = "left"
+                    left_blocks.append(left_block)
+                self._render_content_blocks(slide, left_blocks, start_top_pt=160)
             else:
                 self._add_bullets(
                     slide,
@@ -659,10 +882,13 @@ class DeckRenderer:
 
             # 오른쪽 컬럼: content_blocks 또는 bullets
             if right_col.get("content_blocks"):
-                # 위치 조정 필요
+                # 원본 스펙 변형 방지를 위해 사본에 위치를 지정
+                right_blocks = []
                 for block in right_col["content_blocks"]:
-                    block["position"] = "right"
-                self._render_content_blocks(slide, right_col["content_blocks"], start_top_pt=160)
+                    right_block = dict(block)
+                    right_block["position"] = "right"
+                    right_blocks.append(right_block)
+                self._render_content_blocks(slide, right_blocks, start_top_pt=160)
             else:
                 self._add_bullets(
                     slide,
@@ -716,13 +942,77 @@ class DeckRenderer:
             tf.text = col.get("heading", "")
             self._apply_text_style(tf, "governing", "primary_blue")
 
-            # 컬럼 불릿
-            self._add_bullets(
-                slide,
-                col.get("bullets", []),
-                left_pt=col_positions[i], top_pt=160,
-                width_pt=col_width, height_pt=300
-            )
+            # 컬럼 콘텐츠 (content_blocks 우선, 없으면 bullets)
+            if col.get("content_blocks"):
+                current_top = 160
+                for block in col["content_blocks"]:
+                    block_type = block.get("type", "bullets")
+
+                    if block_type == "bullets":
+                        bullets = block.get("bullets", [])
+                        block_height = self._estimate_bullet_block_height(bullets)
+                        self._add_bullets(
+                            slide, bullets,
+                            left_pt=col_positions[i], top_pt=current_top,
+                            width_pt=col_width, height_pt=block_height
+                        )
+                        current_top += block_height + 14
+
+                    elif block_type == "text":
+                        self._render_text_block(
+                            slide, block.get("text", ""),
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                        )
+                        current_top += 70
+
+                    elif block_type == "callout":
+                        self._render_callout(
+                            slide, block.get("callout", {}),
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                        )
+                        current_top += 84
+
+                    elif block_type == "kpi":
+                        self._render_kpi(
+                            slide, block.get("kpi", {}),
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                        )
+                        current_top += 90
+
+                    elif block_type == "quote":
+                        self._render_quote(
+                            slide, block.get("quote", {}),
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                        )
+                        current_top += 120
+
+                    elif block_type == "table":
+                        self._render_table_placeholder(
+                            slide, block.get("table", {}),
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                        )
+                        current_top += 150
+
+                    elif block_type == "chart":
+                        self._render_chart_placeholder(
+                            slide, block.get("chart", {}),
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                        )
+                        current_top += 220
+
+                    elif block_type == "image":
+                        self._render_image_placeholder(
+                            slide, block.get("image", {}),
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                        )
+                        current_top += 220
+            else:
+                self._add_bullets(
+                    slide,
+                    col.get("bullets", []),
+                    left_pt=col_positions[i], top_pt=160,
+                    width_pt=col_width, height_pt=300
+                )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -779,7 +1069,8 @@ class DeckRenderer:
             self._add_bullets(
                 slide,
                 right_col.get("bullets", []),
-                left_pt=490, top_pt=175, width_pt=380, height_pt=280
+                left_pt=490, top_pt=175, width_pt=380, height_pt=280,
+                color_key="background"
             )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
@@ -790,18 +1081,32 @@ class DeckRenderer:
         self._set_title(slide, slide_data.get("title", ""))
         self._add_governing_message(slide, slide_data.get("governing_message", ""))
 
-        visuals = slide_data.get("visuals", [])
+        intent = slide_data.get("layout_intent", {})
+        visual_position = str(intent.get("visual_position", "left")).lower()
+        emphasis = str(intent.get("emphasis", "content")).lower()
 
-        if visuals:
-            visual = visuals[0]
-            self._render_chart_placeholder(slide, visual, 43, 130, 600)
+        visual = self._extract_chart_visual(slide_data)
+
+        # visual_position / emphasis를 반영한 배치
+        if visual_position == "right":
+            chart_left, chart_top, chart_width = 320, 130, 600
+            bullet_left, bullet_top, bullet_width, bullet_height = 43, 130, 250, 330
+        elif visual_position == "center" or emphasis == "visual":
+            chart_left, chart_top, chart_width = 43, 130, 860
+            bullet_left, bullet_top, bullet_width, bullet_height = 43, 360, 860, 120
+        else:
+            chart_left, chart_top, chart_width = 43, 130, 600
+            bullet_left, bullet_top, bullet_width, bullet_height = 670, 130, 250, 330
+
+        if visual:
+            self._render_chart_placeholder(slide, visual, chart_left, chart_top, chart_width)
 
         # 오른쪽 불릿 (선택적)
         bullets = slide_data.get("bullets", [])
         if bullets:
             self._add_bullets(
                 slide, bullets,
-                left_pt=670, top_pt=130, width_pt=250, height_pt=330
+                left_pt=bullet_left, top_pt=bullet_top, width_pt=bullet_width, height_pt=bullet_height
             )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
@@ -812,18 +1117,31 @@ class DeckRenderer:
         self._set_title(slide, slide_data.get("title", ""))
         self._add_governing_message(slide, slide_data.get("governing_message", ""))
 
-        visuals = slide_data.get("visuals", [])
+        intent = slide_data.get("layout_intent", {})
+        visual_position = str(intent.get("visual_position", "left")).lower()
+        emphasis = str(intent.get("emphasis", "content")).lower()
 
-        if visuals:
-            visual = visuals[0]
-            self._render_image_placeholder(slide, visual, 43, 130, 600)
+        visual = self._extract_image_visual(slide_data)
+
+        if visual_position == "right":
+            image_left, image_top, image_width = 320, 130, 600
+            bullet_left, bullet_top, bullet_width, bullet_height = 43, 130, 250, 330
+        elif visual_position == "center" or emphasis == "visual":
+            image_left, image_top, image_width = 43, 130, 860
+            bullet_left, bullet_top, bullet_width, bullet_height = 43, 360, 860, 120
+        else:
+            image_left, image_top, image_width = 43, 130, 600
+            bullet_left, bullet_top, bullet_width, bullet_height = 670, 130, 250, 330
+
+        if visual:
+            self._render_image_placeholder(slide, visual, image_left, image_top, image_width)
 
         # 오른쪽 불릿 (선택적)
         bullets = slide_data.get("bullets", [])
         if bullets:
             self._add_bullets(
                 slide, bullets,
-                left_pt=670, top_pt=130, width_pt=250, height_pt=330
+                left_pt=bullet_left, top_pt=bullet_top, width_pt=bullet_width, height_pt=bullet_height
             )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
@@ -894,6 +1212,57 @@ class DeckRenderer:
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
+    def _render_process_flow(self, slide, slide_data: dict):
+        """프로세스 플로우 슬라이드 렌더링"""
+        self._set_title(slide, slide_data.get("title", ""))
+        self._add_governing_message(slide, slide_data.get("governing_message", ""))
+
+        steps = slide_data.get("bullets", [])
+        if not steps:
+            self._add_notes(slide, slide_data.get("notes", ""))
+            return
+
+        max_steps = min(len(steps), 5)
+        steps = steps[:max_steps]
+        total_width = 860
+        gap = 14
+        box_width = int((total_width - (gap * (max_steps - 1))) / max_steps)
+        base_left = 43
+        box_top = 200
+        box_height = 130
+
+        for i, step in enumerate(steps):
+            step_text = step if isinstance(step, str) else step.get("text", "")
+            box_left = base_left + (i * (box_width + gap))
+
+            # 단계 박스
+            step_shape = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE,
+                Pt(box_left), Pt(box_top), Pt(box_width), Pt(box_height)
+            )
+            step_shape.fill.solid()
+            step_shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+            step_shape.line.color.rgb = hex_to_rgb(self._get_color("primary_blue"))
+
+            tf = step_shape.text_frame
+            tf.word_wrap = True
+            tf.text = f"Step {i + 1}\n{step_text}"
+            self._apply_text_style(tf, "body", "text_dark", PP_ALIGN.CENTER)
+
+            # 박스 사이 화살표
+            if i < max_steps - 1:
+                arrow_left = box_left + box_width + 2
+                arrow_shape = slide.shapes.add_shape(
+                    MSO_SHAPE.RIGHT_ARROW,
+                    Pt(arrow_left), Pt(box_top + 45), Pt(gap - 4), Pt(30)
+                )
+                arrow_shape.fill.solid()
+                arrow_shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("primary_blue"))
+                arrow_shape.line.fill.background()
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
+        self._add_notes(slide, slide_data.get("notes", ""))
+
     def _render_thank_you(self, slide, slide_data: dict):
         """마무리 슬라이드 렌더링"""
         title = slide_data.get("title", "Thank You")
@@ -932,9 +1301,11 @@ class DeckRenderer:
         self,
         spec: dict,
         template_path: Path,
-        output_path: Path
+        output_path: Path,
+        spec_base_dir: Optional[Path] = None
     ):
         """덱 스펙을 PPTX로 렌더링"""
+        self.asset_base_dir = spec_base_dir
 
         # 프레젠테이션 로드/생성
         if template_path.exists():
@@ -959,7 +1330,7 @@ class DeckRenderer:
             "three_column": self._render_three_column,
             "comparison": self._render_comparison,
             "timeline": self._render_timeline,
-            "process_flow": self._render_timeline,  # 재사용
+            "process_flow": self._render_process_flow,
             "chart_focus": self._render_chart_focus,
             "image_focus": self._render_image_focus,
             "quote": self._render_quote_layout,
@@ -997,7 +1368,7 @@ def render(
     layouts = load_yaml(layouts_path)
 
     renderer = DeckRenderer(tokens, layouts)
-    renderer.render(spec, template_pptx, output_pptx)
+    renderer.render(spec, template_pptx, output_pptx, spec_base_dir=spec_path.parent)
 
 
 def main():

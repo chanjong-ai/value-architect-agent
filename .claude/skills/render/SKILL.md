@@ -87,8 +87,9 @@ python scripts/deck_cli.py pipeline <client-name>
 - 단계별 텍스트 박스
 
 ### chart_focus
-- 좌측 2/3: 차트 플레이스홀더
+- 좌측 2/3: 차트 (`data_inline`/`data_path` 있으면 실제 차트, 없으면 플레이스홀더)
 - 우측 1/3: 불릿
+- `layout_intent.visual_position`: left/right/center 배치 제어
 
 ## 트러블슈팅
 

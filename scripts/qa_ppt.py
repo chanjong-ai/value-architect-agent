@@ -26,7 +26,7 @@ from enum import Enum
 
 try:
     from pptx import Presentation
-    from pptx.util import Pt, Emu
+    from pptx.util import Pt
 except ImportError:
     print("python-pptx 패키지가 필요합니다: pip install python-pptx")
     sys.exit(1)
@@ -41,17 +41,20 @@ except ImportError:
 try:
     from constants import (
         BULLET_MAX_CHARS, BULLET_MAX_COUNT, BULLET_MIN_COUNT,
+        BULLET_CHARS_PER_LINE, BULLET_MAX_LINES,
         TITLE_FONT_SIZE_PT, GOVERNING_FONT_SIZE_PT, BODY_FONT_SIZE_PT,
         FONT_SIZE_TOLERANCE_PT, ALLOWED_FONTS,
         DENSITY_MAX_CHARS, DENSITY_MIN_CHARS, DENSITY_MIN_PARAGRAPHS,
         NO_BULLET_LAYOUTS, COLUMN_LAYOUTS, EVIDENCE_ANCHOR_PATTERN,
-        get_max_bullets, get_max_chars_per_bullet, get_forbidden_words
+        get_max_bullets, get_max_chars_per_bullet, get_forbidden_words, get_bullet_bounds
     )
 except ImportError:
     # 폴백 상수
     BULLET_MAX_CHARS = 100
     BULLET_MAX_COUNT = 6
     BULLET_MIN_COUNT = 3
+    BULLET_CHARS_PER_LINE = 42
+    BULLET_MAX_LINES = 2
     TITLE_FONT_SIZE_PT = 24
     GOVERNING_FONT_SIZE_PT = 16
     BODY_FONT_SIZE_PT = 12
@@ -85,6 +88,16 @@ except ImportError:
         if sc and "forbidden_words" in sc:
             words.extend(sc["forbidden_words"])
         return list(set(words))
+
+    def get_bullet_bounds(layout, gc=None, sc=None):
+        layout = (layout or "").strip().lower()
+        max_bullets = get_max_bullets(gc, sc)
+        min_bullets = BULLET_MIN_COUNT
+        if layout in NO_BULLET_LAYOUTS:
+            return 0, 0
+        if layout in ("chart_focus", "image_focus"):
+            return 0, min(max_bullets, 4)
+        return min_bullets, max_bullets
 
 
 class Severity(Enum):
@@ -383,12 +396,95 @@ class PPTQAChecker:
         # 3. 콘텐츠 밀도 검사
         self._check_density(slide_idx, slide)
 
-        # 4. 금지어 검사 (slide_constraints 포함)
+        # 4. 레이아웃 경계 검사
+        self._check_layout_bounds(slide_idx, slide)
+
+        # 5. 금지어 검사 (slide_constraints 포함)
         self._check_forbidden_words(slide_idx, slide, slide_constraints)
 
-        # 5. Spec과의 일치 검사 (고도화된 로직)
+        # 6. Spec과의 일치 검사 (고도화된 로직)
         if self.spec:
             self._check_spec_alignment(slide_idx, slide)
+
+    def _extract_spec_bullet_texts(self, slide_idx: int) -> List[str]:
+        """Spec에서 슬라이드의 모든 불릿 텍스트를 추출"""
+        if not self.spec or "slides" not in self.spec:
+            return []
+
+        slides = self.spec["slides"]
+        if slide_idx - 1 >= len(slides):
+            return []
+
+        spec_slide = slides[slide_idx - 1]
+        bullet_texts: List[str] = []
+
+        def _append_bullets(items):
+            for item in items:
+                if isinstance(item, str):
+                    text = item.strip()
+                elif isinstance(item, dict):
+                    text = str(item.get("text", "")).strip()
+                else:
+                    text = ""
+                if text:
+                    bullet_texts.append(text)
+
+        # Top-level bullets
+        _append_bullets(spec_slide.get("bullets", []))
+
+        # Columns bullets + column content_blocks bullets
+        for col in spec_slide.get("columns", []):
+            _append_bullets(col.get("bullets", []))
+            for block in col.get("content_blocks", []):
+                if block.get("type") == "bullets":
+                    _append_bullets(block.get("bullets", []))
+
+        # Slide-level content_blocks bullets
+        for block in spec_slide.get("content_blocks", []):
+            if block.get("type") == "bullets":
+                _append_bullets(block.get("bullets", []))
+
+        return bullet_texts
+
+    def _extract_rendered_bullet_texts(self, slide) -> List[str]:
+        """
+        렌더된 PPT에서 불릿으로 볼 텍스트 추출 (spec 미제공 시 폴백)
+        - 제목/부제목 placeholder 제외
+        - 상단 짧은 헤딩 박스와 하단 각주 박스 제외
+        """
+        bullet_texts: List[str] = []
+
+        for shape in slide.shapes:
+            if not shape.has_text_frame:
+                continue
+
+            tf = shape.text_frame
+            texts = [para.text.strip() for para in tf.paragraphs if para.text.strip()]
+            if not texts:
+                continue
+
+            # 제목/부제목 placeholder는 제외
+            if hasattr(shape, "is_placeholder") and shape.is_placeholder:
+                ph_type = shape.placeholder_format.type
+                # TITLE (1), CENTER_TITLE (3), SUBTITLE (4)
+                if ph_type in [1, 3, 4]:
+                    continue
+
+            shape_height = getattr(shape, "height", 0)
+            shape_top = getattr(shape, "top", 0)
+
+            # 단일 라인의 얇은 텍스트 박스는 헤딩/각주일 가능성이 높아 제외
+            if len(texts) == 1:
+                if shape_height and shape_height <= Pt(45):
+                    continue
+                if shape_top and shape_top < self.prs.slide_height * 0.22:
+                    continue
+
+            for text in texts:
+                if not re.fullmatch(r"[*†‡0-9]+", text):
+                    bullet_texts.append(text)
+
+        return bullet_texts
 
     def _classify_text_boxes(self, slide) -> Tuple[List, List, List]:
         """
@@ -451,54 +547,95 @@ class PPTQAChecker:
     def _check_bullets(self, slide_idx: int, slide, slide_constraints: dict):
         """
         불릿 검사
-        개선: 제목/거버닝 메시지 텍스트 박스 제외
+        개선:
+        - spec가 있으면 spec 기준으로 불릿 수/길이 검증 (렌더링 오탐 방지)
+        - spec가 없으면 렌더 결과에서 휴리스틱 추출
         """
-        # 텍스트 박스 분류
-        _, _, bullet_boxes = self._classify_text_boxes(slide)
-
         # 슬라이드별 제약 적용
         max_chars = get_max_chars_per_bullet(self.global_constraints, slide_constraints)
+        min_bullets = 0
         max_bullets = get_max_bullets(self.global_constraints, slide_constraints)
+        layout_name = ""
 
-        total_bullets = 0
+        if self.spec and "slides" in self.spec:
+            slides = self.spec["slides"]
+            if 0 <= slide_idx - 1 < len(slides):
+                layout_name = slides[slide_idx - 1].get("layout", "content")
+                min_bullets, max_bullets = get_bullet_bounds(
+                    layout_name, self.global_constraints, slide_constraints
+                )
 
-        for tf in bullet_boxes:
-            for para in tf.paragraphs:
-                text = para.text.strip()
-                if not text:
-                    continue
+        if self.spec:
+            bullet_texts = self._extract_spec_bullet_texts(slide_idx)
+        else:
+            bullet_texts = self._extract_rendered_bullet_texts(slide)
 
-                # 불릿 레벨이 있거나 일반 텍스트면 불릿으로 카운트
-                total_bullets += 1
+        for text in bullet_texts:
+            if len(text) > max_chars:
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="불릿 길이",
+                    message=f"불릿이 {max_chars}자를 초과합니다 ({len(text)}자)",
+                    details={
+                        "text_preview": text[:50] + "..." if len(text) > 50 else text,
+                        "limit": max_chars
+                    },
+                    auto_fixable=False
+                ))
 
-                # 불릿 길이 검사
-                if len(text) > max_chars:
-                    self.report.add_issue(QAIssue(
-                        slide_index=slide_idx,
-                        severity=Severity.WARNING,
-                        category="불릿 길이",
-                        message=f"불릿이 {max_chars}자를 초과합니다 ({len(text)}자)",
-                        details={
-                            "text_preview": text[:50] + "..." if len(text) > 50 else text,
-                            "limit": max_chars
-                        },
-                        auto_fixable=False
-                    ))
+            estimated_lines = max(1, (len(text) - 1) // BULLET_CHARS_PER_LINE + 1)
+            if estimated_lines > BULLET_MAX_LINES:
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="불릿 줄 수",
+                    message=f"불릿이 {BULLET_MAX_LINES}줄을 초과할 수 있습니다 (추정 {estimated_lines}줄)",
+                    details={
+                        "text_preview": text[:50] + "..." if len(text) > 50 else text,
+                        "estimated_lines": estimated_lines
+                    },
+                    auto_fixable=False
+                ))
 
         # 불릿 수 검사
+        total_bullets = len(bullet_texts)
+        if max_bullets == 0 and total_bullets > 0:
+            self.report.add_issue(QAIssue(
+                slide_index=slide_idx,
+                severity=Severity.WARNING,
+                category="불릿 개수",
+                message=f"{layout_name or '현재'} 레이아웃에는 불릿이 없어야 합니다 ({total_bullets}개)",
+                details={"count": total_bullets, "max": 0, "layout": layout_name or "unknown"},
+                auto_fixable=False
+            ))
+            return
+
         if total_bullets > max_bullets:
             self.report.add_issue(QAIssue(
                 slide_index=slide_idx,
                 severity=Severity.WARNING,
                 category="불릿 개수",
                 message=f"불릿이 {max_bullets}개를 초과합니다 ({total_bullets}개)",
-                details={"count": total_bullets, "max": max_bullets},
+                details={"count": total_bullets, "max": max_bullets, "layout": layout_name or "unknown"},
+                auto_fixable=False
+            ))
+
+        if min_bullets > 0 and total_bullets < min_bullets:
+            self.report.add_issue(QAIssue(
+                slide_index=slide_idx,
+                severity=Severity.WARNING,
+                category="불릿 개수",
+                message=f"불릿이 {min_bullets}개 미만입니다 ({total_bullets}개)",
+                details={"count": total_bullets, "min": min_bullets, "layout": layout_name or "unknown"},
                 auto_fixable=False
             ))
 
     def _check_fonts(self, slide_idx: int, slide):
         """폰트 검사"""
         allowed_fonts = self.constraints["allowed_fonts"]
+        reported_fonts = set()
+        reported_sizes = set()
 
         for shape in slide.shapes:
             if not shape.has_text_frame:
@@ -517,7 +654,9 @@ class PPTQAChecker:
                             normalized.lower() == f.replace(" ", "").replace("-", "").lower()
                             for f in allowed_fonts
                         )
-                        if not is_similar:
+                        dedupe_key = normalized.lower()
+                        if not is_similar and dedupe_key not in reported_fonts:
+                            reported_fonts.add(dedupe_key)
                             self.report.add_issue(QAIssue(
                                 slide_index=slide_idx,
                                 severity=Severity.WARNING,
@@ -530,7 +669,9 @@ class PPTQAChecker:
                     # 폰트 사이즈 검사 (비정상적 크기)
                     if font.size:
                         size_pt = font.size.pt
-                        if size_pt > 30 or size_pt < 8:
+                        size_key = round(size_pt, 1)
+                        if (size_pt > 30 or size_pt < 8) and size_key not in reported_sizes:
+                            reported_sizes.add(size_key)
                             self.report.add_issue(QAIssue(
                                 slide_index=slide_idx,
                                 severity=Severity.INFO,
@@ -575,6 +716,53 @@ class PPTQAChecker:
                 details={"chars": total_chars, "paragraphs": total_paragraphs},
                 auto_fixable=False
             ))
+
+    def _check_layout_bounds(self, slide_idx: int, slide):
+        """도형이 슬라이드 경계를 벗어나는지 검사"""
+        slide_width = self.prs.slide_width
+        slide_height = self.prs.slide_height
+        tolerance = Pt(2)
+
+        for shape_idx, shape in enumerate(slide.shapes, start=1):
+            left = getattr(shape, "left", None)
+            top = getattr(shape, "top", None)
+            width = getattr(shape, "width", None)
+            height = getattr(shape, "height", None)
+
+            if None in (left, top, width, height):
+                continue
+
+            right = left + width
+            bottom = top + height
+
+            if left < -tolerance or top < -tolerance or right > slide_width + tolerance or bottom > slide_height + tolerance:
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="레이아웃 경계",
+                    message=f"도형 {shape_idx}가 슬라이드 경계를 벗어날 수 있습니다",
+                    details={
+                        "left": left,
+                        "top": top,
+                        "right": right,
+                        "bottom": bottom
+                    },
+                    auto_fixable=False
+                ))
+
+            if shape.has_text_frame:
+                text_content = " ".join(
+                    para.text.strip() for para in shape.text_frame.paragraphs if para.text.strip()
+                )
+                if text_content and (width < Pt(60) or height < Pt(18)):
+                    self.report.add_issue(QAIssue(
+                        slide_index=slide_idx,
+                        severity=Severity.INFO,
+                        category="레이아웃 가독성",
+                        message=f"도형 {shape_idx} 텍스트 영역이 너무 작을 수 있습니다",
+                        details={"text_preview": text_content[:40]},
+                        auto_fixable=False
+                    ))
 
     def _check_forbidden_words(self, slide_idx: int, slide, slide_constraints: dict):
         """금지어 검사 (global + slide_constraints 병합)"""
@@ -680,6 +868,32 @@ class PPTQAChecker:
                     auto_fixable=False
                 ))
 
+            # required_sections 검사 (layout 또는 metadata.section 기준)
+            required_sections = self.global_constraints.get("required_sections", [])
+            if self.spec and isinstance(required_sections, list) and required_sections:
+                slides = self.spec.get("slides", [])
+                available_layouts = {str(slide.get("layout", "")).strip().lower() for slide in slides}
+                available_sections = set()
+                for slide in slides:
+                    metadata = slide.get("metadata", {})
+                    section_name = metadata.get("section")
+                    if section_name:
+                        available_sections.add(str(section_name).strip().lower())
+
+                for section in required_sections:
+                    section_norm = str(section).strip().lower()
+                    if not section_norm:
+                        continue
+                    if section_norm not in available_layouts and section_norm not in available_sections:
+                        self.report.add_issue(QAIssue(
+                            slide_index=0,
+                            severity=Severity.WARNING,
+                            category="필수 섹션",
+                            message=f"필수 섹션 미존재: '{section}'",
+                            details={"required": section},
+                            auto_fixable=False
+                        ))
+
     def _check_evidence(self):
         """
         Evidence 검사
@@ -689,6 +903,10 @@ class PPTQAChecker:
             return
 
         evidence_pattern = re.compile(EVIDENCE_ANCHOR_PATTERN)
+
+        # top-level sources_ref 검사
+        for ref in self.spec.get("sources_ref", []):
+            self._validate_evidence_anchor(0, ref, evidence_pattern)
 
         for slide_idx, spec_slide in enumerate(self.spec["slides"], start=1):
             # 슬라이드 레벨 metadata의 source_refs 검사
@@ -703,15 +921,24 @@ class PPTQAChecker:
             # columns 내 bullets evidence 검사
             for col in spec_slide.get("columns", []):
                 self._check_bullets_evidence(slide_idx, col.get("bullets", []), evidence_pattern)
+                self._check_visual_evidence(slide_idx, col.get("visual"), evidence_pattern)
+
+                # columns[].content_blocks 내 evidence 검사
+                for block in col.get("content_blocks", []):
+                    self._check_content_block_evidence(slide_idx, block, evidence_pattern)
+
+            # slide visuals evidence 검사
+            for visual in spec_slide.get("visuals", []):
+                self._check_visual_evidence(slide_idx, visual, evidence_pattern)
 
             # content_blocks 내 evidence 검사
             for block in spec_slide.get("content_blocks", []):
-                # 블록 레벨 evidence
-                if "evidence" in block:
-                    self._validate_evidence(slide_idx, block["evidence"], evidence_pattern)
+                self._check_content_block_evidence(slide_idx, block, evidence_pattern)
 
-                # 블록 내 bullets
-                self._check_bullets_evidence(slide_idx, block.get("bullets", []), evidence_pattern)
+            # footnotes 내 evidence 검사
+            for footnote in spec_slide.get("footnotes", []):
+                if isinstance(footnote, dict) and "evidence" in footnote:
+                    self._validate_evidence(slide_idx, footnote["evidence"], evidence_pattern)
 
     def _check_bullets_evidence(self, slide_idx: int, bullets: list, pattern):
         """불릿 내 evidence 검사"""
@@ -719,13 +946,67 @@ class PPTQAChecker:
             if isinstance(bullet, dict) and "evidence" in bullet:
                 self._validate_evidence(slide_idx, bullet["evidence"], pattern)
 
+    def _check_visual_evidence(self, slide_idx: int, visual: dict, pattern):
+        """visual 내 evidence 검사"""
+        if isinstance(visual, dict) and "evidence" in visual:
+            self._validate_evidence(slide_idx, visual["evidence"], pattern)
+
+    def _check_content_block_evidence(self, slide_idx: int, block: dict, pattern):
+        """content_block 내부 evidence 검사"""
+        if not isinstance(block, dict):
+            return
+
+        # 블록 레벨 evidence
+        if "evidence" in block:
+            self._validate_evidence(slide_idx, block["evidence"], pattern)
+
+        # 블록 내 bullets
+        self._check_bullets_evidence(slide_idx, block.get("bullets", []), pattern)
+
+        # nested object evidence
+        table_def = block.get("table")
+        if isinstance(table_def, dict) and "evidence" in table_def:
+            self._validate_evidence(slide_idx, table_def["evidence"], pattern)
+
+        self._check_visual_evidence(slide_idx, block.get("chart"), pattern)
+        self._check_visual_evidence(slide_idx, block.get("image"), pattern)
+
+        quote_def = block.get("quote")
+        if isinstance(quote_def, dict) and "evidence" in quote_def:
+            self._validate_evidence(slide_idx, quote_def["evidence"], pattern)
+
+        kpi_def = block.get("kpi")
+        if isinstance(kpi_def, dict) and "evidence" in kpi_def:
+            self._validate_evidence(slide_idx, kpi_def["evidence"], pattern)
+
     def _validate_evidence(self, slide_idx: int, evidence: dict, pattern):
         """evidence 객체 검증"""
+        if not isinstance(evidence, dict):
+            self.report.add_issue(QAIssue(
+                slide_index=slide_idx,
+                severity=Severity.WARNING,
+                category="Evidence 포맷",
+                message="evidence는 object 형태여야 합니다",
+                details={"evidence": str(evidence)},
+                auto_fixable=False
+            ))
+            return
         if "source_anchor" in evidence:
             self._validate_evidence_anchor(slide_idx, evidence["source_anchor"], pattern)
 
     def _validate_evidence_anchor(self, slide_idx: int, anchor: str, pattern):
         """앵커 포맷 및 존재 검사"""
+        if not isinstance(anchor, str):
+            self.report.add_issue(QAIssue(
+                slide_index=slide_idx,
+                severity=Severity.WARNING,
+                category="Evidence 포맷",
+                message="앵커 타입이 문자열이 아닙니다",
+                details={"anchor": str(anchor), "expected_format": "sources.md#anchor-name"},
+                auto_fixable=False
+            ))
+            return
+
         # 포맷 검사
         if not pattern.match(anchor):
             self.report.add_issue(QAIssue(
@@ -861,14 +1142,6 @@ def main():
     )
 
     report = checker.run_all_checks()
-
-    # Spec 비즈니스 규칙 검사 (spec이 있는 경우)
-    if args.spec and Path(args.spec).exists():
-        with open(args.spec, 'r', encoding='utf-8') as f:
-            spec = yaml.safe_load(f)
-        spec_issues = validate_spec_business_rules(spec)
-        for issue in spec_issues:
-            report.add_issue(issue)
 
     # 결과 출력
     if args.verbose or not args.output:

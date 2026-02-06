@@ -13,10 +13,13 @@ constants.py - 전역 상수 및 정책 정의
 # 불릿 길이 제한 (문자 수)
 BULLET_MAX_CHARS = 100  # 기본 최대 길이
 BULLET_RECOMMENDED_CHARS = 80  # 권장 길이
+BULLET_CHARS_PER_LINE = 42  # 줄 수 추정용 기준 문자수 (휴리스틱)
+BULLET_MAX_LINES = 2  # 불릿 최대 줄 수
 
 # 불릿 개수 제한
 BULLET_MIN_COUNT = 3  # 컨텐츠 슬라이드 최소 개수
 BULLET_MAX_COUNT = 6  # 기본 최대 개수 (global_constraints로 오버라이드 가능)
+VISUAL_BULLET_MAX_COUNT = 4  # chart_focus/image_focus 기본 최대 개수
 
 # =============================================================================
 # 폰트 정책
@@ -133,3 +136,27 @@ def get_forbidden_words(global_constraints: dict = None, slide_constraints: dict
         forbidden.extend(slide_constraints["forbidden_words"])
 
     return list(set(forbidden))  # 중복 제거
+
+
+def get_bullet_bounds(
+    layout: str,
+    global_constraints: dict = None,
+    slide_constraints: dict = None
+) -> tuple:
+    """
+    레이아웃 + global_constraints + slide_constraints를 반영한 불릿 범위 반환.
+    반환값: (min_bullets, max_bullets)
+    """
+    normalized_layout = (layout or "").strip().lower()
+    max_bullets = get_max_bullets(global_constraints, slide_constraints)
+    min_bullets = BULLET_MIN_COUNT
+
+    if normalized_layout in NO_BULLET_LAYOUTS:
+        return 0, 0
+
+    if normalized_layout in VISUAL_LAYOUTS:
+        # visual 중심 레이아웃은 0~4 권장
+        min_bullets = 0
+        max_bullets = min(max_bullets, VISUAL_BULLET_MAX_COUNT)
+
+    return min_bullets, max_bullets

@@ -16,11 +16,8 @@
 ## 절차
 
 ### 1. 현재 상태 확인
-```python
-# 가장 최근 PPTX 파일 확인
-outputs = clients/{client}/outputs/*.pptx
-qa_report = clients/{client}/outputs/*_qa_report.json
-```
+- `clients/<client>/outputs/`의 최신 원본 PPTX(`*_polished.pptx` 제외)를 선택합니다.
+- QA 보고서가 있으면 함께 확인합니다.
 
 ### 2. QA 이슈 기반 편집 계획 수립
 QA 보고서가 있으면 자동 수정 가능한 이슈 식별:
@@ -29,51 +26,29 @@ QA 보고서가 있으면 자동 수정 가능한 이슈 식별:
 - **밀도 경고**: 슬라이드 분할 제안
 
 ### 3. 미세 편집 수행
-python-pptx를 사용하여:
+CLI 또는 스크립트를 사용합니다:
 
-```python
-from pptx import Presentation
-from pptx.util import Pt
-from pptx.dml.color import RgbColor
+```bash
+# 기본: 최신 원본 PPTX를 자동 선택
+python scripts/deck_cli.py polish <client>
 
-prs = Presentation(pptx_path)
-
-for slide in prs.slides:
-    for shape in slide.shapes:
-        if shape.has_text_frame:
-            for para in shape.text_frame.paragraphs:
-                for run in para.runs:
-                    # 폰트 통일
-                    run.font.name = "Noto Sans KR"
-
-                    # 문장 다듬기 (Claude가 판단)
-                    # - 불필요한 조사 제거
-                    # - 간결한 표현으로 수정
+# 특정 파일 지정
+python scripts/deck_cli.py polish <client> --pptx clients/<client>/outputs/<file>.pptx
 ```
+
+내부적으로 `scripts/polish_ppt.py`가 다음을 수행합니다:
+- 폰트 일관화 (`tokens.yaml` 기준)
+- 탭/연속 공백 정리
+- 본문 문단 줄간격 정리
 
 ### 4. 편집 내용 기록
-```yaml
-# clients/{client}/polish_log.yaml
-timestamp: 2024-01-15T10:30:00
-source_pptx: "{client}_20240115_103000.pptx"
-output_pptx: "{client}_20240115_103000_polished.pptx"
-changes:
-  - slide: 3
-    type: font_fix
-    detail: "Arial → Noto Sans KR"
-  - slide: 5
-    type: text_edit
-    original: "현재 시장 상황을 분석해 보면 다음과 같은 특징이 있습니다"
-    edited: "시장 상황 분석 결과"
-  - slide: 7
-    type: bullet_split
-    detail: "80자 초과 불릿을 2개로 분할"
-```
+- `clients/<client>/outputs/<file>_polished.polish.json` 로그 파일을 생성합니다.
+- 로그에는 폰트 변경 수, 텍스트 정리 수, 줄간격 조정 수가 포함됩니다.
 
 ### 5. 저장 및 보고
 - 원본 보존: `{client}_YYYYMMDD_HHMMSS.pptx`
 - 편집본 생성: `{client}_YYYYMMDD_HHMMSS_polished.pptx`
-- 편집 로그: `polish_log.yaml`
+- 편집 로그: `<output>.polish.json`
 
 ## 편집 가이드라인
 
@@ -95,7 +70,7 @@ changes:
 
 ## 출력
 - `clients/<client>/outputs/*_polished.pptx`
-- `clients/<client>/polish_log.yaml`
+- `clients/<client>/outputs/*_polished.polish.json`
 
 ## 완료 조건
 - [ ] 원본 PPTX 백업 보존
@@ -115,11 +90,6 @@ changes:
 /polish acme-demo --pptx acme-demo_20240115_103000.pptx
 ```
 
-### 미리보기 (실제 수정 없음)
-```
-/polish acme-demo --dry-run
-```
-
 ## 하이브리드 렌더 전체 워크플로우
 
 ```
@@ -132,6 +102,9 @@ deck_spec.yaml  검증      1차 PPTX   QA보고서  최종 PPTX
 ```bash
 # 전체 파이프라인 (validate → render → qa)
 python scripts/deck_cli.py full-pipeline <client>
+
+# 전체 파이프라인 + polish
+python scripts/deck_cli.py full-pipeline <client> --polish
 
 # Polish는 별도 실행 (Claude Code 대화형)
 /polish <client>

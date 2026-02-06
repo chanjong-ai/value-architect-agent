@@ -59,11 +59,17 @@ python scripts/deck_cli.py render <client-name>
 # QA 검사 (v2.0)
 python scripts/deck_cli.py qa <client-name>
 
+# 미세 편집 (v2.1)
+python scripts/deck_cli.py polish <client-name>
+
 # 기본 파이프라인 (검증 + 렌더링)
 python scripts/deck_cli.py pipeline <client-name>
 
 # 전체 파이프라인 (검증 + 렌더링 + QA) (v2.0)
 python scripts/deck_cli.py full-pipeline <client-name>
+
+# 전체 파이프라인 + 미세 편집 (v2.1)
+python scripts/deck_cli.py full-pipeline <client-name> --polish
 ```
 
 ---
@@ -89,7 +95,7 @@ python scripts/deck_cli.py full-pipeline <client-name>
 ### 4. Density Rules (밀도 규칙)
 슬라이드당:
 - 1개 제목 + 1개 거버닝 메시지
-- 3-6개 불릿 (1줄 권장, 최대 2줄)
+- 일반 컨텐츠는 3-6개 불릿, chart/image 중심 슬라이드는 0-4개 (1줄 권장, 최대 2줄)
 - 긴 문단 금지, MECE 불릿 사용
 
 ### 5. Sources & Credibility (출처 및 신뢰성)
@@ -118,6 +124,7 @@ value-architect-agent/
 │   ├── deck_cli.py             # 통합 CLI
 │   ├── render_ppt.py           # PPTX 렌더러
 │   ├── qa_ppt.py               # QA 자동 검사기 (v2.0)
+│   ├── polish_ppt.py           # 미세 편집기 (v2.1)
 │   ├── validate_spec.py        # 스키마 검증
 │   └── new_client.py           # 클라이언트 생성
 ├── schema/
@@ -184,14 +191,16 @@ value-architect-agent/
 - **슬라이드별 제약**: slide_constraints로 로컬 규칙 적용
 
 ### 자동 QA 검사
-- 불릿 개수/길이 검증
+- 레이아웃별 불릿 최소/최대/길이 검증
+- 불릿 2줄 초과 가능성 및 레이아웃 경계 이탈 검사
 - 폰트/사이즈 규칙 준수 확인
 - 콘텐츠 밀도 분석
 - 금지어 검사
+- Evidence 포맷 및 sources.md 앵커 존재 검사
 - JSON/Markdown 보고서 출력
 
 ### 하이브리드 렌더 워크플로우
-- 1단계: Spec → PPTX 자동 생성 (구조/레이아웃 강제)
+- 1단계: Spec → PPTX 자동 생성 (구조/레이아웃 강제, chart `data_inline`/`data_path` 지원)
 - 2단계: /polish 스킬로 미세 편집 (문장 다듬기, 정렬 보정)
 
 ---
