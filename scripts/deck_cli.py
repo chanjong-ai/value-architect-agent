@@ -5,6 +5,7 @@ deck_cli.py - 통합 CLI for Value Architect Agent
 워크플로우 오케스트레이션:
   - new: 새 클라이언트 팩 생성
   - analyze: 고객사 분석 전략/준비도 리포트 생성
+  - recommend: 고객 요건/집중영역 기반 전략 추천
   - sync-layout: 고객 지정 레이아웃 선호를 deck_spec에 반영
   - enrich-evidence: 불릿 evidence/source_anchor 자동 보강
   - validate: Deck Spec 스키마 검증
@@ -162,10 +163,12 @@ def cmd_new(args) -> int:
     print(f"\n다음 단계:")
     print(f"  1. brief.md 작성: {dest / 'brief.md'}")
     print(f"  2. constraints.md 확인: {dest / 'constraints.md'}")
-    print(f"  3. 리서치 후 sources.md 업데이트")
-    print(f"  4. deck_outline.md → deck_spec.yaml 작성")
-    print(f"  5. python scripts/deck_cli.py analyze {client_name}")
-    print(f"  6. python scripts/deck_cli.py full-pipeline {client_name} --sync-layout --enrich-evidence --polish")
+    print(f"  3. strategy_input.yaml에 고객 요건/집중영역 입력")
+    print(f"  4. 리서치 후 sources.md 업데이트")
+    print(f"  5. deck_outline.md → deck_spec.yaml 작성")
+    print(f"  6. python scripts/deck_cli.py recommend {client_name} --apply-layout")
+    print(f"  7. python scripts/deck_cli.py analyze {client_name}")
+    print(f"  8. python scripts/deck_cli.py full-pipeline {client_name} --sync-layout --enrich-evidence --polish")
 
     return 0
 
@@ -785,6 +788,78 @@ def cmd_analyze(args) -> int:
 
 
 # =============================================================================
+# Command: recommend
+# =============================================================================
+def cmd_recommend(args) -> int:
+    """고객 요건/집중영역 입력 기반 전략 추천 리포트 생성"""
+    client_name = args.client_name
+
+    if not client_exists(client_name):
+        print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
+        return 1
+
+    client_dir = get_client_dir(client_name)
+    input_path = Path(args.input).resolve() if getattr(args, "input", None) else (client_dir / "strategy_input.yaml")
+
+    try:
+        from recommend_strategy import recommend_for_client, write_outputs
+    except ImportError:
+        print("Error: recommend_strategy 모듈을 불러올 수 없습니다.")
+        return 1
+
+    try:
+        report, generated_pref = recommend_for_client(client_name, input_path)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}")
+        print(f"Hint: 템플릿 파일을 생성하려면 `clients/_template/strategy_input.yaml`을 참고하세요.")
+        return 1
+
+    md_path = Path(args.output).resolve() if getattr(args, "output", None) else (client_dir / "strategy_report.md")
+    json_path = Path(args.json).resolve() if getattr(args, "json", None) else (client_dir / "strategy_report.json")
+    pref_path = Path(args.pref_output).resolve() if getattr(args, "pref_output", None) else (client_dir / "layout_preferences.generated.yaml")
+
+    write_outputs(report, generated_pref, md_path, json_path, pref_path)
+
+    print(f"✓ 전략 리포트 생성: {md_path}")
+    print(f"✓ JSON 리포트 생성: {json_path}")
+    print(f"✓ 생성 레이아웃 선호: {pref_path}")
+
+    top_focus = report.get("focus_priority", [])
+    if top_focus:
+        labels = ", ".join([item.get("label", "") for item in top_focus[:3]])
+        print(f"  - Top focus: {labels}")
+    print(f"  - 권장 슬라이드 수: {len(report.get('recommended_layout_sequence', []))}")
+
+    if getattr(args, "apply_layout", False):
+        print("\n생성 레이아웃 선호를 deck_spec.yaml에 즉시 반영합니다... (안전모드: 키워드 기반)")
+        try:
+            from layout_sync import load_yaml as load_layout_yaml, save_yaml as save_layout_yaml, apply_layout_preferences
+        except ImportError:
+            print("⚠ layout_sync 모듈을 불러오지 못해 자동 반영을 건너뜁니다.")
+            return 1
+
+        spec_path = client_dir / "deck_spec.yaml"
+        spec = load_layout_yaml(spec_path)
+        apply_pref = dict(generated_pref)
+        apply_pref["layout_sequence"] = []  # 안전모드: 위치 강제 치환 방지
+        updated_spec, changes, warnings = apply_layout_preferences(spec, apply_pref)
+
+        for warning in warnings:
+            print(f"⚠ {warning}")
+
+        if not changes:
+            print("✓ 안전모드 적용 변경사항이 없습니다.")
+            return 0
+
+        save_layout_yaml(spec_path, updated_spec)
+        print(f"✓ 안전모드 레이아웃 반영 {len(changes)}건: {spec_path}")
+        for line in changes[:20]:
+            print(f"  - {line}")
+
+    return 0
+
+
+# =============================================================================
 # Command: sync-layout
 # =============================================================================
 def cmd_sync_layout(args) -> int:
@@ -926,7 +1001,9 @@ def cmd_status(args) -> int:
         ("deck_outline.md", "덱 아웃라인"),
         ("deck_spec.yaml", "덱 스펙"),
         ("layout_preferences.yaml", "레이아웃 선호 설정"),
+        ("strategy_input.yaml", "요건/집중영역 입력 (권장)"),
         ("analysis_report.md", "고객사 분석 리포트"),
+        ("strategy_report.md", "요건 기반 전략 리포트 (권장)"),
         ("lessons.md", "학습 내용"),
     ]
 
@@ -1017,6 +1094,7 @@ def main():
 예시:
   %(prog)s new my-client           # 새 클라이언트 생성
   %(prog)s analyze my-client       # 고객사 분석 전략/준비도 리포트
+  %(prog)s recommend my-client     # 요건 입력 기반 전략 추천
   %(prog)s sync-layout my-client   # 레이아웃 선호를 deck_spec에 반영
   %(prog)s enrich-evidence my-client # 불릿 evidence 자동 보강
   %(prog)s analyze --all           # 전체 고객사 분석 요약
@@ -1071,6 +1149,16 @@ def main():
     p_analyze.add_argument("--output", "-o", help="분석 리포트(Markdown) 출력 경로")
     p_analyze.add_argument("--json", help="분석 리포트(JSON) 출력 경로")
     p_analyze.set_defaults(func=cmd_analyze)
+
+    # recommend
+    p_recommend = subparsers.add_parser("recommend", help="고객 요건/집중영역 기반 전략 추천")
+    p_recommend.add_argument("client_name", help="클라이언트 이름")
+    p_recommend.add_argument("--input", help="요건 입력 파일 경로 (기본: clients/<client>/strategy_input.yaml)")
+    p_recommend.add_argument("--output", "-o", help="전략 리포트(Markdown) 출력 경로")
+    p_recommend.add_argument("--json", help="전략 리포트(JSON) 출력 경로")
+    p_recommend.add_argument("--pref-output", help="생성 layout_preferences 출력 경로")
+    p_recommend.add_argument("--apply-layout", action="store_true", help="생성 레이아웃을 키워드 기반 안전모드로 즉시 deck_spec에 반영")
+    p_recommend.set_defaults(func=cmd_recommend)
 
     # sync-layout
     p_sync = subparsers.add_parser("sync-layout", help="layout_preferences를 deck_spec에 반영")

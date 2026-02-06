@@ -1,6 +1,6 @@
 # Client Analysis Report: acme-demo
 
-- Generated at: 2026-02-06T23:15:08
+- Generated at: 2026-02-06T23:29:45
 - Industry: Manufacturing
 - Audience: C-level (CEO/CFO/CIO)
 - Maturity: **READY_FOR_EXEC_DECK**
@@ -25,7 +25,7 @@
 - Checked source entries: 11
 - Latest QA: PASS
 - QA summary: errors 0, warnings 0, info 0
-- QA report: `/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/acme-demo/outputs/acme-demo_20260206_231418_qa_report.json`
+- QA report: `/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/acme-demo/outputs/acme-demo_20260206_232901_qa_report.json`
 
 ## 3) Recommended Analysis Modules (Client-Specific)
 

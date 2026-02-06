@@ -227,6 +227,7 @@ slides:
   layout_intent:
     emphasis: balanced
     content_density: normal
+    visual_position: right
 - layout: timeline
   title: 3단계 실행 로드맵
   governing_message: 24개월 내 핵심 전환을 완료하고, AI 내재화를 시작합니다

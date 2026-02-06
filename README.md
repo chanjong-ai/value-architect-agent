@@ -16,12 +16,13 @@
 8. [워크플로우](#워크플로우)
 9. [CLI 사용법](#cli-사용법)
 10. [고객사 분석 리포트](#고객사-분석-리포트)
-11. [대화형 스킬](#대화형-스킬)
-12. [Deck Spec v2.0 작성 가이드](#deck-spec-v20-작성-가이드)
-13. [레이아웃 유형](#레이아웃-유형)
-14. [디자인 토큰](#디자인-토큰)
-15. [품질 관리 (QA)](#품질-관리-qa)
-16. [문제 해결](#문제-해결)
+11. [요건 입력 기반 맞춤 추천](#요건-입력-기반-맞춤-추천)
+12. [대화형 스킬](#대화형-스킬)
+13. [Deck Spec v2.0 작성 가이드](#deck-spec-v20-작성-가이드)
+14. [레이아웃 유형](#레이아웃-유형)
+15. [디자인 토큰](#디자인-토큰)
+16. [품질 관리 (QA)](#품질-관리-qa)
+17. [문제 해결](#문제-해결)
 
 ---
 
@@ -96,6 +97,11 @@ deck_spec.yaml → validate → render → qa → polish → output.pptx
 - 산업별 분석 모듈 추천(예: 제조/리테일/금융/헬스케어)
 - 분석 단계 → PPT 레이아웃 매핑 자동 생성
 - 갭/리스크 및 즉시 실행 액션 아이템 파일 출력
+
+### 요건 입력 기반 맞춤 추천 (v2.3)
+- `strategy_input.yaml`에 고객 요건/집중영역/성공지표를 입력하면 맞춤 전략 리포트 생성
+- 집중영역 점수화 후 분석 모듈 우선순위 및 슬라이드 아키텍처 자동 추천
+- `layout_preferences.generated.yaml` 자동 생성으로 고객이 원하는 레이아웃을 즉시 반영 가능
 
 ---
 
@@ -274,6 +280,7 @@ Claude Code에서 슬래시 명령어로 스킬을 호출할 수 있습니다:
 /research samsung-ai  # 리서치 수행
 /storyline samsung-ai # 스토리라인 구축
 /slidespec samsung-ai # Deck Spec 생성
+/recommend samsung-ai # 요건 기반 전략 추천
 /sync-layout samsung-ai # 레이아웃 선호 반영
 /enrich-evidence samsung-ai # evidence 자동 보강
 /render samsung-ai    # PPTX 렌더링
@@ -407,6 +414,7 @@ value-architect-agent/
 ├── scripts/                     # CLI 스크립트
 │   ├── deck_cli.py             # 통합 CLI (메인 진입점)
 │   ├── analyze_client.py       # 고객사 분석 전략/준비도 리포터 (v2.2)
+│   ├── recommend_strategy.py   # 요건 입력 기반 전략/레이아웃 추천기 (v2.3)
 │   ├── layout_sync.py          # layout_preferences -> deck_spec 동기화 (v2.2)
 │   ├── enrich_evidence.py      # 불릿 evidence/source_anchor 자동 보강 (v2.2)
 │   ├── render_ppt.py           # PPTX 렌더러
@@ -427,6 +435,7 @@ value-architect-agent/
 │
 ├── clients/                     # 클라이언트별 작업 영역
 │   ├── _template/              # 새 클라이언트용 템플릿
+│   │   └── strategy_input.yaml # 요건/집중영역 입력 템플릿 (v2.3)
 │   └── acme-demo/              # 예제 클라이언트
 │
 ├── library/                     # 재사용 가능한 자산
@@ -443,6 +452,7 @@ value-architect-agent/
     │   ├── storyline/
     │   ├── slidespec/
     │   ├── analyze/            # 고객사 분석 전략/갭 리포트 (v2.2)
+    │   ├── recommend/          # 요건 기반 전략 추천 (v2.3)
     │   ├── sync-layout/        # 레이아웃 선호 반영 (v2.2)
     │   ├── enrich-evidence/    # evidence 자동 보강 (v2.2)
     │   ├── render/
@@ -457,18 +467,20 @@ value-architect-agent/
 
 ## 워크플로우
 
-### 전체 프로세스 (v2.2 하이브리드 렌더)
+### 전체 프로세스 (v2.3 하이브리드 렌더)
 
 ```
 [1] Intake     → 클라이언트 정보 수집, 프로젝트 설정
 [2] Research   → 산업, 경쟁사, 기술 트렌드 리서치
 [3] Storyline  → 피라미드 원칙 기반 스토리라인 구축
 [4] Slidespec  → deck_outline.md를 deck_spec.yaml로 변환
-[5] Analyze    → 고객사별 분석 전략/갭/실행계획 리포트 생성
-[6] Render     → PPTX 파일 생성 (1차 렌더)
-[7] QA         → 자동 품질 검증 및 보고서 생성
-[8] Polish     → 미세 편집 (문장 다듬기, 정렬 보정)
-[9] Lessons    → 학습 내용 기록 및 라이브러리 업데이트
+[5] Recommend  → 요건 입력 기반 전략/레이아웃 추천 및 생성
+[6] Analyze    → 고객사별 준비도/갭/실행계획 리포트 생성
+[7] Sync/Evidence → 생성된 레이아웃 반영 + 근거 자동 보강
+[8] Render     → PPTX 파일 생성 (1차 렌더)
+[9] QA         → 자동 품질 검증 및 보고서 생성
+[10] Polish    → 미세 편집 (문장 다듬기, 정렬 보정)
+[11] Lessons   → 학습 내용 기록 및 라이브러리 업데이트
 ```
 
 ### 파이프라인 명령어
@@ -527,6 +539,9 @@ python scripts/deck_cli.py analyze <client-name>
 # 전체 고객사 분석 요약 (v2.2)
 python scripts/deck_cli.py analyze --all
 
+# 요건 입력 기반 전략 추천 (v2.3)
+python scripts/deck_cli.py recommend <client-name>
+
 # 레이아웃 선호 반영 (v2.2)
 python scripts/deck_cli.py sync-layout <client-name>
 
@@ -556,13 +571,20 @@ $ python scripts/deck_cli.py new hyundai-ev-strategy
 다음 단계:
   1. brief.md 작성
   2. constraints.md 확인
-  3. 리서치 후 sources.md 업데이트
-  4. deck_outline.md → deck_spec.yaml 작성
-  5. python scripts/deck_cli.py analyze hyundai-ev-strategy
-  6. python scripts/deck_cli.py full-pipeline hyundai-ev-strategy --sync-layout --enrich-evidence --polish
+  3. strategy_input.yaml 작성
+  4. 리서치 후 sources.md 업데이트
+  5. deck_outline.md → deck_spec.yaml 작성
+  6. python scripts/deck_cli.py recommend hyundai-ev-strategy --apply-layout
+  7. python scripts/deck_cli.py analyze hyundai-ev-strategy
+  8. python scripts/deck_cli.py full-pipeline hyundai-ev-strategy --sync-layout --enrich-evidence --polish
 
-# 2. 전체 파이프라인 실행
-$ python scripts/deck_cli.py full-pipeline acme-demo
+# 2. 요건 기반 전략 추천 실행
+$ python scripts/deck_cli.py recommend acme-demo --apply-layout
+✓ 전략 리포트 생성: clients/acme-demo/strategy_report.md
+✓ 생성 레이아웃 선호: clients/acme-demo/layout_preferences.generated.yaml
+
+# 3. 전체 파이프라인 실행
+$ python scripts/deck_cli.py full-pipeline acme-demo --sync-layout --enrich-evidence --polish
 === Full Pipeline 시작: acme-demo ===
 
 [1/3] 스키마 검증 중...
@@ -576,7 +598,7 @@ $ python scripts/deck_cli.py full-pipeline acme-demo
 
 === Full Pipeline 완료: acme-demo ===
 
-# 3. QA만 별도 실행
+# 4. QA만 별도 실행
 $ python scripts/deck_cli.py qa acme-demo
 # PPT QA 보고서
 **파일**: `clients/acme-demo/outputs/acme-demo_20260201_103000.pptx`
@@ -629,6 +651,64 @@ python scripts/deck_cli.py full-pipeline <client-name> --sync-layout --enrich-ev
 
 ---
 
+## 요건 입력 기반 맞춤 추천
+
+`recommend` 명령은 고객사별 요구사항과 집중 포인트를 입력하면, 그에 맞는 전략과 레이아웃 결과를 자동으로 생성합니다.
+
+### 입력 파일
+
+- `clients/<client>/strategy_input.yaml`
+- 새 클라이언트 생성 시 템플릿이 자동 포함됩니다.
+
+### 핵심 입력 항목
+
+- `priorities.focus_areas`
+- 선택값: `cost_reduction`, `revenue_growth`, `risk_control`, `customer_experience`, `operational_excellence`, `data_foundation`, `ai_scaling`
+- `priorities.must_answer_questions`
+- 실제 경영진 질문(최소 3개) 입력
+- `data_readiness.internal_data_level`
+- `none`, `partial`, `full`
+- `deck_preferences.storytelling_mode`
+- `decision_first`, `diagnostic_first`, `opportunity_first`
+- `deck_preferences.must_have_layouts`
+- 고객이 요구한 PPT 레이아웃 강제 항목
+
+### 실행 명령
+
+```bash
+# 전략 추천 결과 생성
+python scripts/deck_cli.py recommend <client-name>
+
+# 생성된 레이아웃을 deck_spec에 즉시 반영 (안전모드: 키워드 기반)
+python scripts/deck_cli.py recommend <client-name> --apply-layout
+```
+
+### 생성 결과물
+
+- `clients/<client>/strategy_report.md`
+- `clients/<client>/strategy_report.json`
+- `clients/<client>/layout_preferences.generated.yaml`
+
+### 고객사 유형별 집중 포인트 가이드
+
+| 고객사 유형 | 우선 focus_areas | 필수 확인 KPI | 권장 레이아웃 |
+|---|---|---|---|
+| 제조/산업재 | `operational_excellence`, `cost_reduction`, `ai_scaling` | OEE, 불량률, 재고일수, 다운타임 | `comparison`, `chart_focus`, `timeline` |
+| 유통/소비재 | `revenue_growth`, `customer_experience`, `data_foundation` | 채널별 매출성장률, 객단가, 재고회전율 | `content`, `chart_focus`, `comparison` |
+| 금융/보험 | `risk_control`, `revenue_growth`, `data_foundation` | 손실률, 승인율, 컴플라이언스 위반건수 | `comparison`, `process_flow`, `timeline` |
+| 헬스케어 | `risk_control`, `customer_experience`, `operational_excellence` | 대기시간, 자원가동률, 품질지표 | `process_flow`, `chart_focus`, `timeline` |
+| 공공/기관 | `risk_control`, `data_foundation`, `cost_reduction` | 서비스 처리시간, 예산 집행효율, 품질지표 | `process_flow`, `comparison`, `timeline` |
+
+### 권장 운영 순서
+
+```bash
+python scripts/deck_cli.py recommend <client-name> --apply-layout
+python scripts/deck_cli.py analyze <client-name>
+python scripts/deck_cli.py full-pipeline <client-name> --sync-layout --enrich-evidence --polish
+```
+
+---
+
 ## 대화형 스킬
 
 Claude Code와 대화할 때 사용할 수 있는 스킬입니다.
@@ -642,6 +722,7 @@ Claude Code와 대화할 때 사용할 수 있는 스킬입니다.
 | `/storyline <client>` | 스토리라인 구축 | `/storyline samsung-ai` |
 | `/slidespec <client>` | Deck Spec 생성 | `/slidespec samsung-ai` |
 | `/analyze <client>` | 고객사 분석 전략/갭 리포트 | `/analyze samsung-ai` |
+| `/recommend <client>` | 요건 입력 기반 전략/레이아웃 추천 | `/recommend samsung-ai` |
 | `/sync-layout <client>` | 레이아웃 선호 반영 | `/sync-layout samsung-ai` |
 | `/enrich-evidence <client>` | evidence/source_anchor 자동 보강 | `/enrich-evidence samsung-ai` |
 | `/render <client>` | PPTX 렌더링 | `/render samsung-ai` |
@@ -929,6 +1010,15 @@ python scripts/deck_cli.py qa <client>
 ---
 
 ## 변경 이력
+
+### v2.3.0 (2026-02-06)
+- `recommend` 명령 추가: `strategy_input.yaml` 기반 맞춤 전략/레이아웃 추천
+- 생성 파일:
+  - `strategy_report.md/json` (요건 기반 우선순위/모듈/슬라이드 추천)
+  - `layout_preferences.generated.yaml` (생성형 레이아웃 선호)
+- `--apply-layout` 옵션으로 생성 레이아웃을 `deck_spec.yaml`에 즉시 반영 지원
+- 고객사 유형별 집중 포인트 가이드(README) 추가
+- `_template`에 `strategy_input.yaml` 템플릿 추가
 
 ### v2.2.1 (2026-02-06)
 - `enrich-evidence` 명령 추가: deck_spec 불릿에 `evidence.source_anchor` 자동 보강

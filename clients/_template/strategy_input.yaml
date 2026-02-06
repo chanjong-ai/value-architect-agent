@@ -1,0 +1,47 @@
+meta:
+  version: "1.0"
+  description: "고객 요건/집중영역 입력 템플릿"
+
+client_profile:
+  industry: ""
+  business_model: ""              # B2B / B2C / B2B2C / Public
+  region: ""
+  audience: ""                    # CEO/CFO/COO/CIO/Board 등
+  presentation_context: ""        # ExCom / Board / 투자심의 / 워크샵
+
+engagement:
+  objective: ""
+  decision_type: ""               # 투자 승인 / 전략 방향 확정 / 실행 계획 승인
+  expected_slide_count: 12
+  presentation_minutes: 30
+  language: "ko"
+
+priorities:
+  # 아래 focus ID 중 선택:
+  # cost_reduction, revenue_growth, risk_control,
+  # customer_experience, operational_excellence, data_foundation, ai_scaling
+  focus_areas: []
+  must_answer_questions:
+    - ""
+    - ""
+    - ""
+  success_metrics:
+    - name: ""
+      target: ""
+      horizon: ""
+
+data_readiness:
+  internal_data_level: "partial"  # none / partial / full
+  available_datasets: []
+  constraints: []
+
+deck_preferences:
+  storytelling_mode: "decision_first"  # decision_first / diagnostic_first / opportunity_first
+  must_have_layouts:
+    - "exec_summary"
+    - "comparison"
+    - "timeline"
+    - "chart_focus"
+  avoid_layouts: []
+  visual_emphasis: "balanced"      # content / balanced / visual
+  content_density: "normal"        # sparse / normal / dense

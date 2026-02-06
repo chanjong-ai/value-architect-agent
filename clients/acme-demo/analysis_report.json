@@ -1,6 +1,6 @@
 {
   "client_name": "acme-demo",
-  "generated_at": "2026-02-06T23:15:08",
+  "generated_at": "2026-02-06T23:29:45",
   "client_dir": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/acme-demo",
   "brief": {
     "client_name": "ACME Demo (가상 제조기업)",
@@ -139,7 +139,7 @@
     "issues": []
   },
   "latest_qa": {
-    "pptx_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/acme-demo/outputs/acme-demo_20260206_231418.pptx",
+    "pptx_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/acme-demo/outputs/acme-demo_20260206_232901.pptx",
     "total_slides": 11,
     "passed": true,
     "summary": {
@@ -148,8 +148,8 @@
       "info": 0
     },
     "issues": [],
-    "_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/acme-demo/outputs/acme-demo_20260206_231418_qa_report.json",
-    "_mtime": "2026-02-06T23:14:19"
+    "_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/acme-demo/outputs/acme-demo_20260206_232901_qa_report.json",
+    "_mtime": "2026-02-06T23:29:02"
   },
   "analysis_modules": [
     {

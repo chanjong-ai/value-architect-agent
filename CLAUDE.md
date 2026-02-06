@@ -22,9 +22,9 @@
 2. `/intake` 스킬로 클라이언트 팩 생성
 3. brief.md 작성을 위한 정보 수집
 
-### 덱 생성 워크플로우 (v2.2)
+### 덱 생성 워크플로우 (v2.3)
 ```
-[1] Intake → [2] Research → [3] Storyline → [4] Slidespec → [5] Analyze → [6] Sync-Layout → [7] Enrich-Evidence → [8] Render → [9] QA → [10] Polish → [11] Lessons
+[1] Intake → [2] Research → [3] Storyline → [4] Slidespec → [5] Recommend → [6] Analyze → [7] Sync-Layout → [8] Enrich-Evidence → [9] Render → [10] QA → [11] Polish → [12] Lessons
 ```
 
 각 단계별 스킬:
@@ -34,6 +34,7 @@
 - `/competitors <client>`: 경쟁사 분석
 - `/storyline <client>`: 스토리라인 구축
 - `/slidespec <client>`: Deck Spec 생성
+- `/recommend <client>`: 요건 기반 전략/레이아웃 추천 (v2.3)
 - `/analyze <client>`: 고객사 분석 전략/갭 리포트 생성 (v2.2)
 - `/sync-layout <client>`: 고객 선호 레이아웃을 deck_spec에 반영 (v2.2)
 - `/enrich-evidence <client>`: 불릿 evidence/source_anchor 자동 보강 (v2.2)
@@ -70,6 +71,9 @@ python scripts/deck_cli.py analyze <client-name>
 
 # 전체 고객사 분석 요약 (v2.2)
 python scripts/deck_cli.py analyze --all
+
+# 요건 입력 기반 전략 추천 (v2.3)
+python scripts/deck_cli.py recommend <client-name>
 
 # 레이아웃 선호 반영 (v2.2)
 python scripts/deck_cli.py sync-layout <client-name>
@@ -141,6 +145,7 @@ value-architect-agent/
 ├── scripts/
 │   ├── deck_cli.py             # 통합 CLI
 │   ├── analyze_client.py       # 고객사 분석 전략/준비도 리포터 (v2.2)
+│   ├── recommend_strategy.py   # 요건 입력 기반 전략/레이아웃 추천기 (v2.3)
 │   ├── layout_sync.py          # layout_preferences -> deck_spec 동기화 (v2.2)
 │   ├── enrich_evidence.py      # 불릿 evidence/source_anchor 자동 보강 (v2.2)
 │   ├── render_ppt.py           # PPTX 렌더러
@@ -157,13 +162,14 @@ value-architect-agent/
 │   └── layouts.yaml             # 레이아웃 매핑
 ├── clients/
 │   ├── _template/              # 클라이언트 템플릿
+│   │   └── strategy_input.yaml # 요건/집중영역 입력 템플릿 (v2.3)
 │   └── <client>/               # 클라이언트별 작업 영역
 ├── library/
 │   ├── patterns/               # 재사용 패턴
 │   ├── slides/                 # 프리셋 슬라이드
 │   └── lessons/                # 학습 내용
 └── .claude/
-    ├── skills/                 # 스킬 정의 (13개)
+    ├── skills/                 # 스킬 정의 (14개)
     └── subagents/              # 서브에이전트 정의
 ```
 
