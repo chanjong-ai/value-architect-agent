@@ -4,9 +4,11 @@ deck_cli.py - 통합 CLI for Value Architect Agent
 
 워크플로우 오케스트레이션:
   - new: 새 클라이언트 팩 생성
+  - predeck: 덱 작성 전 리서치 구조화 리포트 생성
   - analyze: 고객사 분석 전략/준비도 리포트 생성
   - recommend: 고객 요건/집중영역 기반 전략 추천
   - sync-layout: 고객 지정 레이아웃 선호를 deck_spec에 반영
+  - densify: 본문 밀도 자동 보강 (표/차트 중심 슬라이드 보강)
   - enrich-evidence: 불릿 evidence/source_anchor 자동 보강
   - validate: Deck Spec 스키마 검증
   - render: PPTX 렌더링
@@ -547,10 +549,11 @@ def cmd_polish(args) -> int:
         stats = result.get("stats", {})
         print(f"✓ PPTX 미세 편집 완료: {output_path}")
         print(
-            "  - 폰트 변경: {font_updates}, 텍스트 정리: {text_normalizations}, 줄간격 조정: {line_spacing_updates}".format(
+            "  - 폰트 변경: {font_updates}, 텍스트 정리: {text_normalizations}, 줄간격 조정: {line_spacing_updates}, weight 정리: {weight_normalizations}".format(
                 font_updates=stats.get("font_updates", 0),
                 text_normalizations=stats.get("text_normalizations", 0),
                 line_spacing_updates=stats.get("line_spacing_updates", 0),
+                weight_normalizations=stats.get("weight_normalizations", 0),
             )
         )
         print(f"  - 편집 로그: {report_path}")
@@ -603,6 +606,8 @@ def cmd_full_pipeline(args) -> int:
     print(f"=== Full Pipeline 시작: {client_name} ===\n")
 
     pre_steps = []
+    if not getattr(args, "skip_densify_content", False):
+        pre_steps.append("densify_content")
     if getattr(args, "sync_layout", False):
         pre_steps.append("sync_layout")
     if getattr(args, "enrich_evidence", False):
@@ -612,7 +617,19 @@ def cmd_full_pipeline(args) -> int:
     current_step = 1
 
     for step_name in pre_steps:
-        if step_name == "sync_layout":
+        if step_name == "densify_content":
+            print(f"[{current_step}/{total_steps}] 본문 밀도 보강 중...")
+            densify_args = argparse.Namespace(
+                client_name=client_name,
+                spec=None,
+                output=None,
+                dry_run=False,
+            )
+            if cmd_densify(densify_args) != 0:
+                print("\n✗ 본문 밀도 보강 실패. 파이프라인 중단.")
+                return 1
+
+        elif step_name == "sync_layout":
             print(f"[{current_step}/{total_steps}] 레이아웃 선호 반영 중...")
             sync_args = argparse.Namespace(
                 client_name=client_name,
@@ -687,6 +704,35 @@ def cmd_full_pipeline(args) -> int:
 
     print(f"\n=== Full Pipeline 완료: {client_name} ===")
     return 0
+
+
+# =============================================================================
+# Command: predeck
+# =============================================================================
+def cmd_predeck(args) -> int:
+    """덱 작성 전 리서치 구조화 리포트 생성"""
+    client_name = args.client_name
+
+    if not client_exists(client_name):
+        print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
+        return 1
+
+    try:
+        from predeck_research import main as predeck_main
+    except ImportError:
+        print("Error: predeck_research 모듈을 불러올 수 없습니다.")
+        return 1
+
+    # predeck_research.main()은 argparse를 사용하므로 subprocess 호출
+    import subprocess
+    cmd = [sys.executable, str(SCRIPT_DIR / "predeck_research.py"), client_name]
+    if getattr(args, "output", None):
+        cmd.extend(["--output", str(Path(args.output).resolve())])
+    if getattr(args, "json", None):
+        cmd.extend(["--json", str(Path(args.json).resolve())])
+
+    result = subprocess.run(cmd, capture_output=False, text=True)
+    return result.returncode
 
 
 # =============================================================================
@@ -979,6 +1025,37 @@ def cmd_enrich_evidence(args) -> int:
 
 
 # =============================================================================
+# Command: densify
+# =============================================================================
+def cmd_densify(args) -> int:
+    """deck_spec 본문 밀도 자동 보강"""
+    client_name = args.client_name
+
+    if not client_exists(client_name):
+        print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
+        return 1
+
+    try:
+        from densify_spec import main as _densify_main  # noqa: F401
+    except ImportError:
+        print("Error: densify_spec 모듈을 불러올 수 없습니다.")
+        return 1
+
+    import subprocess
+
+    cmd = [sys.executable, str(SCRIPT_DIR / "densify_spec.py"), client_name]
+    if getattr(args, "spec", None):
+        cmd.extend(["--spec", str(Path(args.spec).resolve())])
+    if getattr(args, "output", None):
+        cmd.extend(["--output", str(Path(args.output).resolve())])
+    if getattr(args, "dry_run", False):
+        cmd.append("--dry-run")
+
+    result = subprocess.run(cmd, capture_output=False, text=True)
+    return result.returncode
+
+
+# =============================================================================
 # Command: status
 # =============================================================================
 def cmd_status(args) -> int:
@@ -998,6 +1075,7 @@ def cmd_status(args) -> int:
         ("brief.md", "클라이언트 브리프"),
         ("constraints.md", "제약사항"),
         ("sources.md", "출처 목록"),
+        ("research_report.md", "덱 전 리서치 구조화 리포트"),
         ("deck_outline.md", "덱 아웃라인"),
         ("deck_spec.yaml", "덱 스펙"),
         ("layout_preferences.yaml", "레이아웃 선호 설정"),
@@ -1093,9 +1171,11 @@ def main():
         epilog="""
 예시:
   %(prog)s new my-client           # 새 클라이언트 생성
+  %(prog)s predeck my-client       # 덱 전 리서치 구조화 리포트
   %(prog)s analyze my-client       # 고객사 분석 전략/준비도 리포트
   %(prog)s recommend my-client     # 요건 입력 기반 전략 추천
   %(prog)s sync-layout my-client   # 레이아웃 선호를 deck_spec에 반영
+  %(prog)s densify my-client       # 본문 밀도 자동 보강
   %(prog)s enrich-evidence my-client # 불릿 evidence 자동 보강
   %(prog)s analyze --all           # 전체 고객사 분석 요약
   %(prog)s status my-client        # 상태 확인
@@ -1119,6 +1199,13 @@ def main():
     p_validate.add_argument("client_name", help="클라이언트 이름")
     p_validate.add_argument("--schema", help="커스텀 스키마 경로 (기본: schema/deck_spec.schema.json)")
     p_validate.set_defaults(func=cmd_validate)
+
+    # predeck
+    p_predeck = subparsers.add_parser("predeck", help="덱 작성 전 리서치 구조화 리포트 생성")
+    p_predeck.add_argument("client_name", help="클라이언트 이름")
+    p_predeck.add_argument("--output", "-o", help="리포트(Markdown) 출력 경로")
+    p_predeck.add_argument("--json", help="리포트(JSON) 출력 경로")
+    p_predeck.set_defaults(func=cmd_predeck)
 
     # render
     p_render = subparsers.add_parser("render", help="PPTX 렌더링")
@@ -1168,6 +1255,14 @@ def main():
     p_sync.add_argument("--dry-run", action="store_true", help="변경사항만 확인하고 저장하지 않음")
     p_sync.set_defaults(func=cmd_sync_layout)
 
+    # densify
+    p_densify = subparsers.add_parser("densify", help="deck_spec 본문 밀도 자동 보강")
+    p_densify.add_argument("client_name", help="클라이언트 이름")
+    p_densify.add_argument("--spec", help="deck_spec.yaml 경로 (기본: clients/<client>/deck_spec.yaml)")
+    p_densify.add_argument("--output", "-o", help="출력 경로 (기본: deck_spec.yaml 덮어쓰기)")
+    p_densify.add_argument("--dry-run", action="store_true", help="변경사항만 확인하고 저장하지 않음")
+    p_densify.set_defaults(func=cmd_densify)
+
     # enrich-evidence
     p_enrich = subparsers.add_parser("enrich-evidence", help="deck_spec 불릿 evidence 자동 보강")
     p_enrich.add_argument("client_name", help="클라이언트 이름")
@@ -1191,6 +1286,7 @@ def main():
     p_full.add_argument("--enrich-evidence", action="store_true", help="검증 전 evidence/source_anchor 자동 보강")
     p_full.add_argument("--evidence-confidence", default="medium", help="--enrich-evidence 시 기본 confidence")
     p_full.add_argument("--overwrite-evidence", action="store_true", help="--enrich-evidence 시 기존 evidence도 덮어쓰기")
+    p_full.add_argument("--skip-densify-content", action="store_true", help="본문 밀도 자동 보강 단계 건너뛰기")
     p_full.add_argument("--ignore-qa-errors", action="store_true", help="QA 오류 무시하고 계속 진행")
     p_full.add_argument("--polish", action="store_true", help="QA 후 미세 편집까지 수행")
     p_full.set_defaults(func=cmd_full_pipeline)

@@ -446,6 +446,61 @@ class PPTQAChecker:
 
         return bullet_texts
 
+    def _get_spec_slide(self, slide_idx: int) -> Optional[dict]:
+        """슬라이드 번호에 대응하는 spec 슬라이드 반환"""
+        if not self.spec or "slides" not in self.spec:
+            return None
+        slides = self.spec.get("slides", [])
+        if 0 <= slide_idx - 1 < len(slides):
+            return slides[slide_idx - 1]
+        return None
+
+    @staticmethod
+    def _collect_column_bullet_texts_spec(column: dict) -> List[str]:
+        """컬럼 내 bullets + bullets block 텍스트 수집"""
+        texts: List[str] = []
+
+        def _append(items):
+            for item in items:
+                if isinstance(item, str):
+                    text = item.strip()
+                elif isinstance(item, dict):
+                    text = str(item.get("text", "")).strip()
+                else:
+                    text = ""
+                if text:
+                    texts.append(text)
+
+        _append(column.get("bullets", []))
+        for block in column.get("content_blocks", []):
+            if block.get("type") == "bullets":
+                _append(block.get("bullets", []))
+
+        return texts
+
+    @staticmethod
+    def _column_has_non_bullet_content_spec(column: dict) -> bool:
+        """컬럼에 bullets 외 콘텐츠가 있는지 검사"""
+        for block in column.get("content_blocks", []):
+            if str(block.get("type", "")).strip().lower() != "bullets":
+                return True
+        return False
+
+    def _slide_has_non_bullet_content_spec(self, spec_slide: dict) -> bool:
+        """슬라이드에 bullets 외 콘텐츠가 있는지 검사"""
+        if not spec_slide:
+            return False
+
+        for block in spec_slide.get("content_blocks", []):
+            if str(block.get("type", "")).strip().lower() != "bullets":
+                return True
+
+        for column in spec_slide.get("columns", []):
+            if self._column_has_non_bullet_content_spec(column):
+                return True
+
+        return False
+
     def _extract_rendered_bullet_texts(self, slide) -> List[str]:
         """
         렌더된 PPT에서 불릿으로 볼 텍스트 추출 (spec 미제공 시 폴백)
@@ -556,14 +611,13 @@ class PPTQAChecker:
         min_bullets = 0
         max_bullets = get_max_bullets(self.global_constraints, slide_constraints)
         layout_name = ""
+        spec_slide = self._get_spec_slide(slide_idx)
 
-        if self.spec and "slides" in self.spec:
-            slides = self.spec["slides"]
-            if 0 <= slide_idx - 1 < len(slides):
-                layout_name = slides[slide_idx - 1].get("layout", "content")
-                min_bullets, max_bullets = get_bullet_bounds(
-                    layout_name, self.global_constraints, slide_constraints
-                )
+        if spec_slide:
+            layout_name = spec_slide.get("layout", "content")
+            min_bullets, max_bullets = get_bullet_bounds(
+                layout_name, self.global_constraints, slide_constraints
+            )
 
         if self.spec:
             bullet_texts = self._extract_spec_bullet_texts(slide_idx)
@@ -600,6 +654,42 @@ class PPTQAChecker:
 
         # 불릿 수 검사
         total_bullets = len(bullet_texts)
+        if layout_name in COLUMN_LAYOUTS and spec_slide and spec_slide.get("columns"):
+            # 컬럼 레이아웃은 총합이 아닌 컬럼별 과밀/공백 중심으로 점검
+            per_column_limit = max(3, min(5, max_bullets))
+            for col_idx, col in enumerate(spec_slide.get("columns", [])):
+                col_texts = self._collect_column_bullet_texts_spec(col)
+                col_count = len(col_texts)
+                col_has_non_bullet = self._column_has_non_bullet_content_spec(col)
+
+                if col_count > per_column_limit:
+                    self.report.add_issue(QAIssue(
+                        slide_index=slide_idx,
+                        severity=Severity.WARNING,
+                        category="불릿 개수",
+                        message=f"컬럼 불릿이 {per_column_limit}개를 초과합니다 ({col_count}개)",
+                        details={
+                            "column": col_idx + 1,
+                            "count": col_count,
+                            "max": per_column_limit,
+                            "layout": layout_name,
+                        },
+                        auto_fixable=False
+                    ))
+                if col_count == 0 and not col_has_non_bullet:
+                    self.report.add_issue(QAIssue(
+                        slide_index=slide_idx,
+                        severity=Severity.WARNING,
+                        category="불릿 개수",
+                        message=f"{col_idx + 1}번 컬럼에 핵심 불릿 또는 대체 콘텐츠가 없습니다",
+                        details={
+                            "column": col_idx + 1,
+                            "layout": layout_name,
+                        },
+                        auto_fixable=False
+                    ))
+            return
+
         if max_bullets == 0 and total_bullets > 0:
             self.report.add_issue(QAIssue(
                 slide_index=slide_idx,
@@ -621,7 +711,8 @@ class PPTQAChecker:
                 auto_fixable=False
             ))
 
-        if min_bullets > 0 and total_bullets < min_bullets:
+        has_non_bullet_content = bool(spec_slide and self._slide_has_non_bullet_content_spec(spec_slide))
+        if min_bullets > 0 and total_bullets < min_bullets and not has_non_bullet_content:
             self.report.add_issue(QAIssue(
                 slide_index=slide_idx,
                 severity=Severity.WARNING,
@@ -685,6 +776,9 @@ class PPTQAChecker:
         """콘텐츠 밀도 검사"""
         total_chars = 0
         total_paragraphs = 0
+        layout_name = ""
+        if self.spec and "slides" in self.spec and 0 <= slide_idx - 1 < len(self.spec["slides"]):
+            layout_name = str(self.spec["slides"][slide_idx - 1].get("layout", "")).strip().lower()
 
         for shape in slide.shapes:
             if not shape.has_text_frame:
@@ -706,14 +800,39 @@ class PPTQAChecker:
                 auto_fixable=False
             ))
 
-        # 저밀도 검사
-        if total_chars < DENSITY_MIN_CHARS and total_paragraphs < DENSITY_MIN_PARAGRAPHS:
+        # 레이아웃별 저밀도 임계치
+        min_chars = DENSITY_MIN_CHARS
+        min_paragraphs = DENSITY_MIN_PARAGRAPHS
+        severity = Severity.INFO
+
+        if layout_name in {"content", "comparison", "two_column", "three_column"}:
+            min_chars = max(min_chars, 220)
+            min_paragraphs = max(min_paragraphs, 6)
+            severity = Severity.WARNING
+        elif layout_name in {"chart_focus", "image_focus"}:
+            min_chars = max(min_chars, 190)
+            min_paragraphs = max(min_paragraphs, 5)
+            severity = Severity.WARNING
+        elif layout_name in {"timeline", "process_flow"}:
+            min_chars = max(min_chars, 170)
+            min_paragraphs = max(min_paragraphs, 4)
+            severity = Severity.INFO
+        elif layout_name in NO_BULLET_LAYOUTS:
+            return
+
+        if total_chars < min_chars or total_paragraphs < min_paragraphs:
             self.report.add_issue(QAIssue(
                 slide_index=slide_idx,
-                severity=Severity.INFO,
+                severity=severity,
                 category="콘텐츠 밀도",
-                message=f"콘텐츠가 부족할 수 있습니다 ({total_chars}자)",
-                details={"chars": total_chars, "paragraphs": total_paragraphs},
+                message=f"콘텐츠 밀도가 낮습니다 ({total_chars}자 / {total_paragraphs}문단)",
+                details={
+                    "chars": total_chars,
+                    "paragraphs": total_paragraphs,
+                    "layout": layout_name or "unknown",
+                    "min_chars": min_chars,
+                    "min_paragraphs": min_paragraphs,
+                },
                 auto_fixable=False
             ))
 

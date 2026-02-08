@@ -254,8 +254,32 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                 ))
 
         # 4. 슬라이드 단위 불릿 개수 검증
+        # 컬럼/테이블 중심 슬라이드에서 불릿 총합 기준 오탐이 잦아 레이아웃별로 분기
         bullet_count = len(all_bullet_texts)
-        if max_bullets == 0 and bullet_count > 0:
+        has_non_bullet_blocks = _slide_has_non_bullet_content(slide)
+
+        if layout in COLUMN_LAYOUTS and columns:
+            # 컬럼 레이아웃은 "슬라이드 총합" 대신 "컬럼별 과밀" 중심으로 점검
+            per_column_limit = max(3, min(5, max_bullets))
+            for col_idx, col in enumerate(columns):
+                col_bullets = _collect_column_bullet_texts(col)
+                col_count = len(col_bullets)
+                col_has_non_bullet = _column_has_non_bullet_content(col)
+
+                if col_count > per_column_limit:
+                    issues.append(ValidationIssue(
+                        "warning",
+                        f"{slide_path}.columns[{col_idx}]",
+                        f"컬럼 불릿이 {per_column_limit}개를 초과합니다 ({col_count}개)"
+                    ))
+                if col_count == 0 and not col_has_non_bullet:
+                    issues.append(ValidationIssue(
+                        "warning",
+                        f"{slide_path}.columns[{col_idx}]",
+                        "컬럼 내 설명 불릿 또는 대체 콘텐츠(content_blocks)가 없습니다"
+                    ))
+
+        elif max_bullets == 0 and bullet_count > 0:
             issues.append(ValidationIssue(
                 "warning",
                 slide_path,
@@ -268,7 +292,8 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                     slide_path,
                     f"불릿이 {max_bullets}개를 초과합니다 ({bullet_count}개)"
                 ))
-            if bullet_count < min_bullets:
+            # 테이블/차트/콜아웃 등 대체 콘텐츠가 있으면 최소 불릿 규칙 완화
+            if bullet_count < min_bullets and not has_non_bullet_blocks:
                 issues.append(ValidationIssue(
                     "warning",
                     slide_path,
@@ -456,6 +481,47 @@ def _collect_slide_bullet_texts(slide: dict) -> List[str]:
             _append_bullets(block.get("bullets", []))
 
     return texts
+
+
+def _collect_column_bullet_texts(column: dict) -> List[str]:
+    """컬럼 내 bullets + content_blocks(bullets) 텍스트 수집"""
+    texts: List[str] = []
+
+    def _append(items):
+        for bullet in items:
+            if isinstance(bullet, str):
+                text = bullet.strip()
+            elif isinstance(bullet, dict):
+                text = str(bullet.get("text", "")).strip()
+            else:
+                text = ""
+            if text:
+                texts.append(text)
+
+    _append(column.get("bullets", []))
+    for block in column.get("content_blocks", []):
+        if block.get("type") == "bullets":
+            _append(block.get("bullets", []))
+    return texts
+
+
+def _column_has_non_bullet_content(column: dict) -> bool:
+    """컬럼 내 bullets 외 콘텐츠 존재 여부"""
+    for block in column.get("content_blocks", []):
+        if str(block.get("type", "")).strip().lower() != "bullets":
+            return True
+    return False
+
+
+def _slide_has_non_bullet_content(slide: dict) -> bool:
+    """슬라이드 내 bullets 외 콘텐츠 블록 존재 여부"""
+    for block in slide.get("content_blocks", []):
+        if str(block.get("type", "")).strip().lower() != "bullets":
+            return True
+    for col in slide.get("columns", []):
+        if _column_has_non_bullet_content(col):
+            return True
+    return False
 
 
 def _append_content_block_text(chunks: List[str], block: dict):

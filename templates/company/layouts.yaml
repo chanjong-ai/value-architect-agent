@@ -25,7 +25,7 @@ layout_map:
       centered: true
 
   section_divider:
-    slide_layout_index: 5
+    slide_layout_index: 16
     description: "섹션 구분 슬라이드 (큰 제목 중앙 정렬)"
     placeholders:
       title: "TITLE"
@@ -34,7 +34,7 @@ layout_map:
       centered: true
 
   thank_you:
-    slide_layout_index: 5
+    slide_layout_index: 35
     description: "마무리/감사 슬라이드"
     placeholders:
       title: "TITLE"
@@ -46,7 +46,7 @@ layout_map:
   # 컨텐츠 레이아웃
   # =========================================================================
   exec_summary:
-    slide_layout_index: 1
+    slide_layout_index: 21
     description: "Executive Summary - 제목 + 거버닝 메시지 + 불릿"
     placeholders:
       title: "TITLE"
@@ -56,7 +56,7 @@ layout_map:
       bullets_range: [3, 6]
 
   content:
-    slide_layout_index: 1
+    slide_layout_index: 21
     description: "일반 컨텐츠 슬라이드"
     placeholders:
       title: "TITLE"
@@ -67,7 +67,7 @@ layout_map:
       supports_content_blocks: true
 
   appendix:
-    slide_layout_index: 1
+    slide_layout_index: 21
     description: "부록 슬라이드"
     placeholders:
       title: "TITLE"
@@ -80,7 +80,7 @@ layout_map:
   # 컬럼 기반 레이아웃
   # =========================================================================
   two_column:
-    slide_layout_index: 1
+    slide_layout_index: 23
     description: "2컬럼 레이아웃 (좌우 분할)"
     placeholders:
       title: "TITLE"
@@ -92,7 +92,7 @@ layout_map:
       supports_content_blocks: true
 
   three_column:
-    slide_layout_index: 1
+    slide_layout_index: 24
     description: "3컬럼 레이아웃"
     placeholders:
       title: "TITLE"
@@ -102,7 +102,7 @@ layout_map:
       bullets_per_column: [2, 3]
 
   comparison:
-    slide_layout_index: 1
+    slide_layout_index: 23
     description: "비교 레이아웃 (As-Is / To-Be)"
     placeholders:
       title: "TITLE"
@@ -117,7 +117,7 @@ layout_map:
   # 시각화 중심 레이아웃
   # =========================================================================
   chart_focus:
-    slide_layout_index: 1
+    slide_layout_index: 21
     description: "차트 중심 슬라이드 (왼쪽 차트 + 오른쪽 불릿)"
     placeholders:
       title: "TITLE"
@@ -129,7 +129,7 @@ layout_map:
       bullets_range: [0, 4]
 
   image_focus:
-    slide_layout_index: 1
+    slide_layout_index: 21
     description: "이미지 중심 슬라이드"
     placeholders:
       title: "TITLE"
@@ -143,7 +143,7 @@ layout_map:
   # 프로세스/타임라인 레이아웃
   # =========================================================================
   timeline:
-    slide_layout_index: 1
+    slide_layout_index: 20
     description: "타임라인/로드맵 슬라이드"
     placeholders:
       title: "TITLE"
@@ -154,7 +154,7 @@ layout_map:
       bullets_as_phases: true
 
   process_flow:
-    slide_layout_index: 1
+    slide_layout_index: 20
     description: "프로세스 플로우 슬라이드"
     placeholders:
       title: "TITLE"
@@ -168,7 +168,7 @@ layout_map:
   # 특수 레이아웃
   # =========================================================================
   quote:
-    slide_layout_index: 5
+    slide_layout_index: 32
     description: "인용문 슬라이드"
     placeholders:
       title: "TITLE"

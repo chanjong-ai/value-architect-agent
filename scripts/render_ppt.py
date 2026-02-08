@@ -59,6 +59,19 @@ class DeckRenderer:
         self.layout_map = layouts.get("layout_map", {})
         self.prs: Optional[Presentation] = None
         self.asset_base_dir: Optional[Path] = None
+        render_options = tokens.get("render_options", {}) if isinstance(tokens.get("render_options", {}), dict) else {}
+        self.preserve_template_title_style = bool(render_options.get("preserve_template_title_style", False))
+        self.use_body_placeholder_for_bullets = bool(render_options.get("use_body_placeholder_for_bullets", False))
+        self.preserve_template_body_style = bool(render_options.get("preserve_template_body_style", False))
+        self.force_regular_weight = bool(render_options.get("force_regular_weight", True))
+        self.add_chrome_divider = bool(render_options.get("add_chrome_divider", True))
+        self.add_layout_chip = bool(render_options.get("add_layout_chip", True))
+
+    def _resolve_bold(self, desired: bool = False) -> bool:
+        """사용자 요청 시 전체 폰트 weight를 일반체로 강제"""
+        if self.force_regular_weight:
+            return False
+        return bool(desired)
 
     def _resolve_asset_path(self, raw_path: str) -> Optional[Path]:
         """spec 기준 상대경로를 실제 파일 경로로 해석"""
@@ -69,6 +82,24 @@ class DeckRenderer:
         if not resolved.is_absolute() and self.asset_base_dir:
             resolved = (self.asset_base_dir / resolved).resolve()
         return resolved
+
+    @staticmethod
+    def _icon_text(icon_name: str) -> str:
+        """아이콘 키를 텍스트 심볼로 매핑"""
+        icon_map = {
+            "check": "✓",
+            "checkmark": "✓",
+            "arrow": "→",
+            "up": "↑",
+            "down": "↓",
+            "star": "★",
+            "dot": "•",
+            "risk": "⚠",
+            "insight": "◆",
+            "idea": "◈",
+        }
+        key = str(icon_name or "").strip().lower()
+        return icon_map.get(key, "")
 
     @staticmethod
     def _to_number(value):
@@ -196,18 +227,19 @@ class DeckRenderer:
             for run in p.runs:
                 run.font.name = font_cfg.get("name", "Noto Sans KR")
                 run.font.size = Pt(font_cfg.get("size_pt", 12))
-                run.font.bold = font_cfg.get("bold", False)
+                run.font.bold = self._resolve_bold(font_cfg.get("bold", False))
                 run.font.color.rgb = hex_to_rgb(color)
 
     def _set_title(self, slide, title_text: str):
         """슬라이드 제목 설정"""
         if slide.shapes.title:
             slide.shapes.title.text = title_text
-            self._apply_text_style(
-                slide.shapes.title.text_frame,
-                "title",
-                "text_dark"
-            )
+            if not self.preserve_template_title_style:
+                self._apply_text_style(
+                    slide.shapes.title.text_frame,
+                    "title",
+                    "text_dark"
+                )
         else:
             # 폴백: 텍스트박스 추가
             tx = slide.shapes.add_textbox(Pt(43), Pt(20), Pt(860), Pt(50))
@@ -215,13 +247,119 @@ class DeckRenderer:
             tf.text = title_text
             self._apply_text_style(tf, "title", "text_dark")
 
+    def _set_body_placeholder_bullets(self, slide, bullets: List[Union[str, dict]]) -> bool:
+        """가능하면 BODY/OBJECT placeholder에 불릿을 채워 템플릿 스타일을 최대한 활용"""
+        if not bullets:
+            return False
+
+        target = None
+        for shape in slide.shapes:
+            if not getattr(shape, "is_placeholder", False):
+                continue
+            if not getattr(shape, "has_text_frame", False):
+                continue
+            placeholder_type = str(shape.placeholder_format.type)
+            if "BODY" in placeholder_type or "OBJECT" in placeholder_type:
+                target = shape
+                break
+
+        if not target:
+            return False
+
+        tf = target.text_frame
+        tf.clear()
+        tf.word_wrap = True
+
+        body_font_cfg = self._get_font_config("body")
+        color = self._get_color("text_dark")
+
+        for idx, bullet in enumerate(bullets):
+            if isinstance(bullet, str):
+                text = bullet
+                level = 0
+                emphasis = "normal"
+                icon = ""
+            else:
+                text = str(bullet.get("text", ""))
+                level = bullet.get("level", 0)
+                emphasis = bullet.get("emphasis", "normal")
+                icon = self._icon_text(bullet.get("icon", ""))
+
+            if icon:
+                text = f"{icon} {text}"
+
+            if idx == 0:
+                para = tf.paragraphs[0]
+            else:
+                para = tf.add_paragraph()
+            para.text = text
+            para.level = level
+            para.alignment = PP_ALIGN.LEFT
+
+            if self.preserve_template_body_style:
+                continue
+
+            for run in para.runs if para.runs else [para.add_run()]:
+                if not para.runs:
+                    run.text = text
+                run.font.name = body_font_cfg.get("name", "Noto Sans KR")
+                base_size = body_font_cfg.get("size_pt", 12)
+                if level == 1:
+                    run.font.size = Pt(base_size - 1)
+                elif level == 2:
+                    run.font.size = Pt(base_size - 2)
+                else:
+                    run.font.size = Pt(base_size)
+
+                if emphasis == "bold":
+                    run.font.bold = self._resolve_bold(True)
+                elif emphasis == "highlight":
+                    run.font.bold = self._resolve_bold(True)
+                    run.font.color.rgb = hex_to_rgb(self._get_color("primary_blue"))
+                else:
+                    run.font.bold = self._resolve_bold(body_font_cfg.get("bold", False))
+                    run.font.color.rgb = hex_to_rgb(color)
+
+        return True
+
     def _add_governing_message(self, slide, msg: str, top_pt: int = 75):
         """거버닝 메시지 추가"""
-        tx = slide.shapes.add_textbox(Pt(43), Pt(top_pt), Pt(860), Pt(40))
+        tx = slide.shapes.add_textbox(Pt(43), Pt(top_pt), Pt(860), Pt(58))
         tf = tx.text_frame
         tf.text = msg
         tf.word_wrap = True
         self._apply_text_style(tf, "governing", "text_muted")
+
+    def _add_slide_chrome(self, slide, layout_name: str):
+        """슬라이드 상단 크롬(구분선/레이아웃 칩) 추가"""
+        if not (self.add_chrome_divider or self.add_layout_chip):
+            return
+
+        if layout_name in {"cover"}:
+            return
+
+        if self.add_chrome_divider:
+            divider = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Pt(43), Pt(108), Pt(860), Pt(1.4)
+            )
+            divider.fill.solid()
+            divider.fill.fore_color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+            divider.line.fill.background()
+
+        if self.add_layout_chip and layout_name not in {"section_divider", "thank_you"}:
+            chip = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE,
+                Pt(790), Pt(72), Pt(113), Pt(24)
+            )
+            chip.fill.solid()
+            chip.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+            chip.line.fill.background()
+
+            tf = chip.text_frame
+            tf.text = str(layout_name).replace("_", " ").upper()
+            tf.word_wrap = False
+            self._apply_text_style(tf, "footnote", "dark_blue", PP_ALIGN.CENTER)
 
     def _add_bullets(
         self,
@@ -250,10 +388,15 @@ class DeckRenderer:
                 text = bullet
                 level = 0
                 emphasis = "normal"
+                icon = ""
             else:
                 text = bullet.get("text", "")
                 level = bullet.get("level", 0)
                 emphasis = bullet.get("emphasis", "normal")
+                icon = self._icon_text(bullet.get("icon", ""))
+
+            if icon:
+                text = f"{icon} {text}"
 
             # 첫 번째 불릿은 기존 paragraph 사용
             if i == 0:
@@ -285,12 +428,12 @@ class DeckRenderer:
 
                 # 강조 처리
                 if emphasis == "bold":
-                    run.font.bold = True
+                    run.font.bold = self._resolve_bold(True)
                 elif emphasis == "highlight":
-                    run.font.bold = True
+                    run.font.bold = self._resolve_bold(True)
                     run.font.color.rgb = hex_to_rgb(self._get_color("primary_blue"))
                 else:
-                    run.font.bold = font_cfg.get("bold", False)
+                    run.font.bold = self._resolve_bold(font_cfg.get("bold", False))
                     run.font.color.rgb = hex_to_rgb(color)
 
     def _add_notes(self, slide, notes: str):
@@ -353,6 +496,29 @@ class DeckRenderer:
         estimated = 28 + (total_lines * 22)
         return max(90, min(estimated, 320))
 
+    def _slide_height_pt(self) -> int:
+        """현재 프레젠테이션 슬라이드 높이(pt)"""
+        if not self.prs:
+            return 540
+        return int(self.prs.slide_height / 12700)
+
+    def _fit_block_height(
+        self,
+        current_top: int,
+        desired_height: int,
+        min_height: int,
+        bottom_margin_pt: int = 8
+    ) -> Optional[int]:
+        """
+        블록 높이를 슬라이드 높이에 맞춰 보정.
+        배치 불가능 시 None 반환.
+        """
+        slide_height_pt = self._slide_height_pt()
+        available = slide_height_pt - bottom_margin_pt - current_top
+        if available < min_height:
+            return None
+        return int(max(min_height, min(desired_height, available)))
+
     def _render_content_blocks(self, slide, content_blocks: List[dict], start_top_pt: int = 130):
         """
         content_blocks 배열 렌더링
@@ -375,9 +541,17 @@ class DeckRenderer:
             position = block.get("position", "main")
             lane = position if position in lane_tops else "main"
             current_top = lane_tops[lane]
+            custom_top = block.get("top_pt")
+            if isinstance(custom_top, (int, float)):
+                current_top = int(custom_top)
+            current_top = max(110, current_top)
+            custom_height = block.get("height_pt")
 
             # 위치에 따른 좌표 조정
-            if position == "left":
+            if isinstance(block.get("left_pt"), (int, float)) and isinstance(block.get("width_pt"), (int, float)):
+                left_pt = int(block.get("left_pt"))
+                width_pt = int(block.get("width_pt"))
+            elif position == "left":
                 left_pt, width_pt = 43, 400
             elif position == "right":
                 left_pt, width_pt = 480, 400
@@ -390,51 +564,91 @@ class DeckRenderer:
             if block_type == "bullets":
                 bullets = block.get("bullets", [])
                 block_height = self._estimate_bullet_block_height(bullets)
-                self._add_bullets(slide, bullets, left_pt, current_top, width_pt, block_height)
-                lane_tops[lane] = current_top + block_height + 18  # 다음 블록 위치
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(80, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=76)
+                if fitted_height is None:
+                    continue
+                self._add_bullets(slide, bullets, left_pt, current_top, width_pt, fitted_height)
+                lane_tops[lane] = current_top + fitted_height + 18  # 다음 블록 위치
 
             elif block_type == "table":
                 table_def = block.get("table", {})
                 rows = table_def.get("rows", [])
                 block_height = max(120, min(220, 35 + (len(rows) * 28)))
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(110, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=110)
+                if fitted_height is None:
+                    continue
                 self._render_table_placeholder(slide, table_def, left_pt, current_top, width_pt)
-                lane_tops[lane] = current_top + block_height + 18
+                lane_tops[lane] = current_top + fitted_height + 18
 
             elif block_type == "chart":
                 chart_def = block.get("chart", {})
                 block_height = 230
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(150, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=150)
+                if fitted_height is None:
+                    continue
                 self._render_chart_placeholder(slide, chart_def, left_pt, current_top, width_pt)
-                lane_tops[lane] = current_top + block_height + 18
+                lane_tops[lane] = current_top + fitted_height + 18
 
             elif block_type == "image":
                 image_def = block.get("image", {})
                 block_height = 230
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(150, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=150)
+                if fitted_height is None:
+                    continue
                 self._render_image_placeholder(slide, image_def, left_pt, current_top, width_pt)
-                lane_tops[lane] = current_top + block_height + 18
+                lane_tops[lane] = current_top + fitted_height + 18
 
             elif block_type == "quote":
                 quote_def = block.get("quote", {})
                 block_height = 120
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(90, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=90)
+                if fitted_height is None:
+                    continue
                 self._render_quote(slide, quote_def, left_pt, current_top, width_pt)
-                lane_tops[lane] = current_top + block_height + 18
+                lane_tops[lane] = current_top + fitted_height + 18
 
             elif block_type == "kpi":
                 kpi_def = block.get("kpi", {})
                 block_height = 90
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(70, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=70)
+                if fitted_height is None:
+                    continue
                 self._render_kpi(slide, kpi_def, left_pt, current_top, width_pt)
-                lane_tops[lane] = current_top + block_height + 18
+                lane_tops[lane] = current_top + fitted_height + 18
 
             elif block_type == "callout":
                 callout_def = block.get("callout", {})
                 block_height = 80
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(60, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=56)
+                if fitted_height is None:
+                    continue
                 self._render_callout(slide, callout_def, left_pt, current_top, width_pt)
-                lane_tops[lane] = current_top + block_height + 18
+                lane_tops[lane] = current_top + fitted_height + 18
 
             elif block_type == "text":
                 text = block.get("text", "")
                 block_height = 70
-                self._render_text_block(slide, text, left_pt, current_top, width_pt)
-                lane_tops[lane] = current_top + block_height + 18
+                if isinstance(custom_height, (int, float)):
+                    block_height = max(60, int(custom_height))
+                fitted_height = self._fit_block_height(current_top, block_height, min_height=54)
+                if fitted_height is None:
+                    continue
+                self._render_text_block(slide, text, left_pt, current_top, width_pt, fitted_height)
+                lane_tops[lane] = current_top + fitted_height + 18
 
             # main lane 블록은 전체 기준선을 함께 이동
             if lane == "main":
@@ -467,7 +681,7 @@ class DeckRenderer:
                 cell.text = header
                 # 헤더 스타일
                 for para in cell.text_frame.paragraphs:
-                    para.font.bold = True
+                    para.font.bold = self._resolve_bold(True)
                     para.font.size = Pt(10)
                     para.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
 
@@ -692,12 +906,13 @@ class DeckRenderer:
                 run.font.color.rgb = hex_to_rgb(self._get_color("background"))
                 run.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
                 run.font.size = Pt(12)
-                run.font.bold = True
+                run.font.bold = self._resolve_bold(True)
 
     def _render_callout(self, slide, callout_def: dict, left_pt: int, top_pt: int, width_pt: int):
         """콜아웃 렌더링"""
         text = callout_def.get("text", "")
         callout_type = callout_def.get("type", "info")
+        icon = self._icon_text(callout_def.get("icon", ""))
 
         # 타입별 색상
         type_colors = {
@@ -719,7 +934,7 @@ class DeckRenderer:
         shape.line.fill.background()
 
         tf = shape.text_frame
-        tf.text = text
+        tf.text = f"{icon} {text}".strip() if icon else text
         tf.word_wrap = True
 
         for para in tf.paragraphs:
@@ -729,9 +944,9 @@ class DeckRenderer:
                 run.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
                 run.font.size = Pt(11)
 
-    def _render_text_block(self, slide, text: str, left_pt: int, top_pt: int, width_pt: int):
+    def _render_text_block(self, slide, text: str, left_pt: int, top_pt: int, width_pt: int, height_pt: int = 50):
         """일반 텍스트 블록 렌더링"""
-        tx = slide.shapes.add_textbox(Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(50))
+        tx = slide.shapes.add_textbox(Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(height_pt))
         tf = tx.text_frame
         tf.text = text
         tf.word_wrap = True
@@ -818,11 +1033,17 @@ class DeckRenderer:
         self._set_title(slide, slide_data.get("title", ""))
         self._add_governing_message(slide, slide_data.get("governing_message", ""))
 
-        # content_blocks 우선, 없으면 bullets
+        # content_blocks + bullets 병행 지원 (밀도 높은 summary 작성)
         if slide_data.get("content_blocks"):
-            self._render_content_blocks(slide, slide_data["content_blocks"])
+            blocks = list(slide_data.get("content_blocks", []))
+            bullets = slide_data.get("bullets", [])
+            if bullets and not any(isinstance(b, dict) and b.get("type") == "bullets" for b in blocks):
+                blocks.insert(0, {"type": "bullets", "bullets": bullets})
+            self._render_content_blocks(slide, blocks)
         else:
-            self._add_bullets(slide, slide_data.get("bullets", []))
+            bullets = slide_data.get("bullets", [])
+            if not (self.use_body_placeholder_for_bullets and self._set_body_placeholder_bullets(slide, bullets)):
+                self._add_bullets(slide, bullets)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -832,11 +1053,17 @@ class DeckRenderer:
         self._set_title(slide, slide_data.get("title", ""))
         self._add_governing_message(slide, slide_data.get("governing_message", ""))
 
-        # content_blocks 우선, 없으면 bullets
+        # content_blocks + bullets 병행 지원 (표/콜아웃 + 핵심 불릿 동시 표현)
         if slide_data.get("content_blocks"):
-            self._render_content_blocks(slide, slide_data["content_blocks"])
+            blocks = list(slide_data.get("content_blocks", []))
+            bullets = slide_data.get("bullets", [])
+            if bullets and not any(isinstance(b, dict) and b.get("type") == "bullets" for b in blocks):
+                blocks.insert(0, {"type": "bullets", "bullets": bullets})
+            self._render_content_blocks(slide, blocks)
         else:
-            self._add_bullets(slide, slide_data.get("bullets", []))
+            bullets = slide_data.get("bullets", [])
+            if not (self.use_body_placeholder_for_bullets and self._set_body_placeholder_bullets(slide, bullets)):
+                self._add_bullets(slide, bullets)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -918,6 +1145,12 @@ class DeckRenderer:
                 slide, right_bullets,
                 left_pt=480, top_pt=130, width_pt=400, height_pt=330
             )
+
+        # 슬라이드 레벨 보조 블록(하단 서술 등)
+        if slide_data.get("content_blocks"):
+            extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
+            if extra_blocks:
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=430)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1014,6 +1247,12 @@ class DeckRenderer:
                     width_pt=col_width, height_pt=300
                 )
 
+        # 슬라이드 레벨 보조 블록(하단 서술 등)
+        if slide_data.get("content_blocks"):
+            extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
+            if extra_blocks:
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=430)
+
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
@@ -1042,12 +1281,18 @@ class DeckRenderer:
             tf.text = left_col.get("heading", "As-Is")
             self._apply_text_style(tf, "governing", "dark_blue")
 
-            # 불릿
-            self._add_bullets(
-                slide,
-                left_col.get("bullets", []),
-                left_pt=53, top_pt=175, width_pt=380, height_pt=280
-            )
+            # 왼쪽 컬럼: content_blocks + bullets
+            if left_col.get("content_blocks"):
+                left_blocks = [dict(block, position="left") for block in left_col.get("content_blocks", [])]
+                if left_col.get("bullets") and not any(block.get("type") == "bullets" for block in left_blocks):
+                    left_blocks.append({"type": "bullets", "position": "left", "bullets": left_col.get("bullets", [])})
+                self._render_content_blocks(slide, left_blocks, start_top_pt=175)
+            else:
+                self._add_bullets(
+                    slide,
+                    left_col.get("bullets", []),
+                    left_pt=53, top_pt=175, width_pt=380, height_pt=280
+                )
 
             # 오른쪽 (To-Be)
             right_col = columns[1]
@@ -1065,13 +1310,25 @@ class DeckRenderer:
             tf.text = right_col.get("heading", "To-Be")
             self._apply_text_style(tf, "governing", "background")
 
-            # 불릿
-            self._add_bullets(
-                slide,
-                right_col.get("bullets", []),
-                left_pt=490, top_pt=175, width_pt=380, height_pt=280,
-                color_key="background"
-            )
+            # 오른쪽 컬럼: content_blocks + bullets
+            if right_col.get("content_blocks"):
+                right_blocks = [dict(block, position="right") for block in right_col.get("content_blocks", [])]
+                if right_col.get("bullets") and not any(block.get("type") == "bullets" for block in right_blocks):
+                    right_blocks.append({"type": "bullets", "position": "right", "bullets": right_col.get("bullets", [])})
+                self._render_content_blocks(slide, right_blocks, start_top_pt=175)
+            else:
+                self._add_bullets(
+                    slide,
+                    right_col.get("bullets", []),
+                    left_pt=490, top_pt=175, width_pt=380, height_pt=280,
+                    color_key="background"
+                )
+
+        # 슬라이드 레벨 보조 블록(하단 서술 등)
+        if slide_data.get("content_blocks"):
+            extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
+            if extra_blocks:
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=430)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1101,12 +1358,40 @@ class DeckRenderer:
         if visual:
             self._render_chart_placeholder(slide, visual, chart_left, chart_top, chart_width)
 
-        # 오른쪽 불릿 (선택적)
         bullets = slide_data.get("bullets", [])
+        aux_blocks = [
+            block for block in slide_data.get("content_blocks", [])
+            if isinstance(block, dict) and block.get("type") != "chart"
+        ]
+
+        side_blocks = []
         if bullets:
-            self._add_bullets(
-                slide, bullets,
-                left_pt=bullet_left, top_pt=bullet_top, width_pt=bullet_width, height_pt=bullet_height
+            side_blocks.append({"type": "bullets", "bullets": bullets})
+        side_blocks.extend(aux_blocks)
+
+        if side_blocks:
+            # 시각 요소 옆 설명 패널
+            if bullet_width <= 280:
+                panel = slide.shapes.add_shape(
+                    MSO_SHAPE.ROUNDED_RECTANGLE,
+                    Pt(bullet_left), Pt(bullet_top), Pt(bullet_width), Pt(bullet_height)
+                )
+                panel.fill.solid()
+                panel.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+                panel.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+
+            stacked_blocks = []
+            for block in side_blocks:
+                block_copy = dict(block)
+                block_copy["position"] = "main"
+                block_copy["left_pt"] = bullet_left + 8
+                block_copy["width_pt"] = max(140, bullet_width - 16)
+                stacked_blocks.append(block_copy)
+
+            self._render_content_blocks(
+                slide,
+                stacked_blocks,
+                start_top_pt=bullet_top + 8
             )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
@@ -1136,12 +1421,39 @@ class DeckRenderer:
         if visual:
             self._render_image_placeholder(slide, visual, image_left, image_top, image_width)
 
-        # 오른쪽 불릿 (선택적)
         bullets = slide_data.get("bullets", [])
+        aux_blocks = [
+            block for block in slide_data.get("content_blocks", [])
+            if isinstance(block, dict) and block.get("type") != "image"
+        ]
+
+        side_blocks = []
         if bullets:
-            self._add_bullets(
-                slide, bullets,
-                left_pt=bullet_left, top_pt=bullet_top, width_pt=bullet_width, height_pt=bullet_height
+            side_blocks.append({"type": "bullets", "bullets": bullets})
+        side_blocks.extend(aux_blocks)
+
+        if side_blocks:
+            if bullet_width <= 280:
+                panel = slide.shapes.add_shape(
+                    MSO_SHAPE.ROUNDED_RECTANGLE,
+                    Pt(bullet_left), Pt(bullet_top), Pt(bullet_width), Pt(bullet_height)
+                )
+                panel.fill.solid()
+                panel.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+                panel.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+
+            stacked_blocks = []
+            for block in side_blocks:
+                block_copy = dict(block)
+                block_copy["position"] = "main"
+                block_copy["left_pt"] = bullet_left + 8
+                block_copy["width_pt"] = max(140, bullet_width - 16)
+                stacked_blocks.append(block_copy)
+
+            self._render_content_blocks(
+                slide,
+                stacked_blocks,
+                start_top_pt=bullet_top + 8
             )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
@@ -1209,6 +1521,11 @@ class DeckRenderer:
                 tf.word_wrap = True
                 self._apply_text_style(tf, "body", "text_dark", PP_ALIGN.CENTER)
 
+        if slide_data.get("content_blocks"):
+            extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
+            if extra_blocks:
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=392)
+
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
@@ -1259,6 +1576,11 @@ class DeckRenderer:
                 arrow_shape.fill.solid()
                 arrow_shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("primary_blue"))
                 arrow_shape.line.fill.background()
+
+        if slide_data.get("content_blocks"):
+            extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
+            if extra_blocks:
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=370)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1349,6 +1671,7 @@ class DeckRenderer:
             # 레이아웃별 렌더러 호출
             renderer = layout_renderers.get(layout_name, self._render_default)
             renderer(slide, slide_data)
+            self._add_slide_chrome(slide, layout_name)
 
         # 저장
         output_path.parent.mkdir(parents=True, exist_ok=True)

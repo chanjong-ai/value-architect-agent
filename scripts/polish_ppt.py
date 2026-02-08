@@ -56,6 +56,11 @@ def polish_ppt(
     prs = Presentation(str(input_pptx))
     tokens = load_yaml(tokens_path) if tokens_path and tokens_path.exists() else {}
 
+    render_options = tokens.get("render_options", {}) if isinstance(tokens.get("render_options", {}), dict) else {}
+    preserve_template_fonts = bool(render_options.get("preserve_template_fonts_in_polish", True))
+    preserve_template_line_spacing = bool(render_options.get("preserve_template_line_spacing_in_polish", False))
+    force_regular_weight = bool(render_options.get("force_regular_weight_in_polish", True))
+
     title_font = get_font_name(tokens, "title", "Noto Sans KR")
     governing_font = get_font_name(tokens, "governing", "Noto Sans KR")
     body_font = get_font_name(tokens, "body", "Noto Sans KR")
@@ -66,6 +71,7 @@ def polish_ppt(
         "font_updates": 0,
         "text_normalizations": 0,
         "line_spacing_updates": 0,
+        "weight_normalizations": 0,
     }
     changes = []
 
@@ -87,7 +93,7 @@ def polish_ppt(
                         target_font = footnote_font
 
                 # 본문 계열 문단 줄간격 정리
-                if target_font in (body_font, governing_font):
+                if (not preserve_template_line_spacing) and target_font in (body_font, governing_font):
                     para.line_spacing = 1.15
                     stats["line_spacing_updates"] += 1
 
@@ -96,9 +102,14 @@ def polish_ppt(
                     before_text = run.text
 
                     # 폰트 통일
-                    if before_font != target_font:
+                    if (not preserve_template_fonts) and before_font != target_font:
                         run.font.name = target_font
                         stats["font_updates"] += 1
+
+                    # 사용자 요청: 전체 일반체 강제
+                    if force_regular_weight and run.font.bold is not False:
+                        run.font.bold = False
+                        stats["weight_normalizations"] += 1
 
                     # 공백 정리
                     after_text = normalize_run_text(before_text)
@@ -161,7 +172,7 @@ def main():
 
     print(f"✓ Polished PPTX: {result['output_pptx']}")
     print(
-        "  - 폰트 변경: {font_updates}, 텍스트 정리: {text_normalizations}, 줄간격 조정: {line_spacing_updates}".format(
+        "  - 폰트 변경: {font_updates}, 텍스트 정리: {text_normalizations}, 줄간격 조정: {line_spacing_updates}, weight 정리: {weight_normalizations}".format(
             **result["stats"]
         )
     )
