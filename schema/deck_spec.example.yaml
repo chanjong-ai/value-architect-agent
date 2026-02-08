@@ -12,7 +12,7 @@ global_constraints:
   default_max_bullets: 9
   default_max_chars_per_bullet: 180
   forbidden_words: ["추정", "아마"]
-  required_sections: ["cover", "exec_summary", "timeline", "thank_you"]
+  required_sections: ["cover", "exec_summary", "thank_you"]
 
 assumptions:
   - "Public information is used unless client internal data is provided."
@@ -31,58 +31,79 @@ slides:
 
   - layout: "exec_summary"
     title: "Executive Summary"
-    governing_message: "표준 운영 기반 위에 AI 의사결정 체계를 결합해 24개월 내 성과를 창출해야 합니다"
-    bullets:
-      - text: "운영: 데이터/프로세스 표준화로 실행 리스크 축소"
-        evidence:
-          source_anchor: "sources.md#market"
-          confidence: "medium"
-      - text: "가치: KPI 단일화로 경영 의사결정 속도 향상"
-        evidence:
-          source_anchor: "sources.md#tech-trends"
-          confidence: "medium"
-      - text: "확장: 통합 플랫폼으로 신규 과제 확장 비용 절감"
-        evidence:
-          source_anchor: "sources.md#competitors"
-          confidence: "medium"
+    governing_message: "표준 운영과 AI 의사결정을 결합해 실행 속도를 높여야 합니다"
+    blocks:
+      - type: bullets
+        slot: main_bullets
+        items:
+          - text: "운영 표준화로 실행 리스크를 축소"
+            evidence:
+              source_anchor: "sources.md#market"
+              confidence: "medium"
+          - text: "KPI 단일화로 의사결정 속도 향상"
+            evidence:
+              source_anchor: "sources.md#tech-trends"
+              confidence: "medium"
+          - text: "플랫폼 통합으로 확장 비용 절감 달성"
+            evidence:
+              source_anchor: "sources.md#competitors"
+              confidence: "medium"
+      - type: action_list
+        slot: action_box
+        items:
+          - text: "100일 내 표준 KPI 확정 및 PMO 가동"
+          - text: "분기별 Value Review 체계 정례화"
 
-  - layout: "two_column"
+  - layout: "chart_insight"
     title: "Industry & Technology Context"
     governing_message: "공급망 불확실성 확대에 따라 데이터 중심 운영 전환이 필수입니다"
-    columns:
-      - heading: "산업 동인"
-        bullets:
-          - "수요 변동성 확대"
-          - "원가/환율/리드타임 불확실성 증가"
-          - "실시간 가시성 요구 강화"
-      - heading: "시사점"
-        bullets:
-          - "데이터 표준화가 AI 활용의 전제조건"
-          - "핵심 KPI 단일화 선행 필요"
-          - "계획-실행 폐루프 운영 필요"
+    blocks:
+      - type: chart
+        slot: chart_box
+        chart:
+          type: "bar_chart"
+          title: "3-Year Cumulative Value (KRW 100M)"
+          data_path: "data/value_case_3y.csv"
+          caption: "Scenario-based estimate"
+          evidence:
+            source_anchor: "sources.md#market"
+            confidence: "medium"
+      - type: bullets
+        slot: insight_box
+        items:
+          - text: "수요 변동성 확대가 계획 정확도를 저하시킴"
+          - text: "원가/환율/리드타임 리스크가 동시 발생"
+          - text: "실시간 가시성이 운영 안정성의 핵심 조건"
+      - type: action_list
+        slot: action_box
+        items:
+          - text: "월간 핵심 지표 리뷰를 정례화합니다"
+          - text: "편차 발생 시 즉시 보정 조치 시행"
 
-  - layout: "section_divider"
-    title: "Execution Blueprint"
-    governing_message: "분석 결과를 실행 가능한 아키텍처와 로드맵으로 전환합니다"
-
-  - layout: "chart_focus"
+  - layout: "kpi_cards"
     title: "Value Case"
     governing_message: "3년 내 누적 가치 창출을 통해 투자 회수 기반을 확보할 수 있습니다"
-    layout_intent:
-      emphasis: "balanced"
-      visual_position: "right"
-    visuals:
-      - type: "bar_chart"
-        title: "3-Year Cumulative Value (KRW 100M)"
-        data_path: "data/value_case_3y.csv"
-        caption: "Scenario-based estimate"
-        evidence:
-          source_anchor: "sources.md#market"
-          confidence: "medium"
-    bullets:
-      - "운영/품질 KPI 개선 효과가 2년차부터 본격 반영"
-      - "리드타임 단축과 가동률 개선이 이익률에 직결"
-      - "클라이언트 실제 데이터 반영 후 투자안 확정"
+    blocks:
+      - type: kpi_cards
+        slot: kpi_cards
+        cards:
+          - label: "Revenue Uplift"
+            value: "+8~12%"
+            comparison: "vs baseline"
+          - label: "EBITDA Margin"
+            value: "+2.1%p"
+            comparison: "year 3"
+          - label: "Inventory Turn"
+            value: "+18%"
+            comparison: "year 2"
+          - label: "Payback"
+            value: "24~30M"
+            comparison: "scenario range"
+      - type: action_list
+        slot: assumptions_box
+        items:
+          - text: "시장/정책 가정은 분기 단위로 재검증"
+          - text: "내부 데이터 확정 후 투자안 최종 승인"
 
   - layout: "thank_you"
     title: "Thank You"

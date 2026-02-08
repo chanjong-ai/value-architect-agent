@@ -27,9 +27,13 @@ try:
         BULLET_MAX_CHARS, BULLET_MAX_COUNT, BULLET_MIN_COUNT,
         BULLET_CHARS_PER_LINE, BULLET_MAX_LINES,
         TITLE_MAX_CHARS, GOVERNING_MAX_CHARS,
+        BULLET_RECOMMENDED_MIN_CHARS, BULLET_RECOMMENDED_MAX_CHARS,
+        BULLET_BLOCK_MIN_ITEMS, BULLET_BLOCK_MAX_ITEMS,
+        ACTION_LIST_MIN_ITEMS, ACTION_LIST_MAX_ITEMS,
+        GOVERNING_RECOMMENDED_MIN_CHARS, GOVERNING_RECOMMENDED_MAX_CHARS,
         NO_BULLET_LAYOUTS, COLUMN_LAYOUTS, EVIDENCE_ANCHOR_PATTERN,
         get_max_bullets, get_max_chars_per_bullet, get_forbidden_words, get_bullet_bounds,
-        get_column_bullet_limit
+        get_column_bullet_limit, normalize_layout_name, LAYOUT_REQUIRED_BLOCKS
     )
 except ImportError:
     # 폴백 상수
@@ -38,11 +42,28 @@ except ImportError:
     BULLET_MIN_COUNT = 3
     BULLET_CHARS_PER_LINE = 38
     BULLET_MAX_LINES = 4
+    BULLET_RECOMMENDED_MIN_CHARS = 18
+    BULLET_RECOMMENDED_MAX_CHARS = 110
+    BULLET_BLOCK_MIN_ITEMS = 3
+    BULLET_BLOCK_MAX_ITEMS = 5
+    ACTION_LIST_MIN_ITEMS = 2
+    ACTION_LIST_MAX_ITEMS = 3
     TITLE_MAX_CHARS = 100
     GOVERNING_MAX_CHARS = 200
+    GOVERNING_RECOMMENDED_MIN_CHARS = 28
+    GOVERNING_RECOMMENDED_MAX_CHARS = 45
     NO_BULLET_LAYOUTS = ["cover", "section_divider", "thank_you", "quote"]
     COLUMN_LAYOUTS = ["two_column", "three_column", "comparison"]
     EVIDENCE_ANCHOR_PATTERN = r"^sources\.md#[\w-]+$"
+    LAYOUT_REQUIRED_BLOCKS = {
+        "exec_summary": ["bullets", "action_list"],
+        "two_column": ["bullets", "action_list"],
+        "chart_insight": ["chart", "bullets", "action_list"],
+        "competitor_2x2": ["matrix_2x2", "bullets", "action_list"],
+        "strategy_cards": ["kpi_cards", "action_list"],
+        "timeline": ["timeline_steps", "action_list"],
+        "kpi_cards": ["kpi_cards", "action_list"],
+    }
 
     def get_max_bullets(gc=None, sc=None):
         if sc and "max_bullets" in sc:
@@ -67,12 +88,12 @@ except ImportError:
         return list(set(words))
 
     def get_bullet_bounds(layout, gc=None, sc=None):
-        layout = (layout or "").strip().lower()
+        layout = normalize_layout_name(layout)
         max_bullets = get_max_bullets(gc, sc)
         min_bullets = BULLET_MIN_COUNT
         if layout in NO_BULLET_LAYOUTS:
             return 0, 0
-        if layout in ("chart_focus", "image_focus"):
+        if layout in ("chart_focus", "image_focus", "chart_insight", "competitor_2x2", "kpi_cards"):
             return 0, min(max_bullets, 8)
         return min_bullets, max_bullets
 
@@ -80,6 +101,19 @@ except ImportError:
         if max_bullets <= 0:
             return 0
         return max(3, min(8, max_bullets))
+
+    def normalize_layout_name(layout):
+        key = str(layout or "").strip().lower()
+        return {"chart_focus": "chart_insight", "strategy_options": "strategy_cards"}.get(key, key)
+
+try:
+    from block_utils import normalize_slide_blocks, block_types_in_slide, iter_bullet_texts, governing_message_quality, bullet_quality
+except ImportError:
+    normalize_slide_blocks = None
+    block_types_in_slide = None
+    iter_bullet_texts = None
+    governing_message_quality = None
+    bullet_quality = None
 
 
 def load_yaml(path: Path):
@@ -172,17 +206,19 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
 
     for slide_idx, slide in enumerate(slides, start=1):
         slide_path = f"slides[{slide_idx-1}]"
-        layout = slide.get("layout", "content")
+        raw_layout = slide.get("layout", "content")
+        layout = normalize_layout_name(raw_layout)
         slide_constraints = slide.get("slide_constraints", {})
         columns = slide.get("columns", [])
         content_blocks = slide.get("content_blocks", [])
         top_bullets = slide.get("bullets", [])
+        blocks = normalize_slide_blocks(slide) if normalize_slide_blocks else slide.get("blocks", [])
 
         # 제약조건 계산 (global + slide override)
         min_bullets, max_bullets = get_bullet_bounds(layout, global_constraints, slide_constraints)
         max_chars = get_max_chars_per_bullet(global_constraints, slide_constraints)
         forbidden_words = get_forbidden_words(global_constraints, slide_constraints)
-        all_bullet_texts = _collect_slide_bullet_texts(slide)
+        all_bullet_texts = iter_bullet_texts(slide) if iter_bullet_texts else _collect_slide_bullet_texts(slide)
 
         # 1. 제목 길이 검사
         title = slide.get("title", "")
@@ -201,10 +237,28 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                 f"{slide_path}.governing_message",
                 f"거버닝 메시지가 {GOVERNING_MAX_CHARS}자를 초과합니다 ({len(governing)}자)"
             ))
+        if governing_message_quality:
+            gm_quality = governing_message_quality(governing)
+            if layout not in NO_BULLET_LAYOUTS and (
+                gm_quality["length"] < GOVERNING_RECOMMENDED_MIN_CHARS
+                or gm_quality["length"] > GOVERNING_RECOMMENDED_MAX_CHARS
+            ):
+                issues.append(ValidationIssue(
+                    "warning",
+                    f"{slide_path}.governing_message",
+                    f"거버닝 메시지 길이 권장 범위({GOVERNING_RECOMMENDED_MIN_CHARS}~{GOVERNING_RECOMMENDED_MAX_CHARS}자) 벗어남 ({gm_quality['length']}자)"
+                ))
+            if gm_quality.get("sentence_count", 1) > 1:
+                issues.append(ValidationIssue(
+                    "info",
+                    f"{slide_path}.governing_message",
+                    "거버닝 메시지는 단문 1문장 구성을 권장합니다"
+                ))
 
         # 3. 레이아웃 구조 검사
         has_content_blocks = isinstance(slide.get("content_blocks"), list) and len(slide.get("content_blocks", [])) > 0
-        if layout in COLUMN_LAYOUTS and len(columns) < 2 and not has_content_blocks:
+        has_blocks = isinstance(blocks, list) and len(blocks) > 0
+        if layout in COLUMN_LAYOUTS and len(columns) < 2 and not has_content_blocks and not has_blocks:
             issues.append(ValidationIssue(
                 "warning",
                 f"{slide_path}.columns",
@@ -224,7 +278,7 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
             ))
 
         # chart/image focus 최소 구조 검사
-        if layout == "chart_focus":
+        if layout in {"chart_focus", "chart_insight"}:
             has_chart = any(
                 isinstance(v, dict) and str(v.get("type", "")).lower() in {
                     "chart", "bar_chart", "line_chart", "pie_chart", "stacked_bar", "scatter"
@@ -232,6 +286,9 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                 for v in slide.get("visuals", [])
             ) or any(
                 isinstance(b, dict) and b.get("type") == "chart" for b in content_blocks
+            ) or any(
+                isinstance(b, dict) and str(b.get("type", "")).strip().lower() == "chart"
+                for b in (blocks if isinstance(blocks, list) else [])
             ) or any(
                 isinstance(v, dict) and (
                     v.get("data_inline") or v.get("data_path") or v.get("values") or v.get("series")
@@ -242,7 +299,7 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                 issues.append(ValidationIssue(
                     "warning",
                     slide_path,
-                    "chart_focus 레이아웃에는 visuals 또는 chart content_block이 필요합니다"
+                    f"{layout} 레이아웃에는 visuals 또는 chart content_block이 필요합니다"
                 ))
         if layout == "image_focus":
             has_image = any(
@@ -252,6 +309,9 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                 for v in slide.get("visuals", [])
             ) or any(
                 isinstance(b, dict) and b.get("type") == "image" for b in content_blocks
+            ) or any(
+                isinstance(b, dict) and str(b.get("type", "")).strip().lower() == "image"
+                for b in (blocks if isinstance(blocks, list) else [])
             )
             if not has_image:
                 issues.append(ValidationIssue(
@@ -259,6 +319,32 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                     slide_path,
                     "image_focus 레이아웃에는 visuals 또는 image content_block이 필요합니다"
                 ))
+
+        # 3b. 신규 practical layout 필수 블록 검사
+        required_blocks = LAYOUT_REQUIRED_BLOCKS.get(layout, [])
+        if required_blocks:
+            available_types = set(block_types_in_slide(slide) if block_types_in_slide else _collect_slide_block_types(slide))
+            normalized_available = set()
+            for t in available_types:
+                if t == "chart_focus":
+                    normalized_available.add("chart_insight")
+                normalized_available.add(t)
+
+            for req in required_blocks:
+                if req == "bullets":
+                    has_req = bool(all_bullet_texts)
+                elif req == "kpi_cards":
+                    has_req = bool({"kpi_cards", "kpi"} & normalized_available)
+                elif req == "timeline_steps":
+                    has_req = bool({"timeline_steps", "timeline"} & normalized_available) or (layout == "timeline" and bool(all_bullet_texts))
+                else:
+                    has_req = req in normalized_available
+                if not has_req:
+                    issues.append(ValidationIssue(
+                        "warning",
+                        slide_path,
+                        f"{layout} 레이아웃 필수 블록 누락: {req}"
+                    ))
 
         # 4. 슬라이드 단위 불릿 개수 검증
         # 컬럼/테이블 중심 슬라이드에서 불릿 총합 기준 오탐이 잦아 레이아웃별로 분기
@@ -347,6 +433,62 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                             f"{slide_path}.content_blocks[{block_idx}].bullets", forbidden_words, check_count=False
                         )
 
+            # 4d. 신규 blocks 내 bullets/action_list 검사
+            if isinstance(blocks, list):
+                cai_keywords = ("원인", "영향", "시사점")
+                cai_count = 0
+                for b_idx, block in enumerate(blocks):
+                    if not isinstance(block, dict):
+                        continue
+                    b_type = str(block.get("type", "")).strip().lower()
+                    if b_type not in {"bullets", "action_list"}:
+                        continue
+                    items = block.get("items", []) if isinstance(block.get("items", []), list) else []
+                    if items:
+                        _validate_bullets(
+                            issues,
+                            items,
+                            max_bullets,
+                            max_chars,
+                            f"{slide_path}.blocks[{b_idx}].items",
+                            forbidden_words,
+                            check_count=False,
+                        )
+                        if b_type == "bullets":
+                            if len(items) < BULLET_BLOCK_MIN_ITEMS or len(items) > BULLET_BLOCK_MAX_ITEMS:
+                                issues.append(ValidationIssue(
+                                    "warning",
+                                    f"{slide_path}.blocks[{b_idx}].items",
+                                    f"bullets 블록 아이템 수 권장 범위({BULLET_BLOCK_MIN_ITEMS}~{BULLET_BLOCK_MAX_ITEMS}) 벗어남 ({len(items)}개)"
+                                ))
+                        elif b_type == "action_list":
+                            if len(items) < ACTION_LIST_MIN_ITEMS or len(items) > ACTION_LIST_MAX_ITEMS:
+                                issues.append(ValidationIssue(
+                                    "warning",
+                                    f"{slide_path}.blocks[{b_idx}].items",
+                                    f"action_list 아이템 수 권장 범위({ACTION_LIST_MIN_ITEMS}~{ACTION_LIST_MAX_ITEMS}) 벗어남 ({len(items)}개)"
+                                ))
+                        if bullet_quality:
+                            for i_idx, it in enumerate(items):
+                                txt = it if isinstance(it, str) else it.get("text", "")
+                                q = bullet_quality(txt)
+                                if q["length"] < BULLET_RECOMMENDED_MIN_CHARS or q["length"] > BULLET_RECOMMENDED_MAX_CHARS:
+                                    issues.append(ValidationIssue(
+                                        "info",
+                                        f"{slide_path}.blocks[{b_idx}].items[{i_idx}]",
+                                        f"불릿 길이 권장 범위({BULLET_RECOMMENDED_MIN_CHARS}~{BULLET_RECOMMENDED_MAX_CHARS}자) 벗어남 ({q['length']}자)"
+                                    ))
+                                lowered = str(txt or "")
+                                if all(k in lowered for k in cai_keywords):
+                                    cai_count += 1
+
+                if cai_count > 1:
+                    issues.append(ValidationIssue(
+                        "info",
+                        f"{slide_path}.blocks",
+                        "원인→영향→시사점 구조 불릿은 슬라이드당 1개를 권장합니다"
+                    ))
+
         # 5. Evidence 검사 (모든 슬라이드)
         # 5a. bullets 내 evidence
         for bullet_idx, bullet in enumerate(slide.get("bullets", [])):
@@ -396,6 +538,34 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
                 evidence_pattern,
                 f"{slide_path}.content_blocks[{block_idx}]"
             )
+
+        # 5d-2. 신규 blocks nested evidence 검사
+        for block_idx, block in enumerate(blocks if isinstance(blocks, list) else []):
+            if not isinstance(block, dict):
+                continue
+            if "evidence" in block:
+                _validate_evidence(
+                    issues,
+                    block.get("evidence"),
+                    evidence_pattern,
+                    f"{slide_path}.blocks[{block_idx}].evidence"
+                )
+            for item_idx, item in enumerate(block.get("items", [])):
+                if isinstance(item, dict) and "evidence" in item:
+                    _validate_evidence(
+                        issues,
+                        item.get("evidence"),
+                        evidence_pattern,
+                        f"{slide_path}.blocks[{block_idx}].items[{item_idx}].evidence"
+                    )
+            if isinstance(block.get("chart"), dict):
+                _validate_visual_evidence(
+                    issues, block.get("chart"), evidence_pattern, f"{slide_path}.blocks[{block_idx}].chart"
+                )
+            if isinstance(block.get("image"), dict):
+                _validate_visual_evidence(
+                    issues, block.get("image"), evidence_pattern, f"{slide_path}.blocks[{block_idx}].image"
+                )
 
         # 5e. footnotes evidence
         for footnote_idx, footnote in enumerate(slide.get("footnotes", [])):
@@ -457,6 +627,24 @@ def _collect_slide_text(slide: dict) -> str:
     for block in slide.get("content_blocks", []):
         _append_content_block_text(chunks, block)
 
+    for block in slide.get("blocks", []) if isinstance(slide.get("blocks", []), list) else []:
+        if not isinstance(block, dict):
+            continue
+        b_type = str(block.get("type", "")).strip().lower()
+        if b_type in {"headline", "key_message", "text"}:
+            chunks.append(str(block.get("text", "")))
+        elif b_type in {"bullets", "action_list"}:
+            for item in block.get("items", []):
+                if isinstance(item, str):
+                    chunks.append(item)
+                elif isinstance(item, dict):
+                    chunks.append(str(item.get("text", "")))
+        elif b_type == "kpi_cards":
+            for card in block.get("cards", []):
+                if isinstance(card, dict):
+                    chunks.append(str(card.get("label", "")))
+                    chunks.append(str(card.get("value", "")))
+
     return " ".join(c for c in chunks if c)
 
 
@@ -487,7 +675,39 @@ def _collect_slide_bullet_texts(slide: dict) -> List[str]:
         if block.get("type") == "bullets":
             _append_bullets(block.get("bullets", []))
 
+    for block in slide.get("blocks", []) if isinstance(slide.get("blocks", []), list) else []:
+        if not isinstance(block, dict):
+            continue
+        b_type = str(block.get("type", "")).strip().lower()
+        if b_type in {"bullets", "action_list"}:
+            _append_bullets(block.get("items", []))
+
     return texts
+
+
+def _collect_slide_block_types(slide: dict) -> List[str]:
+    types: List[str] = []
+    for block in slide.get("blocks", []) if isinstance(slide.get("blocks", []), list) else []:
+        if isinstance(block, dict):
+            b_type = str(block.get("type", "")).strip().lower()
+            if b_type:
+                types.append(b_type)
+    for block in slide.get("content_blocks", []) if isinstance(slide.get("content_blocks", []), list) else []:
+        if isinstance(block, dict):
+            b_type = str(block.get("type", "")).strip().lower()
+            if b_type:
+                types.append(b_type)
+    if isinstance(slide.get("bullets"), list) and slide.get("bullets"):
+        types.append("bullets")
+    if isinstance(slide.get("columns"), list) and slide.get("columns"):
+        types.append("columns")
+    out: List[str] = []
+    seen = set()
+    for t in types:
+        if t and t not in seen:
+            seen.add(t)
+            out.append(t)
+    return out
 
 
 def _collect_column_bullet_texts(column: dict) -> List[str]:
@@ -524,6 +744,11 @@ def _slide_has_non_bullet_content(slide: dict) -> bool:
     """슬라이드 내 bullets 외 콘텐츠 블록 존재 여부"""
     for block in slide.get("content_blocks", []):
         if str(block.get("type", "")).strip().lower() != "bullets":
+            return True
+    for block in slide.get("blocks", []) if isinstance(slide.get("blocks", []), list) else []:
+        if not isinstance(block, dict):
+            continue
+        if str(block.get("type", "")).strip().lower() not in {"bullets", "action_list"}:
             return True
     for col in slide.get("columns", []):
         if _column_has_non_bullet_content(col):

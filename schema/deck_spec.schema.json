@@ -142,6 +142,10 @@
           "enum": [
             "cover",
             "exec_summary",
+            "kpi_cards",
+            "chart_insight",
+            "competitor_2x2",
+            "strategy_cards",
             "section_divider",
             "content",
             "two_column",
@@ -203,6 +207,13 @@
           "minLength": 1,
           "maxLength": 200,
           "description": "핵심 메시지 - 슬라이드의 'So What'"
+        },
+        "blocks": {
+          "type": "array",
+          "description": "슬라이드 블록 구조 (권장 canonical 입력)",
+          "items": {
+            "$ref": "#/$defs/slide_block"
+          }
         },
         "content_blocks": {
           "type": "array",
@@ -310,6 +321,104 @@
             }
           },
           "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "slide_block": {
+      "type": "object",
+      "description": "슬라이드 블록 구조 정의 (레이아웃 슬롯에 매핑)",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "headline",
+            "key_message",
+            "bullets",
+            "action_list",
+            "kpi_cards",
+            "chart",
+            "matrix_2x2",
+            "timeline_steps",
+            "text",
+            "callout",
+            "image"
+          ]
+        },
+        "slot": {
+          "type": "string",
+          "description": "layouts.yaml의 슬롯 이름"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 1200
+        },
+        "items": {
+          "type": "array",
+          "description": "bullets/action_list 항목",
+          "items": {
+            "$ref": "#/$defs/bullet"
+          },
+          "maxItems": 12
+        },
+        "cards": {
+          "type": "array",
+          "description": "kpi_cards 카드 항목",
+          "items": {
+            "$ref": "#/$defs/kpi_def"
+          },
+          "maxItems": 8
+        },
+        "chart": {
+          "$ref": "#/$defs/visual"
+        },
+        "matrix_2x2": {
+          "type": "object",
+          "properties": {
+            "x_axis": { "type": "string" },
+            "y_axis": { "type": "string" },
+            "quadrants": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "points": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "x": { "type": "number", "minimum": 0, "maximum": 100 },
+                  "y": { "type": "number", "minimum": 0, "maximum": 100 },
+                  "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+                },
+                "required": ["label", "x", "y"]
+              },
+              "maxItems": 20
+            }
+          },
+          "additionalProperties": true
+        },
+        "timeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "phase": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            },
+            "required": ["phase", "title"]
+          },
+          "maxItems": 8
+        },
+        "image": {
+          "$ref": "#/$defs/visual"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
         }
       },
       "additionalProperties": true

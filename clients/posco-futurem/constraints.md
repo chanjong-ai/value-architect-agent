@@ -1,16 +1,15 @@
 # 제약사항 및 스타일 가이드 (포스코퓨처엠 ERP 전략)
 
 ## 덱 스타일
-- 템플릿: templates/company/base-template.pptx
-- 레퍼런스 톤/밀도: templates/company/additional-template.pptx
+- 렌더 기준: layout-driven (`templates/company/layouts.yaml` + `templates/company/tokens.yaml`)
 - 슬라이드 비율: 16:9
 - 브랜드 색상: 블루 계열 + 중립 그레이 (토큰 기준)
 
 ## 타이포그래피
-- 제목: 굵고 짧게 (1줄 권장)
+- 제목: Noto Sans KR Regular 24pt (1줄 권장)
 - 거버닝 메시지: 1문장, 결론 우선 (So What 명확)
 - 본문: 핵심 불릿 3~5개, 정량/근거 연결
-- 각주: 출처/가정 명시
+- 각주: Noto Sans KR Regular 9pt, 출처/가정 명시
 
 ## 밀도 규칙
 - 본문 슬라이드: 불릿 3~5개

@@ -22,14 +22,26 @@ deck_cli.py - 통합 CLI for Value Architect Agent
 
 import argparse
 import json
-import re
-import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List
 
 import yaml
+
+try:
+    from block_utils import iter_bullet_texts, normalize_layout_name as normalize_layout_name_blocks
+except ImportError:
+    iter_bullet_texts = None
+
+    def normalize_layout_name_blocks(layout: str) -> str:
+        key = str(layout or "").strip().lower()
+        return {"chart_focus": "chart_insight", "strategy_options": "strategy_cards"}.get(key, key)
+
+try:
+    from client_bootstrap import create_client_pack
+except ImportError:
+    create_client_pack = None
 
 # Repository root detection
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -84,60 +96,22 @@ def get_all_clients() -> list:
     ]
 
 
-def slugify(text: str) -> str:
-    value = re.sub(r"[^\w\s-]", "", (text or "").strip().lower())
-    value = re.sub(r"[\s]+", "-", value).strip("-_")
-    return value or "topic"
-
-
-def resolve_new_client_name(client_name: str, topic: str = "", new_folder_if_exists: bool = False) -> str:
+def resolve_template_path(template_arg: Optional[str], template_mode: str = "layout") -> Path:
     """
-    동일 고객사/다른 주제 대응:
-    - 기본: 기존 동작 유지 (중복 시 에러)
-    - 옵션 사용 시: <client>--<topic-slug>--<timestamp> 형태로 신규 폴더 생성
-    """
-    dest = get_client_dir(client_name)
-    if not dest.exists():
-        return client_name
-
-    if not new_folder_if_exists and not topic:
-        return client_name
-
-    suffix_parts = []
-    if topic:
-        suffix_parts.append(slugify(topic)[:32])
-    suffix_parts.append(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    return f"{client_name}--{'-'.join(suffix_parts)}"
-
-
-def resolve_template_path(template_arg: Optional[str], template_mode: str = "auto") -> Path:
-    """
-    템플릿 선택 정책:
+    템플릿 선택 정책 (layout-driven 기본):
     - custom(--template) 우선
-    - auto: additional-template 우선, 없으면 base-template, 둘 다 없으면 blank fallback
-    - additional/base/blank 명시 모드 지원
+    - layout/blank/auto: 내부 blank deck 모드 사용 (템플릿 파일 불필요)
     """
     if template_arg:
         return Path(template_arg).resolve()
 
-    additional = TEMPLATES_DIR / "additional-template.pptx"
-    base = TEMPLATES_DIR / "base-template.pptx"
-    mode = (template_mode or "auto").strip().lower()
+    blank_sentinel = TEMPLATES_DIR / "__blank__.pptx"
+    mode = (template_mode or "layout").strip().lower()
 
-    if mode == "additional":
-        return additional if additional.exists() else base
-    if mode == "base":
-        return base
-    if mode == "blank":
-        # 존재하지 않는 경로를 넘기면 render_ppt에서 blank deck fallback 사용
-        return TEMPLATES_DIR / "__blank__.pptx"
+    if mode in {"layout", "blank", "auto", ""}:
+        return blank_sentinel
 
-    # auto
-    if additional.exists():
-        return additional
-    if base.exists():
-        return base
-    return TEMPLATES_DIR / "__blank__.pptx"
+    return blank_sentinel
 
 
 def _bullet_text(item) -> str:
@@ -151,6 +125,9 @@ def _bullet_text(item) -> str:
 
 def _collect_slide_bullets(slide: dict) -> List[str]:
     """슬라이드의 bullets/columns/content_blocks에서 불릿 텍스트를 수집"""
+    if iter_bullet_texts:
+        return iter_bullet_texts(slide)
+
     texts: List[str] = []
 
     # Top-level bullets
@@ -193,113 +170,33 @@ def cmd_new(args) -> int:
     client_name = args.client_name.strip()
     topic = getattr(args, "topic", "") or ""
 
-    if not client_name:
-        print("Error: 클라이언트 이름이 비어있습니다.")
+    if not create_client_pack:
+        print("Error: client_bootstrap 모듈을 불러올 수 없습니다.")
         return 1
 
-    # 이름 검증 (알파벳, 숫자, 하이픈, 언더스코어만 허용)
-    if not re.match(r'^[a-zA-Z0-9_-]+$', client_name):
-        print(f"Error: 클라이언트 이름은 영문, 숫자, 하이픈, 언더스코어만 가능합니다: {client_name}")
+    try:
+        created = create_client_pack(
+            clients_dir=CLIENTS_DIR,
+            template_dir=TEMPLATE_DIR,
+            client_name=client_name,
+            topic=topic,
+            new_folder_if_exists=bool(getattr(args, "new_folder_if_exists", False)),
+            topic_creates_variant=True,
+            update_brief_topic=True,
+        )
+    except ValueError as e:
+        print(f"Error: {e}")
+        return 1
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return 1
+    except FileExistsError as e:
+        print(f"Error: {e}")
+        print("Hint: 같은 고객사의 다른 주제로 생성하려면 --topic <주제> 또는 --new-folder-if-exists 옵션을 사용하세요.")
         return 1
 
-    resolved_name = resolve_new_client_name(
-        client_name=client_name,
-        topic=topic,
-        new_folder_if_exists=bool(getattr(args, "new_folder_if_exists", False)),
-    )
-    dest = get_client_dir(resolved_name)
-
-    if dest.exists():
-        print(f"Error: 이미 존재하는 클라이언트입니다: {dest}")
-        print("Hint: 같은 고객사의 다른 주제로 생성하려면 --topic <주제> --new-folder-if-exists 옵션을 사용하세요.")
-        return 1
-
-    if not TEMPLATE_DIR.exists():
-        print(f"Error: 템플릿 폴더를 찾을 수 없습니다: {TEMPLATE_DIR}")
-        return 1
-
-    # 템플릿 복사
-    shutil.copytree(TEMPLATE_DIR, dest)
-
-    # deck_spec.yaml 초기화 (날짜 자동 설정)
-    spec_path = dest / "deck_spec.yaml"
-    if spec_path.exists():
-        spec = load_yaml(spec_path)
-        spec["client_meta"] = spec.get("client_meta", {})
-        spec["client_meta"]["client_name"] = resolved_name
-        if not str(spec["client_meta"].get("industry", "")).strip():
-            spec["client_meta"]["industry"] = "TBD"
-        spec["client_meta"]["date"] = datetime.now().strftime("%Y-%m-%d")
-        if not str(spec["client_meta"].get("audience", "")).strip():
-            spec["client_meta"]["audience"] = "Executive"
-        if not str(spec["client_meta"].get("language", "")).strip():
-            spec["client_meta"]["language"] = "ko"
-        if topic:
-            spec["client_meta"]["objective"] = topic
-        elif not str(spec["client_meta"].get("objective", "")).strip():
-            spec["client_meta"]["objective"] = "핵심 과제 정의 필요"
-
-        spec["global_constraints"] = spec.get("global_constraints", {})
-        spec["global_constraints"].setdefault("max_slides", 35)
-        spec["global_constraints"].setdefault("default_max_bullets", 9)
-        spec["global_constraints"].setdefault("default_max_chars_per_bullet", 180)
-        spec["global_constraints"].setdefault("forbidden_words", ["아마", "대충"])
-        spec["global_constraints"].setdefault("required_sections", ["cover", "exec_summary", "thank_you"])
-
-        if not isinstance(spec.get("slides"), list) or not spec.get("slides"):
-            spec["slides"] = [
-                {
-                    "layout": "cover",
-                    "title": "고객사 전략 제언",
-                    "subtitle": "프로젝트 킥오프 버전",
-                    "governing_message": "핵심 의사결정 질문을 명확히 정의하고, 근거 기반 실행 프레임을 설계합니다.",
-                    "metadata": {"section": "Cover", "source_refs": ["sources.md#client"]},
-                },
-                {
-                    "layout": "exec_summary",
-                    "title": "Executive Summary",
-                    "governing_message": "초기 진단 결과를 바탕으로 우선순위 과제를 정의하고 검증 가능한 가치 가설을 제시합니다.",
-                    "bullets": [
-                        {
-                            "text": "핵심 질문: 이번 과제에서 경영진이 반드시 결정해야 할 항목을 3개 이내로 정리합니다.",
-                            "icon": "insight",
-                            "evidence": {"source_anchor": "sources.md#client", "confidence": "medium"},
-                        },
-                        {
-                            "text": "핵심 가설: 성과 영향도가 큰 과제를 먼저 선정하고 단기·중기 KPI를 함께 정의합니다.",
-                            "icon": "check",
-                            "evidence": {"source_anchor": "sources.md#market", "confidence": "medium"},
-                        },
-                        {
-                            "text": "실행 원칙: 실행 오너·일정·검증 기준을 한 장표에서 연결해 의사결정 속도를 높입니다.",
-                            "icon": "arrow",
-                            "evidence": {"source_anchor": "sources.md#client", "confidence": "medium"},
-                        },
-                    ],
-                    "layout_intent": {"emphasis": "content", "content_density": "dense"},
-                    "metadata": {"section": "Executive", "source_refs": ["sources.md#market", "sources.md#client"]},
-                },
-                {
-                    "layout": "thank_you",
-                    "title": "결론 및 다음 단계",
-                    "governing_message": "상세 리서치와 페이지 블루프린트를 반영해 본 보고서를 고도화합니다.",
-                    "metadata": {"section": "Closing", "source_refs": ["sources.md#client"]},
-                },
-            ]
-        save_yaml(spec_path, spec)
-
-    # brief에 topic 힌트 추가
-    if topic:
-        brief_path = dest / "brief.md"
-        if brief_path.exists():
-            brief_text = read_text(brief_path)
-            if "- Why now?" in brief_text and topic not in brief_text:
-                brief_text = brief_text.replace(
-                    "- Why now? (trigger / pain points / strategic agenda)",
-                    f"- Why now? (trigger / pain points / strategic agenda)\\n- Topic focus: {topic}",
-                    1,
-                )
-                brief_path.write_text(brief_text, encoding="utf-8")
+    resolved_name = created.get("resolved_name", client_name)
+    dest = Path(created.get("dest", str(get_client_dir(resolved_name))))
 
     print(f"✓ 클라이언트 팩 생성 완료: {dest}")
     if resolved_name != client_name:
@@ -428,14 +325,14 @@ def validate_business_rules(spec: dict) -> list:
     warnings = []
     global_constraints = spec.get("global_constraints", {})
     no_bullet_layouts = {"cover", "section_divider", "thank_you", "quote"}
-    visual_bullet_layouts = {"chart_focus", "image_focus"}
+    visual_bullet_layouts = {"chart_focus", "image_focus", "chart_insight", "competitor_2x2", "kpi_cards"}
     chars_per_line = 38
 
     slides = spec.get("slides", [])
 
     for i, slide in enumerate(slides, 1):
         bullet_texts = _collect_slide_bullets(slide)
-        layout = slide.get("layout", "")
+        layout = normalize_layout_name_blocks(slide.get("layout", ""))
         slide_constraints = slide.get("slide_constraints", {})
 
         max_bullets = slide_constraints.get(
@@ -505,7 +402,7 @@ def cmd_render(args) -> int:
     # 템플릿 경로
     template_path = resolve_template_path(
         template_arg=getattr(args, "template", None),
-        template_mode=getattr(args, "template_mode", "auto"),
+        template_mode=getattr(args, "template_mode", "layout"),
     )
     tokens_path = TEMPLATES_DIR / "tokens.yaml"
     layouts_path = TEMPLATES_DIR / "layouts.yaml"
@@ -526,7 +423,10 @@ def cmd_render(args) -> int:
     if template_path.exists():
         print(f"ℹ template: {template_path.name}")
     else:
-        print(f"ℹ template: blank fallback mode ({template_path})")
+        if template_path.name == "__blank__.pptx":
+            print("ℹ template: layout-driven blank deck mode (no PPTX template file)")
+        else:
+            print(f"ℹ template: blank fallback mode ({template_path})")
 
     # 렌더링 실행
     try:
@@ -593,6 +493,7 @@ def cmd_qa(args) -> int:
 
     spec_path = client_dir / "deck_spec.yaml"
     tokens_path = TEMPLATES_DIR / "tokens.yaml"
+    layouts_path = TEMPLATES_DIR / "layouts.yaml"
     sources_path = client_dir / "sources.md"
 
     # QA 실행
@@ -602,7 +503,8 @@ def cmd_qa(args) -> int:
             pptx_path=str(pptx_path),
             spec_path=str(spec_path) if spec_path.exists() else None,
             tokens_path=str(tokens_path) if tokens_path.exists() else None,
-            sources_path=str(sources_path) if sources_path.exists() else None
+            sources_path=str(sources_path) if sources_path.exists() else None,
+            layouts_path=str(layouts_path) if layouts_path.exists() else None
         )
         report = checker.run_all_checks()
 
@@ -630,6 +532,8 @@ def cmd_qa(args) -> int:
             cmd.extend(["--spec", str(spec_path)])
         if tokens_path.exists():
             cmd.extend(["--tokens", str(tokens_path)])
+        if layouts_path.exists():
+            cmd.extend(["--layouts", str(layouts_path)])
         if sources_path.exists():
             cmd.extend(["--sources", str(sources_path)])
         if args.output:
@@ -857,9 +761,41 @@ def cmd_full_pipeline(args) -> int:
     if qa_result != 0:
         print("\n⚠ QA 검사에서 이슈가 발견되었습니다.")
         if not args.ignore_qa_errors:
-            print("  - 이슈를 수정 후 다시 실행하거나")
-            print("  - --ignore-qa-errors 옵션으로 경고 무시 가능")
-            return 1
+            retries = max(0, int(getattr(args, "qa_auto_fix_retries", 2) or 0))
+            if retries > 0:
+                print(f"  - 자동 수정 루프 시작 (최대 {retries}회): densify → validate → render → qa")
+            for attempt in range(1, retries + 1):
+                print(f"\n[Auto-Fix {attempt}/{retries}] 본문 밀도/구조 자동 보정 중...")
+                densify_args = argparse.Namespace(
+                    client_name=client_name,
+                    spec=None,
+                    output=None,
+                    dry_run=False,
+                )
+                if cmd_densify(densify_args) != 0:
+                    print("  ✗ 자동 보정(densify) 실패")
+                    break
+
+                print("[Auto-Fix] 재검증/재렌더링/재QA 실행...")
+                args.schema = None
+                if cmd_validate(args) != 0:
+                    print("  ✗ 자동 보정 후 validate 실패")
+                    break
+                args.output = None
+                if cmd_render(args) != 0:
+                    print("  ✗ 자동 보정 후 render 실패")
+                    break
+                args.pptx = None
+                args.output = None
+                qa_result = cmd_qa(args)
+                if qa_result == 0:
+                    print("  ✓ 자동 수정 루프로 QA 통과")
+                    break
+
+            if qa_result != 0:
+                print("  - 자동 수정 후에도 QA 이슈가 남아 파이프라인을 중단합니다.")
+                print("  - --ignore-qa-errors 옵션으로 강행할 수 있습니다.")
+                return 1
         else:
             print("  - QA 오류 무시 모드로 계속 진행")
 
@@ -1383,7 +1319,7 @@ def main():
   %(prog)s analyze --all           # 전체 고객사 분석 요약
   %(prog)s status my-client        # 상태 확인
   %(prog)s validate my-client      # 스키마 검증
-  %(prog)s render my-client --template-mode additional
+  %(prog)s render my-client --template-mode layout
   %(prog)s polish my-client        # PPTX 미세 편집
   %(prog)s full-pipeline my-client --topic \"AI 데이터 전략\" --sync-layout --enrich-evidence --polish
   %(prog)s list                    # 클라이언트 목록
@@ -1428,9 +1364,9 @@ def main():
     p_render.add_argument("--template", "-t", help="템플릿 경로 (지정 시 최우선)")
     p_render.add_argument(
         "--template-mode",
-        choices=["auto", "additional", "base", "blank"],
-        default="auto",
-        help="템플릿 선택 모드 (auto: additional 우선, 없으면 base, 없으면 blank)",
+        choices=["layout", "blank", "auto"],
+        default="layout",
+        help="템플릿 선택 모드 (기본: layout-driven blank deck)",
     )
     p_render.set_defaults(func=cmd_render)
 
@@ -1517,11 +1453,12 @@ def main():
     p_full.add_argument("--template", "-t", help="렌더링 템플릿 경로 (지정 시 최우선)")
     p_full.add_argument(
         "--template-mode",
-        choices=["auto", "additional", "base", "blank"],
-        default="auto",
-        help="렌더링 템플릿 모드",
+        choices=["layout", "blank", "auto"],
+        default="layout",
+        help="렌더링 템플릿 모드 (기본: layout-driven blank deck)",
     )
     p_full.add_argument("--ignore-qa-errors", action="store_true", help="QA 오류 무시하고 계속 진행")
+    p_full.add_argument("--qa-auto-fix-retries", type=int, default=2, help="QA 실패 시 자동 보정 루프 재시도 횟수")
     p_full.add_argument("--polish", action="store_true", help="QA 후 미세 편집까지 수행")
     p_full.set_defaults(func=cmd_full_pipeline)
 

@@ -18,9 +18,6 @@ global_constraints:
   required_sections:
   - cover
   - exec_summary
-  - comparison
-  - timeline
-  - thank_you
   tone: professional
 assumptions:
 - 포스코퓨처엠은 SAP ECC 6.0 기반 운영 (추정)
@@ -38,7 +35,7 @@ slides:
 - layout: cover
   title: 포스코퓨처엠 ERP 업그레이드 IT 전략
   subtitle: 비즈니스 플랫폼으로의 전환 — 투자심의 보고
-  governing_message: ERP를 비즈니스 플랫폼으로 재정의하여 글로벌 확장과 데이터 기반 경영의 기반을 구축합니다.
+  governing_message: ERP를 비즈니스 플랫폼으로 재정의하여 글로벌 확장과 데이터 기반 경영의 기반을…
   notes: CIO 투자심의용. 2026-02-07 작성.
   layout_intent:
     emphasis: content
@@ -52,93 +49,14 @@ slides:
     - sources.md#policy-regulation
 - layout: exec_summary
   title: Executive Summary
-  governing_message: EOMM 대응을 넘어 ERP를 비즈니스 플랫폼으로 전환해야 하며, 잃는 것/얻는 것/해야 할 것의 프레임으로
-    투자 당위성을 제시합니다.
-  content_blocks:
-  - type: bullets
-    position: main
-    bullets:
-    - text: '[잃는 것] 데이터 신뢰성 저하로 경영 의사결정 품질 악화'
-      emphasis: bold
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: '[잃는 것] 규제(K-SOX/EU Battery Reg) 미준수 리스크 확대'
-      emphasis: bold
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: '[잃는 것] 글로벌 확장 속도 저하 — 해외법인 시스템 사일로'
-      emphasis: bold
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: '[얻는 것] 실시간 경영 데이터로 의사결정 속도·정확도 향상'
-      emphasis: bold
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: '[얻는 것] 통합 플랫폼 기반 글로벌 운영 효율화·규제 대응력 확보'
-      emphasis: bold
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: '[얻는 것] AI/분석 역량으로 원가·수요 예측 고도화'
-      emphasis: bold
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: 'Executive Summary 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
-      관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  bullets:
-  - text: '[해야 할 것] 1순위: S/4HANA 전환 로드맵 확정 및 착수'
-    emphasis: bold
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: '[해야 할 것] 2순위: Clean Core/Fit to Standard 방법론 적용'
-    emphasis: bold
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: '[해야 할 것] 3순위: 글로벌 통합 거버넌스 체계 구축'
-    emphasis: bold
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  governing_message: EOMM 대응을 넘어 ERP를 비즈니스 플랫폼으로 전환해야 하며, 잃는 것/얻는…
+  content_blocks: []
+  bullets: []
   layout_intent:
     emphasis: content
     content_density: dense
   slide_constraints:
-    max_bullets: 10
+    max_bullets: 7
     max_chars_per_bullet: 180
   metadata:
     section: Executive
@@ -146,9 +64,60 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
+  blocks:
+  - type: bullets
+    slot: main_bullets
+    items:
+    - text: '[해야 할 것] 1순위: S/4HANA 전환 로드맵 확정 및 착수'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '[해야 할 것] 2순위: Clean Core/Fit to Standard 방법론 적용'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '[해야 할 것] 3순위: 글로벌 통합 거버넌스 체계 구축'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '[잃는 것] 데이터 신뢰성 저하로 경영 의사결정 품질 악화'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: Executive Summary 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
 - layout: section_divider
   title: 산업 동향 및 ERP 동향
-  governing_message: ERP 시장은 클라우드·AI·표준화로 전환 중이며, EOMM은 변화의 촉발점입니다.
+  governing_message: ERP 시장은 클라우드·AI·표준화로 전환 중이며, EOMM은 변화의 촉발점입니…
   layout_intent:
     emphasis: content
     content_density: dense
@@ -159,68 +128,15 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: content
+- layout: two_column
   title: SAP ECC EOMM 타임라인과 시장 현황
-  governing_message: 2027년 EOMM 종료가 확정되었으나 글로벌 기업의 61%가 아직 미전환 상태로, 선제적 전환이 경쟁 우위를
-    결정합니다.
-  bullets:
-  - text: 'SAP ECC 6.0 EHP6-8: 2027.12.31 Mainstream Maintenance 종료 확정'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 연장 유지보수(~2030) 가능하나 추가 비용 발생 및 혁신 접근 제한
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Gartner: SAP ECC 고객 35,000개 중 39%만 전환 완료 (2024년 말)'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 평균 전환 소요기간 2-3년 — 2025년이 사실상 마지막 착수 시점
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: '전환 지연 시: 보안 패치 중단, 규제 준수 실패, 기술 인력 확보 난'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  governing_message: 2027년 EOMM 종료가 확정되었으나 글로벌 기업의 61%가 아직 미전환 상태…
+  bullets: []
   layout_intent:
     emphasis: content
     visual_position: right
     content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: 'SAP ECC EOMM 타임라인과 시장 현황 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한
-      실행 프레임으로 관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
   slide_constraints:
     max_bullets: 10
     max_chars_per_bullet: 180
@@ -230,203 +146,90 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: chart_focus
-  title: ECC vs S/4HANA 핵심 차이점
-  governing_message: S/4HANA는 인메모리·실시간·AI 기반으로 ECC와 근본적으로 다른 비즈니스 플랫폼입니다.
-  columns:
-  - heading: SAP ECC (As-Is)
-    bullets:
-    - text: 다중 DB (Oracle/DB2) — 배치 처리 중심
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 분산 테이블 (BSEG/BKPF 등) — 집계에 시간 소요
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: SAP GUI — 복잡한 트랜잭션 화면
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 제한적 분석 — 별도 BW/BO 필요
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: S/4HANA (To-Be)
-    bullets:
-    - text: HANA 인메모리 DB — 실시간 처리
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: Universal Journal — 단일 원장(ACDOCA)으로 통합
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: Fiori UX — 역할 기반 직관적 인터페이스
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 내장 AI/ML + BTP 기반 확장 — 혁신 수용 가속
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  layout_intent:
-    emphasis: balanced
-    content_density: dense
-    visual_position: right
-  bullets:
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: ECC vs S/4HANA 핵심 차이점 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력
-      목표가 같은 기준으로 관리되도록 설계해야 합니다.
-    emphasis: normal
-    icon: arrow
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 시나리오별 트리거(수요·가격·정책) 발생 시 대응 액션과 책임조직, 실행 기한을 사전에 매핑해 실제 운영에서 의사결정 지연이 발생하지
-      않도록 해야 합니다.
-    emphasis: normal
-    icon: risk
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 분기 단위 재무성과와 현업 운영지표를 연결해 전략의 실행력을 계량적으로 관리하고, KPI 간 상충 구간을 분기별로 조정하는 운영
-      체계를 유지해야 합니다.
-    emphasis: normal
-    icon: insight
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  content_blocks:
-  - type: chart
-    position: main
-    chart:
-      type: bar_chart
-      title: 핵심 지표 변화 (임시 플레이스홀더)
-      caption: 데이터 확정 시 실제 수치로 교체
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 396
-    height_pt: 118
-    text: 'ECC vs S/4HANA 핵심 차이점 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행
-      프레임으로 관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: callout
-    callout:
-      type: key_insight
-      icon: insight
-      text: 핵심 지표 변화는 단일 수치가 아닌 수요·원가·정책의 결합 시그널로 해석해야 합니다.
-  slide_constraints:
-    max_bullets: 8
-    max_chars_per_bullet: 180
-  metadata:
-    section: External
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: comparison
-  title: 'ERP 기술 트렌드: 클라우드·AI·표준화'
-  governing_message: 2026년 ERP의 핵심 화두는 클라우드 코어, AI 내장, 프로세스 표준화이며 이 방향이 산업 표준이 되고
-    있습니다.
-  columns:
-  - heading: 클라우드 전환
-    bullets:
-    - text: RISE with SAP으로 클라우드 기반 ERP가 표준 옵션
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 인프라 관리 부담 경감, 자동 업데이트 수혜
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: AI/ML 내장
-    bullets:
-    - text: 스코핑부터 최적화까지 AI가 전환 핵심 화두
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 예측 분석, 프로세스 자동화, 이상탐지 내재화
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 프로세스 표준화
-    bullets:
-    - text: 'Fit to Standard: 80% 프로세스는 표준으로 처리 가능'
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: Clean Core로 기술부채 해소, 업그레이드 용이성 확보
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  layout_intent:
-    emphasis: content
-    content_density: dense
-  bullets: []
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 382
-    height_pt: 126
-    text: 'ERP 기술 트렌드 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  blocks:
   - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
+    slot: left_column
+    items:
+    - text: 'SAP ECC 6.0 EHP6-8: 2027.12.31 Mainstream Maintenance 종료 확정'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 연장 유지보수(~2030) 가능하나 추가 비용 발생 및 혁신 접근 제한
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Gartner: SAP ECC 고객 35,000개 중 39%만 전환 완료 (2024년 말)'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 평균 전환 소요기간 2-3년 — 2025년이 사실상 마지막 착수 시점
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: '전환 지연 시: 보안 패치 중단, 규제 준수 실패, 기술 인력 확보 난'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
     - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: insight
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
     - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
         보정 일정을 재지정해야 합니다.
+      icon: insight
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
+    - text: SAP ECC EOMM 타임라인과 시장 현황 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한
+        실행 프레임으로 관리해야 하며, 각 의사결정은 매출·원가·자본효율·정…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: SAP ECC EOMM 타임라인과 시장 현황 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다.
+        실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: chart_insight
+  title: ECC vs S/4HANA 핵심 차이점
+  governing_message: S/4HANA는 인메모리·실시간·AI 기반으로 ECC와 근본적으로 다른 비즈니스…
+  layout_intent:
+    emphasis: balanced
+    content_density: dense
+    visual_position: right
+  bullets: []
+  content_blocks: []
   slide_constraints:
-    max_bullets: 10
+    max_bullets: 8
     max_chars_per_bullet: 180
   metadata:
     section: External
@@ -434,9 +237,167 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: content
+  blocks:
+  - type: chart
+    slot: chart_box
+    chart:
+      type: bar_chart
+      title: 핵심 지표 변화 (임시 플레이스홀더)
+      caption: 데이터 확정 시 실제 수치로 교체
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: ECC vs S/4HANA 핵심 차이점 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기
+        경쟁력 목표가 같은 기준으로 관리되도록 설계해야 합니다.
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 시나리오별 트리거(수요·가격·정책) 발생 시 대응 액션과 책임조직, 실행 기한을 사전에 매핑해 실제 운영에서 의사결정 지연이
+        발생하지 않도록 해야 합니다.
+      icon: risk
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 분기 단위 재무성과와 현업 운영지표를 연결해 전략의 실행력을 계량적으로 관리하고, KPI 간 상충 구간을 분기별로 조정하는 운영
+        체계를 유지해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'SAP ECC (As-Is): 핵심 과제와 KPI를 동일 프레임으로 관리해야 실행 일관성을 확보할 수 있습니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: ECC vs S/4HANA 핵심 차이점 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로
+        연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: competitor_2x2
+  title: 'ERP 기술 트렌드: 클라우드·AI·표준화'
+  governing_message: 2026년 ERP의 핵심 화두는 클라우드 코어, AI 내장, 프로세스 표준화이며…
+  layout_intent:
+    emphasis: content
+    content_density: dense
+  bullets: []
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: External
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: matrix_2x2
+    slot: matrix_box
+    matrix_2x2:
+      x_axis: 시장 매력도
+      y_axis: 실행 역량
+      quadrants:
+      - Defend
+      - Harvest
+      - Build
+      - Invest
+      points:
+      - label: Client
+        x: 62
+        y: 58
+        color: '#008FD3'
+      - label: Peer A
+        x: 74
+        y: 72
+        color: '#0A5E9C'
+      - label: Peer B
+        x: 48
+        y: 64
+        color: '#3C8DBC'
+      - label: Peer C
+        x: 38
+        y: 44
+        color: '#6EAAD2'
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '클라우드 전환: 핵심 과제와 KPI를 동일 프레임으로 관리해야 실행 일관성을 확보할 수 있습니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: RISE with SAP으로 클라우드 기반 ERP가 표준 옵션
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 인프라 관리 부담 경감, 자동 업데이트 수혜
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 'ERP 기술 트렌드: 클라우드·AI·표준화 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다.
+        실행으로 연결합니다. 실행으로 연결합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: two_column
   title: 에너지소재/기초소재 산업 동향 및 경쟁사 분석
-  governing_message: 소재산업은 규제·추적성·글로벌 운영 복잡도가 급증하며 ERP의 역할이 재정의되고 있습니다.
+  governing_message: 소재산업은 규제·추적성·글로벌 운영 복잡도가 급증하며 ERP의 역할이 재정의되고…
   layout_intent:
     emphasis: content
     content_density: dense
@@ -450,88 +411,81 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '에너지소재/기초소재 산업 동향 및 경쟁사 분석 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한
-      실행 프레임으로 관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
+  blocks:
   - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 200
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
+    slot: left_column
+    items:
+    - text: 에너지소재/기초소재 산업 동향 및 경쟁사 분석 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한
+        실행 프레임으로 관리해야 하며, 각 의사결정은 매출·원가·자본효율·…
+      icon: insight
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-- layout: chart_focus
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 에너지소재/기초소재 산업 동향 및 경쟁사 분석 실행안은 과제 오너·검증 지표·투자 조건을 함께 명시해야 의사결정 속도를 높일
+        수 있습니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 소재산업은 규제·추적성·글로벌 운영 복잡도가 급증하며 ERP의 역할이 재정의되고…을 실행으로 연결하려면 사업·재무·운영 데이터의
+        기준선을 통일해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 에너지소재/기초소재 산업 동향 및 경쟁사 분석 실행 범위를 단계적으로 확장해야
+        합니다.
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 에너지소재/기초소재 산업 동향 및 경쟁사 분석 과제는 조기 경보 기준과 대응 액션을 함께
+        관리해야 합니다.
+      icon: risk
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 에너지소재/기초소재 산업 동향 및 경쟁사 분석 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다.
+        실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: chart_insight
   title: 에너지소재 산업 동향과 디지털 요구
-  governing_message: 배터리소재 산업은 EU 배터리 규정, 원산지 추적, 글로벌 확장으로 인해 통합 데이터 플랫폼이 필수가 되었습니다.
-  bullets:
-  - text: 'EU Battery Regulation: 배터리 여권, 탄소발자국 보고, 재활용 함량 추적 의무화'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'IRA FEOC: 배터리 소재 원산지/공급망 추적으로 수출 적격성 결정'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 글로벌 확장(한국/북미/중국/유럽)에 따른 다법인·다통화 통합 관리 필요
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'SAP Global Battery Practice: PLM+ERP+MES 통합으로 E2E 가시성 확보'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
+  governing_message: 배터리소재 산업은 EU 배터리 규정, 원산지 추적, 글로벌 확장으로 인해 통합…
+  bullets: []
   layout_intent:
     emphasis: balanced
     content_density: dense
     visual_position: right
-  content_blocks:
-  - type: chart
-    position: main
-    chart:
-      type: bar_chart
-      title: 핵심 지표 변화 (임시 플레이스홀더)
-      caption: 데이터 확정 시 실제 수치로 교체
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 396
-    height_pt: 118
-    text: '에너지소재 산업 동향과 디지털 요구 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
-      관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: callout
-    callout:
-      type: key_insight
-      icon: insight
-      text: 핵심 지표 변화는 단일 수치가 아닌 수요·원가·정책의 결합 시그널로 해석해야 합니다.
+  content_blocks: []
   slide_constraints:
     max_bullets: 8
     max_chars_per_bullet: 180
@@ -541,62 +495,74 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: content
+  blocks:
+  - type: chart
+    slot: chart_box
+    chart:
+      type: bar_chart
+      title: 핵심 지표 변화 (임시 플레이스홀더)
+      caption: 데이터 확정 시 실제 수치로 교체
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 'EU Battery Regulation: 배터리 여권, 탄소발자국 보고, 재활용 함량 추적 의무화'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'IRA FEOC: 배터리 소재 원산지/공급망 추적으로 수출 적격성 결정'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 글로벌 확장(한국/북미/중국/유럽)에 따른 다법인·다통화 통합 관리 필요
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'SAP Global Battery Practice: PLM+ERP+MES 통합으로 E2E 가시성 확보'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 에너지소재 산업 동향과 디지털 요구 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
+        관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 에너지소재 산업 동향과 디지털 요구 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로
+        연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: two_column
   title: 기초소재 산업 동향과 디지털 요구
-  governing_message: 철강·화학·내화물 등 기초소재 산업은 원가 투명성, 공정 최적화, 규제 대응을 위해 ERP 고도화를 추진하고
-    있습니다.
-  bullets:
-  - text: 화학/소재 산업 상위 150개사 중 90% 이상이 SAP ERP 사용
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 배치 관리, 위험물질 규제, 품질 추적이 ERP 핵심 요건
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Industry 4.0: MES-ERP 실시간 연동, 디지털 트윈, 예측 정비 확산'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 원가 투명성과 실시간 수익성 분석이 경영진 핵심 요구사항으로 부상
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  governing_message: 철강·화학·내화물 등 기초소재 산업은 원가 투명성, 공정 최적화, 규제 대응을…
+  bullets: []
   layout_intent:
     emphasis: content
     content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '기초소재 산업 동향과 디지털 요구 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
-      관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
   slide_constraints:
     max_bullets: 10
     max_chars_per_bullet: 180
@@ -606,36 +572,88 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 화학/소재 산업 상위 150개사 중 90% 이상이 SAP ERP 사용
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 배치 관리, 위험물질 규제, 품질 추적이 ERP 핵심 요건
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Industry 4.0: MES-ERP 실시간 연동, 디지털 트윈, 예측 정비 확산'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 원가 투명성과 실시간 수익성 분석이 경영진 핵심 요구사항으로 부상
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 기초소재 산업 동향과 디지털 요구 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
+        관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 기초소재 산업 동향과 디지털 요구 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로
+        연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
 - layout: section_divider
   title: 경쟁사 ERP/디지털 전환 벤치마크
-  governing_message: BASF, Ecobat 등 글로벌 소재기업은 이미 S/4HANA 전환에 착수했으며, 늦은 전환은 경쟁력 격차로
-    이어집니다.
+  governing_message: BASF, Ecobat 등 글로벌 소재기업은 이미 S/4HANA 전환에 착수했으…
   bullets: []
   layout_intent:
     emphasis: content
     content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '경쟁사 ERP/디지털 전환 벤치마크 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
-      관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
   metadata:
     section: Diagnosis
     source_refs:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: content
+- layout: two_column
   title: 인터뷰 기반 시스템 과제 정의
   governing_message: 현업 인터뷰에서 도출된 과제를 6개 비즈니스 가치 테마로 구조화했습니다.
   layout_intent:
@@ -652,114 +670,79 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '인터뷰 기반 시스템 과제 정의 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
-      관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
+  blocks:
   - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 200
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
+    slot: left_column
+    items:
+    - text: 인터뷰 기반 시스템 과제 정의 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
+        관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를…
+      icon: insight
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-- layout: three_column
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 인터뷰 기반 시스템 과제 정의 실행안은 과제 오너·검증 지표·투자 조건을 함께 명시해야 의사결정 속도를 높일 수 있습니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 현업 인터뷰에서 도출된 과제를 6개 비즈니스 가치 테마로 구조화했습니다.을 실행으로 연결하려면 사업·재무·운영 데이터의 기준선을
+        통일해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 인터뷰 기반 시스템 과제 정의 실행 범위를 단계적으로 확장해야 합니다.
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 인터뷰 기반 시스템 과제 정의 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: risk
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 인터뷰 기반 시스템 과제 정의 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: strategy_cards
   title: 인터뷰 주요 발견 요약
-  governing_message: 현업이 체감하는 시스템 문제는 데이터 불신, 통제 부재, 변화 불가능의 세 축으로 수렴합니다.
-  columns:
-  - heading: 데이터 불신
-    bullets:
-    - text: 결산 수치 불일치로 경영진 보고 시 수작업 보정 반복
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 원가 산출 기준 불투명, 사업부 간 데이터 정합성 부족
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 통제 부재
-    bullets:
-    - text: 재고 실사 차이, 구매 승인 우회 등 내부 통제 취약
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 권한 관리 미흡으로 감사 지적 반복 발생
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 변화 불가능
-    bullets:
-    - text: 과도한 커스터마이징으로 업그레이드/기능 추가 어려움
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 인터페이스 복잡도 증가, IT 운영 속인화
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
+  governing_message: 현업이 체감하는 시스템 문제는 데이터 불신, 통제 부재, 변화 불가능의 세 축으…
   layout_intent:
     emphasis: content
     content_density: dense
   bullets: []
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 382
-    height_pt: 126
-    text: '인터뷰 주요 발견 요약 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
+  content_blocks: []
   slide_constraints:
-    max_bullets: 10
+    max_bullets: 7
     max_chars_per_bullet: 180
   metadata:
     section: Diagnosis
@@ -767,82 +750,52 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: content
+  blocks:
+  - type: kpi_cards
+    slot: kpi_cards
+    cards:
+    - label: 'Option A: 수익성 방어'
+      value: 단기 마진 안정화
+      comparison: 원가·판가·믹스 동시 최적화
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - label: 'Option B: 성장 확장'
+      value: 중기 CAPA 고도화
+      comparison: 고객/제품 포트폴리오 전환
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - label: 'Option C: 포트폴리오 재편'
+      value: 투자 우선순위 재배열
+      comparison: 리스크-수익 균형 최적화
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 인터뷰 주요 발견 요약 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: two_column
   title: 숫자를 믿을 수 있는 회사
-  governing_message: 결산 수치의 불일치와 원가 투명성 부족은 의사결정 품질을 저하시키며, 실시간 단일 원장 체계로의 전환이 필요합니다.
-  columns:
-  - heading: 현재 문제 (As-Is)
-    bullets:
-    - text: 다중 원장(GL/CO/ML)의 결산 수치 불일치 → 수작업 보정
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 원가 산출 기준이 모듈별로 상이하여 투명성 부족
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 결산 소요시간 과다 — 월 결산에 수일 소요
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 목표 상태 (To-Be)
-    bullets:
-    - text: Universal Journal(ACDOCA)로 단일 원장 — 실시간 결산
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: Material Ledger 통합으로 실제 원가 실시간 산출
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 결산 자동화로 결산 주기 단축 (월→일 단위)
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
+  governing_message: 결산 수치의 불일치와 원가 투명성 부족은 의사결정 품질을 저하시키며, 실시간 단…
   layout_intent:
     emphasis: content
     content_density: dense
   bullets: []
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '숫자를 믿을 수 있는 회사 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
+  content_blocks: []
   slide_constraints:
     max_bullets: 10
     max_chars_per_bullet: 180
@@ -852,116 +805,86 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: chart_focus
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 현재 문제 (As-Is) 실행 기준을 함께 정의해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 다중 원장(GL/CO/ML)의 결산 수치 불일치 → 수작업 보정
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 원가 산출 기준이 모듈별로 상이하여 투명성 부족
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 결산 소요시간 과다 — 월 결산에 수일 소요
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 목표 상태 (To-Be) 실행 기준을 함께 정의해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: Universal Journal(ACDOCA)로 단일 원장 — 실시간 결산
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: Material Ledger 통합으로 실제 원가 실시간 산출
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 결산 자동화로 결산 주기 단축 (월→일 단위)
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 숫자를 믿을 수 있는 회사 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: chart_insight
   title: 현금이 새지 않는 회사
-  governing_message: 재고 과다, 구매 프로세스 비효율, 판가-원가 비연동은 현금 누수의 구조적 원인이며 ERP 통합 통제로 해결
-    가능합니다.
-  columns:
-  - heading: 현재 문제 (As-Is)
-    bullets:
-    - text: 재고 정합성 이슈 — 장기 재고, 실사 차이 발생
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 구매 프로세스 비표준화 — 승인 우회, 긴급 구매 과다
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 판가와 원가 연동 부재로 수익성 실시간 파악 불가
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 목표 상태 (To-Be)
-    bullets:
-    - text: 실시간 재고 가시성 — MRP/ATP 최적화로 재고 수준 적정화
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 표준 구매 프로세스 강제 — 워크플로우 기반 승인 체계
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 마진 분석 실시간 가능 — 제품/고객/채널별 수익성 파악
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
+  governing_message: 재고 과다, 구매 프로세스 비효율, 판가-원가 비연동은 현금 누수의 구조적 원인…
   layout_intent:
     emphasis: balanced
     content_density: dense
     visual_position: right
-  bullets:
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 현금이 새지 않는 회사 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력 목표가 같은
-      기준으로 관리되도록 설계해야 합니다.
-    emphasis: normal
-    icon: arrow
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 시나리오별 트리거(수요·가격·정책) 발생 시 대응 액션과 책임조직, 실행 기한을 사전에 매핑해 실제 운영에서 의사결정 지연이 발생하지
-      않도록 해야 합니다.
-    emphasis: normal
-    icon: risk
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 분기 단위 재무성과와 현업 운영지표를 연결해 전략의 실행력을 계량적으로 관리하고, KPI 간 상충 구간을 분기별로 조정하는 운영
-      체계를 유지해야 합니다.
-    emphasis: normal
-    icon: insight
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  content_blocks:
-  - type: chart
-    position: main
-    chart:
-      type: bar_chart
-      title: 핵심 지표 변화 (임시 플레이스홀더)
-      caption: 데이터 확정 시 실제 수치로 교체
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 396
-    height_pt: 118
-    text: '현금이 새지 않는 회사 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-  - type: callout
-    callout:
-      type: key_insight
-      icon: insight
-      text: 핵심 지표 변화는 단일 수치가 아닌 수요·원가·정책의 결합 시그널로 해석해야 합니다.
+  bullets: []
+  content_blocks: []
   slide_constraints:
     max_bullets: 8
     max_chars_per_bullet: 180
@@ -971,256 +894,262 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: comparison
+  blocks:
+  - type: chart
+    slot: chart_box
+    chart:
+      type: bar_chart
+      title: 핵심 지표 변화 (임시 플레이스홀더)
+      caption: 데이터 확정 시 실제 수치로 교체
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 현금이 새지 않는 회사 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력 목표가
+        같은 기준으로 관리되도록 설계해야 합니다.
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 시나리오별 트리거(수요·가격·정책) 발생 시 대응 액션과 책임조직, 실행 기한을 사전에 매핑해 실제 운영에서 의사결정 지연이
+        발생하지 않도록 해야 합니다.
+      icon: risk
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 분기 단위 재무성과와 현업 운영지표를 연결해 전략의 실행력을 계량적으로 관리하고, KPI 간 상충 구간을 분기별로 조정하는 운영
+        체계를 유지해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '현재 문제 (As-Is): 핵심 과제와 KPI를 동일 프레임으로 관리해야 실행 일관성을 확보할 수 있습니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 현금이 새지 않는 회사 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: competitor_2x2
   title: 감사 및 규제에 강한 회사
-  governing_message: K-SOX 강화, EU Battery Regulation, IRA FEOC 등 규제 대응은 시스템 기반 추적성과
-    권한 통제 없이는 불가능합니다.
-  columns:
-  - heading: 현재 문제 (As-Is)
-    bullets:
+  governing_message: K-SOX 강화, EU Battery Regulation, IRA FEOC 등…
+  layout_intent:
+    emphasis: content
+    content_density: dense
+  bullets: []
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: Diagnosis
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: matrix_2x2
+    slot: matrix_box
+    matrix_2x2:
+      x_axis: 시장 매력도
+      y_axis: 실행 역량
+      quadrants:
+      - Defend
+      - Harvest
+      - Build
+      - Invest
+      points:
+      - label: Client
+        x: 62
+        y: 58
+        color: '#008FD3'
+      - label: Peer A
+        x: 74
+        y: 72
+        color: '#0A5E9C'
+      - label: Peer B
+        x: 48
+        y: 64
+        color: '#3C8DBC'
+      - label: Peer C
+        x: 38
+        y: 44
+        color: '#6EAAD2'
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '현재 문제 (As-Is): 핵심 과제와 KPI를 동일 프레임으로 관리해야 실행 일관성을 확보할 수 있습니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
     - text: 권한 분리(SoD) 미흡으로 감사 지적 반복
+      icon: insight
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-      icon: insight
     - text: 변경 이력 추적 제한적 — 감사 증적 확보 어려움
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
       icon: insight
-    - text: EU/IRA 규제 요건(배터리 여권, 원산지) 대응 체계 미비
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 목표 상태 (To-Be)
-    bullets:
-    - text: GRC 통합 — 권한 분리(SoD), 리스크 모니터링 자동화
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 완전한 감사 추적(Audit Trail) — 모든 변경 이력 자동 기록
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: EU Battery Passport 대응 — 배치-원산지-탄소발자국 E2E 추적
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  layout_intent:
-    emphasis: content
-    content_density: dense
-  bullets: []
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 382
-    height_pt: 126
-    text: '감사 및 규제에 강한 회사 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 감사 및 규제에 강한 회사 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-  slide_constraints:
-    max_bullets: 10
-    max_chars_per_bullet: 180
-  metadata:
-    section: Diagnosis
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: content
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: two_column
   title: 변화가 가능한 회사
-  governing_message: 누적된 커스터마이징은 변화의 가장 큰 장벽이며, Clean Core와 Fit to Standard 전환으로 비즈니스
-    민첩성을 확보해야 합니다.
-  columns:
-  - heading: 현재 문제 (As-Is)
-    bullets:
+  governing_message: 누적된 커스터마이징은 변화의 가장 큰 장벽이며, Clean Core와 Fit t…
+  layout_intent:
+    emphasis: content
+    content_density: dense
+  bullets: []
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  metadata:
+    section: Diagnosis
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 현재 문제 (As-Is) 실행 기준을 함께 정의해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
     - text: Z-프로그램, 커스텀 테이블 과다 → 업그레이드 불가능 수준
+      icon: insight
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-      icon: insight
     - text: 표준 기능 출시에도 적용 불가 — 기술부채 누적
+      icon: insight
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-      icon: insight
     - text: 사업 변화(M&A, 신사업)에 시스템 대응 수개월 소요
+      icon: insight
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 목표 상태 (To-Be) 실행 기준을 함께 정의해야 합니다.
       icon: insight
-  - heading: 목표 상태 (To-Be)
-    bullets:
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
     - text: 'Clean Core: 표준 코어 유지, BTP 기반 확장으로 분리'
+      icon: insight
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-      icon: insight
     - text: 'Fit to Standard: 업무 80%는 표준 적용, 차별화 영역만 확장'
+      icon: insight
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-      icon: insight
     - text: 자동 업데이트 수혜 — 분기별 혁신을 즉시 수용 가능
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
       icon: insight
-  layout_intent:
-    emphasis: content
-    content_density: dense
-  bullets: []
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '변화가 가능한 회사 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
-      emphasis: normal
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 변화가 가능한 회사 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로
+        연결합니다.
       icon: check
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-  slide_constraints:
-    max_bullets: 10
-    max_chars_per_bullet: 180
-  metadata:
-    section: Diagnosis
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: process_flow
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: timeline
   title: 운영이 가벼운 회사
-  governing_message: 복잡한 인터페이스, 높은 유지보수 비용, 속인화된 운영은 S/4HANA의 표준 통합과 클라우드 전환으로 해소됩니다.
-  columns:
-  - heading: 현재 문제 (As-Is)
-    bullets:
-    - text: 시스템 간 인터페이스 과다 — 장애 빈도 증가, 추적 곤란
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: ECC 유지보수 비용 지속 증가, 전문인력 확보 난
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: IT 운영 속인화 — 특정 담당자 부재 시 장애 대응 불가
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 목표 상태 (To-Be)
-    bullets:
-    - text: SAP Integration Suite로 인터페이스 표준화·단순화
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 클라우드 전환으로 인프라 관리 부담 경감, TCO 절감
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 표준화된 운영 모델로 속인화 탈피, SLA 기반 운영
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
+  governing_message: 복잡한 인터페이스, 높은 유지보수 비용, 속인화된 운영은 S/4HANA의 표준…
   layout_intent:
     emphasis: content
     content_density: dense
   bullets: []
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 388
-    height_pt: 120
-    text: '운영이 가벼운 회사 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
+  content_blocks: []
   slide_constraints:
-    max_bullets: 10
+    max_bullets: 8
     max_chars_per_bullet: 180
   metadata:
     section: Diagnosis
@@ -1228,66 +1157,46 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: content
+  blocks:
+  - type: timeline_steps
+    slot: timeline_box
+    timeline:
+    - phase: Phase 1
+      title: 0-100일
+      description: 핵심 과제 우선순위 확정 및 PMO·KPI 기준선 정렬
+    - phase: Phase 2
+      title: 3-6개월
+      description: 파일럿 실행과 운영 데이터 통합, 조기 성과 검증
+    - phase: Phase 3
+      title: 6-12개월
+      description: 핵심 프로세스 표준화와 조직/거버넌스 내재화
+    - phase: Phase 4
+      title: 12개월+
+      description: 전사 확산 및 투자/성과 체계 고도화
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 운영이 가벼운 회사 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로
+        연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: two_column
   title: 미래를 준비하는 회사
-  governing_message: 해외법인 통합, 수요계획 고도화, AI/분석 역량은 S/4HANA 플랫폼 위에서만 실질적으로 구현 가능합니다.
-  bullets:
-  - text: '해외법인 투티어 ERP: 본사 S/4HANA + 해외 경량 ERP 통합 운영'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: '수요계획 고도화: IBP(Integrated Business Planning) 연계로 S&OP 실현'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'AI/ML 내장 분석: 수요 예측, 원가 이상탐지, 프로세스 마이닝'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: '데이터 기반 경영: 실시간 KPI 대시보드, 시뮬레이션 의사결정'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 포스코그룹 디지털 전환과의 시너지 — 그룹 표준 아키텍처 정합
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  governing_message: 해외법인 통합, 수요계획 고도화, AI/분석 역량은 S/4HANA 플랫폼 위에서…
+  bullets: []
   layout_intent:
     emphasis: content
     content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '미래를 준비하는 회사 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
   slide_constraints:
     max_bullets: 10
     max_chars_per_bullet: 180
@@ -1297,9 +1206,82 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: '해외법인 투티어 ERP: 본사 S/4HANA + 해외 경량 ERP 통합 운영'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '수요계획 고도화: IBP(Integrated Business Planning) 연계로 S&OP 실현'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'AI/ML 내장 분석: 수요 예측, 원가 이상탐지, 프로세스 마이닝'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: '데이터 기반 경영: 실시간 KPI 대시보드, 시뮬레이션 의사결정'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 포스코그룹 디지털 전환과의 시너지 — 그룹 표준 아키텍처 정합
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 미래를 준비하는 회사 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
+        하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 미래를 준비하는 회사 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
 - layout: section_divider
   title: 6대 시스템 과제 통합 프레임
-  governing_message: 6개 과제는 독립적이 아니라 서로 연결되며, ERP 플랫폼 전환이 동시 해결의 유일한 방법입니다.
+  governing_message: 6개 과제는 독립적이 아니라 서로 연결되며, ERP 플랫폼 전환이 동시 해결의…
   bullets: []
   footnotes:
   - marker: '*'
@@ -1307,28 +1289,14 @@ slides:
   layout_intent:
     emphasis: content
     content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '6대 시스템 과제 통합 프레임 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
-      관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
   metadata:
     section: Options
     source_refs:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-- layout: three_column
+- layout: strategy_cards
   title: To-Be 아키텍처 / 로드맵 / Business Case
   governing_message: 전환의 방향, 일정, 투자 가치를 구체화하여 투자심의 의사결정을 지원합니다.
   layout_intent:
@@ -1336,7 +1304,7 @@ slides:
     content_density: dense
   bullets: []
   slide_constraints:
-    max_bullets: 10
+    max_bullets: 7
     max_chars_per_bullet: 180
   metadata:
     section: Options
@@ -1344,472 +1312,464 @@ slides:
     - sources.md#industry-erp
     - sources.md#client-context
     - sources.md#policy-regulation
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 382
-    height_pt: 126
-    text: 'To-Be 아키텍처 / 로드맵 / Business Case 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지
-      않고 동일한 실행 프레임으로 관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 200
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
-        보정 일정을 재지정해야 합니다.
-      emphasis: normal
-      icon: check
+  content_blocks: []
+  blocks:
+  - type: kpi_cards
+    slot: kpi_cards
+    cards:
+    - label: 'Option A: 수익성 방어'
+      value: 단기 마진 안정화
+      comparison: 원가·판가·믹스 동시 최적화
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-- layout: comparison
+    - label: 'Option B: 성장 확장'
+      value: 중기 CAPA 고도화
+      comparison: 고객/제품 포트폴리오 전환
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - label: 'Option C: 포트폴리오 재편'
+      value: 투자 우선순위 재배열
+      comparison: 리스크-수익 균형 최적화
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: To-Be 아키텍처 / 로드맵 / Business Case 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로
+        연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: competitor_2x2
   title: To-Be 시스템 아키텍처
-  governing_message: S/4HANA를 디지털 코어로, BTP를 혁신 레이어로 배치하는 2계층 아키텍처가 목표입니다.
-  bullets:
-  - text: 'Digital Core: S/4HANA — Finance, SCM, Manufacturing, Procurement 통합'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Innovation Layer: SAP BTP — AI/ML, 프로세스 자동화, 사이드 확장'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Integration: SAP Integration Suite — 외부 시스템/MES/WMS 표준 연동'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Analytics: SAP Analytics Cloud — 실시간 대시보드 및 계획'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Global: 본사 S/4HANA + 해외법인 통합/투티어 구조'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  layout_intent:
-    emphasis: content
-    content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 382
-    height_pt: 126
-    text: 'To-Be 시스템 아키텍처 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  slide_constraints:
-    max_bullets: 10
-    max_chars_per_bullet: 180
-  metadata:
-    section: Options
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: chart_focus
-  title: As-Is vs To-Be 비교
-  governing_message: 현재 사일로형 시스템에서 통합 플랫폼으로의 전환이 운영 효율과 데이터 신뢰성을 동시에 달성합니다.
-  columns:
-  - heading: As-Is
-    bullets:
-    - text: ECC 기반 사일로형 시스템 — 모듈 간 데이터 불일치
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 해외법인별 상이한 시스템 — 글로벌 통합 관리 불가
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 배치 처리 중심 — 실시간 의사결정 지원 부족
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 누적 커스터마이징 — 변화 대응 속도 저하
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: To-Be
-    bullets:
-    - text: S/4HANA 통합 플랫폼 — 단일 원장, 단일 소스
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 글로벌 통합 ERP — 동일 프로세스, 실시간 연결
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 실시간 처리 — 즉시 보고, 즉시 분석, 즉시 의사결정
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: Clean Core — 표준 기반, 빠른 혁신 수용
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  layout_intent:
-    emphasis: balanced
-    content_density: dense
-    visual_position: right
-  bullets:
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: As-Is vs To-Be 비교 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력 목표가
-      같은 기준으로 관리되도록 설계해야 합니다.
-    emphasis: normal
-    icon: arrow
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 시나리오별 트리거(수요·가격·정책) 발생 시 대응 액션과 책임조직, 실행 기한을 사전에 매핑해 실제 운영에서 의사결정 지연이 발생하지
-      않도록 해야 합니다.
-    emphasis: normal
-    icon: risk
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 분기 단위 재무성과와 현업 운영지표를 연결해 전략의 실행력을 계량적으로 관리하고, KPI 간 상충 구간을 분기별로 조정하는 운영
-      체계를 유지해야 합니다.
-    emphasis: normal
-    icon: insight
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  content_blocks:
-  - type: chart
-    position: main
-    chart:
-      type: bar_chart
-      title: 핵심 지표 변화 (임시 플레이스홀더)
-      caption: 데이터 확정 시 실제 수치로 교체
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 396
-    height_pt: 118
-    text: 'As-Is vs To-Be 비교 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
-      관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-      emphasis: normal
-      icon: check
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-  - type: callout
-    callout:
-      type: key_insight
-      icon: insight
-      text: 핵심 지표 변화는 단일 수치가 아닌 수요·원가·정책의 결합 시그널로 해석해야 합니다.
-  slide_constraints:
-    max_bullets: 8
-    max_chars_per_bullet: 180
-  metadata:
-    section: Options
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: chart_focus
-  title: '전환 접근 방법론: Fit to Standard + Clean Core'
-  governing_message: 과거의 커스터마이징 중심이 아닌 Fit to Standard 방법론으로 Clean Core를 유지하는 것이 성공의
-    핵심입니다.
-  bullets:
-  - text: 'Fit to Standard: SAP 표준 프로세스 우선 적용 → 차별화 영역만 확장'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Clean Core 원칙: 코어 수정 최소화, BTP Side-by-Side 확장'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'SAP Activate 방법론: Discover → Prepare → Explore → Realize → Deploy'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 과거 방식(커스터마이징 중심) vs 신규 방식(표준 중심)의 근본적 사고 전환
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  layout_intent:
-    emphasis: balanced
-    content_density: dense
-    visual_position: right
-  content_blocks:
-  - type: chart
-    position: main
-    chart:
-      type: bar_chart
-      title: 핵심 지표 변화 (임시 플레이스홀더)
-      caption: 데이터 확정 시 실제 수치로 교체
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 396
-    height_pt: 118
-    text: '전환 접근 방법론 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야 하며,
-      각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: callout
-    callout:
-      type: key_insight
-      icon: insight
-      text: 핵심 지표 변화는 단일 수치가 아닌 수요·원가·정책의 결합 시그널로 해석해야 합니다.
-  slide_constraints:
-    max_bullets: 8
-    max_chars_per_bullet: 180
-  metadata:
-    section: Options
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: content
-  title: ERP 전환 3단계 로드맵
-  governing_message: 준비(2026)-전환(2027-2028)-최적화(2029-2030)의 3단계로 리스크를 관리하며 단계적으로 전환합니다.
-  bullets:
-  - text: 'Phase 1 준비 (2026): 현행 분석, Fit to Standard 워크샵, 전환 전략 수립, PI 선정'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Phase 2 전환 (2027-2028): S/4HANA 구축, 데이터 마이그레이션, 테스트, Go-Live'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'Phase 3 최적화 (2029-2030): 해외법인 확산, AI/분석 고도화, 지속적 개선'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  layout_intent:
-    emphasis: content
-    content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: 'ERP 전환 3단계 로드맵 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  slide_constraints:
-    max_bullets: 10
-    max_chars_per_bullet: 180
-  metadata:
-    section: Options
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: image_focus
-  title: 'Business Case: 정량적 기대효과'
-  governing_message: 결산 단축, 재고 절감, IT 운영비 감소, 규제 대응 비용 절감 등 측정 가능한 가치가 투자를 정당화합니다.
-  content_blocks:
-  - type: image
-    position: main
-    image:
-      title: 핵심 비주얼 (임시 플레이스홀더)
-      caption: 시각 자료 확정 시 교체
-      type: image
-  - type: kpi
-    kpi:
-      label: 결산 주기 단축
-      value: 70%
-      unit: 단축
-      trend: up
-      comparison: 월 5일 → 1-2일
-  - type: kpi
-    kpi:
-      label: 재고 수준 적정화
-      value: 15-20%
-      unit: 절감
-      trend: up
-      comparison: 실시간 MRP/ATP 기반
-  - type: kpi
-    kpi:
-      label: IT 유지보수 비용
-      value: 30%
-      unit: 절감
-      trend: up
-      comparison: Clean Core + 클라우드 전환
-  - type: kpi
-    kpi:
-      label: 규제 대응 비용
-      value: 50%
-      unit: 절감
-      trend: up
-      comparison: 시스템 기반 자동 추적
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 396
-    height_pt: 118
-    text: 'Business Case 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: callout
-    callout:
-      type: key_insight
-      icon: insight
-      text: 핵심 지표 변화는 단일 수치가 아닌 수요·원가·정책의 결합 시그널로 해석해야 합니다.
-  bullets:
-  - text: 산업 벤치마크 기반 추정값 — 상세 ROI는 Fit to Standard 이후 정밀 산출
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: Business Case 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력 목표가 같은
-      기준으로 관리되도록 설계해야 합니다.
-    emphasis: normal
-    icon: arrow
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  layout_intent:
-    emphasis: balanced
-    content_density: dense
-    visual_position: right
-  slide_constraints:
-    max_bullets: 8
-    max_chars_per_bullet: 180
-  metadata:
-    section: Options
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: section_divider
-  title: 'Business Case: 정성적 기대효과'
-  governing_message: 데이터 기반 의사결정, 글로벌 통합, 혁신 역량 확보는 재무 수치로 환산하기 어렵지만 전략적으로 더 큰 가치입니다.
+  governing_message: S/4HANA를 디지털 코어로, BTP를 혁신 레이어로 배치하는 2계층 아키텍처…
   bullets: []
   layout_intent:
     emphasis: content
     content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: 'Business Case 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: Options
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: matrix_2x2
+    slot: matrix_box
+    matrix_2x2:
+      x_axis: 시장 매력도
+      y_axis: 실행 역량
+      quadrants:
+      - Defend
+      - Harvest
+      - Build
+      - Invest
+      points:
+      - label: Client
+        x: 62
+        y: 58
+        color: '#008FD3'
+      - label: Peer A
+        x: 74
+        y: 72
+        color: '#0A5E9C'
+      - label: Peer B
+        x: 48
+        y: 64
+        color: '#3C8DBC'
+      - label: Peer C
+        x: 38
+        y: 44
+        color: '#6EAAD2'
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 'Digital Core: S/4HANA — Finance, SCM, Manufacturing, Procurement 통합'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Innovation Layer: SAP BTP — AI/ML, 프로세스 자동화, 사이드 확장'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Integration: SAP Integration Suite — 외부 시스템/MES/WMS 표준 연동'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Analytics: SAP Analytics Cloud — 실시간 대시보드 및 계획'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Global: 본사 S/4HANA + 해외법인 통합/투티어 구조'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: To-Be 시스템 아키텍처 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: chart_insight
+  title: As-Is vs To-Be 비교
+  governing_message: 현재 사일로형 시스템에서 통합 플랫폼으로의 전환이 운영 효율과 데이터 신뢰성을…
+  layout_intent:
+    emphasis: balanced
+    content_density: dense
+    visual_position: right
+  bullets: []
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: Options
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: chart
+    slot: chart_box
+    chart:
+      type: bar_chart
+      title: 핵심 지표 변화 (임시 플레이스홀더)
+      caption: 데이터 확정 시 실제 수치로 교체
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: As-Is vs To-Be 비교 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력
+        목표가 같은 기준으로 관리되도록 설계해야 합니다.
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 시나리오별 트리거(수요·가격·정책) 발생 시 대응 액션과 책임조직, 실행 기한을 사전에 매핑해 실제 운영에서 의사결정 지연이
+        발생하지 않도록 해야 합니다.
+      icon: risk
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 분기 단위 재무성과와 현업 운영지표를 연결해 전략의 실행력을 계량적으로 관리하고, KPI 간 상충 구간을 분기별로 조정하는 운영
+        체계를 유지해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'As-Is: 핵심 과제와 KPI를 동일 프레임으로 관리해야 실행 일관성을 확보할 수 있습니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: As-Is vs To-Be 비교 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: chart_insight
+  title: '전환 접근 방법론: Fit to Standard + Clean Core'
+  governing_message: 과거의 커스터마이징 중심이 아닌 Fit to Standard 방법론으로 Clea…
+  bullets: []
+  layout_intent:
+    emphasis: balanced
+    content_density: dense
+    visual_position: right
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: Options
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: chart
+    slot: chart_box
+    chart:
+      type: bar_chart
+      title: 핵심 지표 변화 (임시 플레이스홀더)
+      caption: 데이터 확정 시 실제 수치로 교체
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 'Fit to Standard: SAP 표준 프로세스 우선 적용 → 차별화 영역만 확장'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Clean Core 원칙: 코어 수정 최소화, BTP Side-by-Side 확장'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'SAP Activate 방법론: Discover → Prepare → Explore → Realize → Deploy'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 과거 방식(커스터마이징 중심) vs 신규 방식(표준 중심)의 근본적 사고 전환
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 전환 접근 방법론 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
+        하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '전환 접근 방법론: Fit to Standard + Clean Core 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+        실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: two_column
+  title: ERP 전환 3단계 로드맵
+  governing_message: 준비(2026)-전환(2027-2028)-최적화(2029-2030)의 3단계로…
+  bullets: []
+  layout_intent:
+    emphasis: content
+    content_density: dense
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  metadata:
+    section: Options
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 'Phase 1 준비 (2026): 현행 분석, Fit to Standard 워크샵, 전환 전략 수립, PI 선정'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Phase 2 전환 (2027-2028): S/4HANA 구축, 데이터 마이그레이션, 테스트, Go-Live'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 'Phase 3 최적화 (2029-2030): 해외법인 확산, AI/분석 고도화, 지속적 개선'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: ERP 전환 3단계 로드맵 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로
+        관리해야 하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: ERP 전환 3단계 로드맵 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: chart_insight
+  title: 'Business Case: 정량적 기대효과'
+  governing_message: 결산 단축, 재고 절감, IT 운영비 감소, 규제 대응 비용 절감 등 측정 가능…
+  content_blocks: []
+  bullets: []
+  layout_intent:
+    emphasis: balanced
+    content_density: dense
+    visual_position: right
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: Options
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: chart
+    slot: chart_box
+    chart:
+      type: bar_chart
+      title: 'Business Case: 정량적 기대효과 핵심 지표 추이'
+      caption: 단위/기준시점/출처 확정 후 실데이터로 교체
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: insight_box
+    items:
+    - text: 산업 벤치마크 기반 추정값 — 상세 ROI는 Fit to Standard 이후 정밀 산출
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
+        보정 일정을 재지정해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: Business Case 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력 목표가
+        같은 기준으로 관리되도록 설계해야 합니다.
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: Business Case 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
+        하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 'Business Case: 정량적 기대효과 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다.
+        실행으로 연결합니다. 실행으로 연결합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: section_divider
+  title: 'Business Case: 정성적 기대효과'
+  governing_message: 데이터 기반 의사결정, 글로벌 통합, 혁신 역량 확보는 재무 수치로 환산하기 어…
+  bullets: []
+  layout_intent:
+    emphasis: content
+    content_density: dense
+  content_blocks: []
   metadata:
     section: Execution
     source_refs:
@@ -1818,234 +1778,195 @@ slides:
     - sources.md#policy-regulation
 - layout: timeline
   title: 핵심 리스크 및 대응 방안
-  governing_message: 전환 리스크는 방법론(Fit to Standard), 거버넌스(PMO), 변화관리(OCM)로 체계적으로 관리합니다.
-  columns:
-  - heading: 프로젝트 리스크
-    bullets:
-    - text: 일정 지연 → 단계별 마일스톤, Go/No-Go 게이트
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 예산 초과 → Fit to Standard로 범위 통제
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 기술 리스크
-    bullets:
-    - text: 데이터 마이그레이션 → 사전 정제, 단계적 검증
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 성능 이슈 → POC 기반 사전 검증, 튜닝 계획
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-  - heading: 변화관리 리스크
-    bullets:
-    - text: 현업 저항 → OCM 전담 조직, 교육/소통 체계
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
-    - text: 지식 유실 → 현업 Co-Creation, 문서화 강제
-      evidence:
-        source_anchor: sources.md#industry-erp
-        confidence: medium
-      icon: insight
+  governing_message: 전환 리스크는 방법론(Fit to Standard), 거버넌스(PMO), 변화관…
   layout_intent:
     emphasis: content
     content_density: dense
   bullets: []
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 388
-    height_pt: 120
-    text: '핵심 리스크 및 대응 방안 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - type: bullets
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 210
-    bullets:
-    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-      emphasis: normal
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: Execution
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: timeline_steps
+    slot: timeline_box
+    timeline:
+    - phase: Phase 1
+      title: 0-100일
+      description: 핵심 과제 우선순위 확정 및 PMO·KPI 기준선 정렬
+    - phase: Phase 2
+      title: 3-6개월
+      description: 파일럿 실행과 운영 데이터 통합, 조기 성과 검증
+    - phase: Phase 3
+      title: 6-12개월
+      description: 핵심 프로세스 표준화와 조직/거버넌스 내재화
+    - phase: Phase 4
+      title: 12개월+
+      description: 전사 확산 및 투자/성과 체계 고도화
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 핵심 리스크 및 대응 방안 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
       icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: timeline
+  title: 거버넌스 및 추진 체계
+  governing_message: CEO 스폰서십, 통합 PMO, 현업-IT 공동 추진 체계가 전환 성공의 필수…
+  bullets: []
+  layout_intent:
+    emphasis: content
+    content_density: dense
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 8
+    max_chars_per_bullet: 180
+  metadata:
+    section: Execution
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: timeline_steps
+    slot: timeline_box
+    timeline:
+    - phase: Phase 1
+      title: 0-100일
+      description: 핵심 과제 우선순위 확정 및 PMO·KPI 기준선 정렬
+    - phase: Phase 2
+      title: 3-6개월
+      description: 파일럿 실행과 운영 데이터 통합, 조기 성과 검증
+    - phase: Phase 3
+      title: 6-12개월
+      description: 핵심 프로세스 표준화와 조직/거버넌스 내재화
+    - phase: Phase 4
+      title: 12개월+
+      description: 전사 확산 및 투자/성과 체계 고도화
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 거버넌스 및 추진 체계 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+        실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+- layout: two_column
+  title: 결언 및 제언
+  governing_message: EOMM 대응을 넘어 ERP를 비즈니스 플랫폼으로 재정의하고, Fit to St…
+  bullets: []
+  layout_intent:
+    emphasis: content
+    content_density: dense
+  content_blocks: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  metadata:
+    section: Execution
+    source_refs:
+    - sources.md#industry-erp
+    - sources.md#client-context
+    - sources.md#policy-regulation
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: ERP 업그레이드는 IT 프로젝트가 아닌 비즈니스 전환 — 경영진 관점의 투자
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 6대 과제 해결이 비즈니스 가치의 핵심 — 데이터 신뢰/통제/민첩성/효율/미래
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: Fit to Standard + Clean Core가 성공의 방법론 — 과거의 방식을 반복하지 않아야
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 2026년 착수가 시기적으로 최적 — 2027 EOMM 전 안정적 전환 궤도 확보
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 글로벌 에너지소재 리더의 디지털 기반 — ERP가 그 첫 번째 기둥입니다
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
+      icon: insight
+      emphasis: normal
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
     - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와
         보정 일정을 재지정해야 합니다.
+      icon: insight
       emphasis: normal
-      icon: check
       evidence:
         source_anchor: sources.md#industry-erp
         confidence: medium
-  slide_constraints:
-    max_bullets: 10
-    max_chars_per_bullet: 180
-  metadata:
-    section: Execution
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: process_flow
-  title: 거버넌스 및 추진 체계
-  governing_message: CEO 스폰서십, 통합 PMO, 현업-IT 공동 추진 체계가 전환 성공의 필수 조건입니다.
-  bullets:
-  - text: 'Steering Committee: CEO/CIO 공동 의장, 분기별 전략 점검'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: '통합 PMO: 일정/예산/품질/리스크 통합 관리'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: '현업 Co-Creation Team: 사업부별 핵심 사용자 전담 참여'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'OCM (변화관리): 교육, 소통, 채택 지원 전담'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 'SI 파트너: Fit to Standard 전문 역량 보유 파트너 선정'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  layout_intent:
-    emphasis: content
-    content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 388
-    height_pt: 120
-    text: '거버넌스 및 추진 체계 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야
-      하며, 각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  slide_constraints:
-    max_bullets: 10
-    max_chars_per_bullet: 180
-  metadata:
-    section: Execution
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
-- layout: content
-  title: 결언 및 제언
-  governing_message: EOMM 대응을 넘어 ERP를 비즈니스 플랫폼으로 재정의하고, Fit to Standard로 Clean Core를
-    구현해야 합니다.
-  bullets:
-  - text: ERP 업그레이드는 IT 프로젝트가 아닌 비즈니스 전환 — 경영진 관점의 투자
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 6대 과제 해결이 비즈니스 가치의 핵심 — 데이터 신뢰/통제/민첩성/효율/미래
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: Fit to Standard + Clean Core가 성공의 방법론 — 과거의 방식을 반복하지 않아야
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 2026년 착수가 시기적으로 최적 — 2027 EOMM 전 안정적 전환 궤도 확보
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 글로벌 에너지소재 리더의 디지털 기반 — ERP가 그 첫 번째 기둥입니다
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-    icon: insight
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  - text: 거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정
-      일정을 재지정해야 합니다.
-    emphasis: normal
-    icon: check
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  layout_intent:
-    emphasis: content
-    content_density: dense
-  content_blocks:
-  - type: text
-    position: main
-    left_pt: 43
-    width_pt: 860
-    top_pt: 380
-    height_pt: 128
-    text: '결언 및 제언 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야 하며,
-      각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다.
-
-      경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을
-      즉시 재정렬해야 하며, 이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다.'
-    evidence:
-      source_anchor: sources.md#industry-erp
-      confidence: medium
-  slide_constraints:
-    max_bullets: 10
-    max_chars_per_bullet: 180
-  metadata:
-    section: Execution
-    source_refs:
-    - sources.md#industry-erp
-    - sources.md#client-context
-    - sources.md#policy-regulation
+    - text: 결언 및 제언 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야 하며,
+        각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 결언 및 제언 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로
+        연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다. 실행으로 연결합니다. 실행으로 연결합니다. 실행으로 연결합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#industry-erp
+        confidence: medium
 - layout: thank_you
   title: Thank You
-  governing_message: 실행 성패는 계획의 화려함이 아니라 거버넌스·데이터·책임체계의 정합성에 달려 있으므로, 분기별 리뷰와 게이트
-    의사결정을 통해 전략을 지속 보정해야 합니다.
+  governing_message: 실행 성패는 계획의 화려함이 아니라 거버넌스·데이터·책임체계의 정합성에 달려 있…
   notes: 'Next Step: Fit to Standard 워크샵 → 상세 로드맵 → 파트너 선정 → 구축 착수'
   layout_intent:
     emphasis: content

@@ -34,6 +34,13 @@ try:
 except Exception:
     PdfReader = None
 
+try:
+    from block_utils import normalize_layout_name
+except Exception:
+    def normalize_layout_name(layout: str) -> str:
+        key = str(layout or "").strip().lower()
+        return {"chart_focus": "chart_insight", "strategy_options": "strategy_cards"}.get(key, key)
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -104,37 +111,15 @@ SECTION_KEYWORDS = {
     "finance": ["ebitda", "cash flow", "margin", "capex", "재무", "부채", "차입", "영업이익"],
 }
 
-LAYOUT_SEQUENCE_30 = [
+PRACTICAL_LAYOUT_SET = [
     "cover",
     "exec_summary",
-    "section_divider",
-    "chart_focus",
-    "chart_focus",
-    "comparison",
-    "content",
-    "content",
-    "section_divider",
-    "three_column",
-    "chart_focus",
-    "content",
-    "three_column",
-    "image_focus",
-    "content",
-    "comparison",
-    "process_flow",
-    "content",
-    "section_divider",
-    "three_column",
-    "comparison",
-    "chart_focus",
-    "chart_focus",
-    "content",
-    "process_flow",
-    "section_divider",
+    "two_column",
+    "chart_insight",
+    "competitor_2x2",
+    "strategy_cards",
     "timeline",
-    "process_flow",
-    "content",
-    "thank_you",
+    "kpi_cards",
 ]
 
 
@@ -908,19 +893,21 @@ def parse_slide_range(range_text: str) -> Tuple[int, int]:
 
 
 def select_layout_sequence(pages: int) -> List[str]:
-    if pages <= len(LAYOUT_SEQUENCE_30):
-        seq = LAYOUT_SEQUENCE_30[:pages]
-        if seq:
-            seq[0] = "cover"
-            seq[-1] = "thank_you"
-        return seq
+    pages = max(1, int(pages or 1))
+    if pages == 1:
+        return ["cover"]
+    if pages == 2:
+        return ["cover", "exec_summary"]
 
-    sequence = list(LAYOUT_SEQUENCE_30)
+    # 실무 고정 8개 레이아웃을 순환 사용
+    sequence = ["cover", "exec_summary"]
+    cycle = PRACTICAL_LAYOUT_SET[2:]  # two_column~kpi_cards
+    idx = 0
     while len(sequence) < pages:
-        sequence.insert(-1, "content")
-    sequence[0] = "cover"
-    sequence[-1] = "thank_you"
-    return sequence
+        sequence.append(cycle[idx % len(cycle)])
+        idx += 1
+
+    return sequence[:pages]
 
 
 def layout_recipe(layout: str) -> List[str]:
@@ -934,47 +921,37 @@ def layout_recipe(layout: str) -> List[str]:
             "각 불릿에 숫자/근거 출처를 포함하고 실행 시사점을 문장으로 연결",
             "하단에는 100일 실행항목 2개 이상을 콜아웃으로 배치",
         ],
-        "section_divider": [
-            "섹션 명칭 + 섹션에서 답해야 할 핵심 질문 1문장",
-            "전환 슬라이드이므로 시각 요소는 절제하되 톤 차이를 분명히 설정",
+        "two_column": [
+            "좌측 문제/현황, 우측 해결/시사점을 동일 기준선으로 배치",
+            "컬럼별 불릿 3~5개와 하단 실행 액션 2개 이상으로 밀도 확보",
+            "본문 하단 공백은 action_box로 채워 결론을 페이지 내에서 닫음",
         ],
-        "content": [
-            "상단 제목/거버닝 메시지 이후 본문 2단(불릿+설명 문장) 또는 표+시사점 구성",
-            "본문 문장은 축약형이 아닌 보고서형 문장으로 2~3문단 확보",
-            "하단 빈 공간은 내러티브 블록 또는 결론 바(bar)로 채움",
-        ],
-        "comparison": [
-            "좌측 As-Is(문제), 우측 To-Be(해결)를 대비시키고 기준 KPI를 명시",
-            "문제 카드(회색/점선)와 해결 카드(블루/강조) 대비를 시각적으로 유지",
-            "중앙 연결 화살표/그래프를 통해 변화 경로를 보여줌",
-        ],
-        "three_column": [
-            "3축(시장/경쟁/내부역량 또는 전략옵션 A/B/C) 비교",
-            "각 컬럼은 제목+핵심 불릿 2~3개+시사점 1문장으로 균형 구성",
-        ],
-        "chart_focus": [
+        "chart_insight": [
             "차트는 핵심 축 1~2개만 강조하고 우측 설명 패널로 해석 제공",
             "데이터 포인트에는 출처/기준시점을 명시",
             "하단에 의사결정 인사이트를 긴 문장으로 서술",
         ],
-        "image_focus": [
-            "지도/네트워크/아키텍처 이미지를 메인 비주얼로 배치",
-            "우측/하단 카드에서 기술적 의미와 실행 시사점을 연결",
+        "competitor_2x2": [
+            "2x2 매트릭스로 경쟁 포지션을 배치하고 축 정의를 명확히 표기",
+            "우측 패널에 전략적 해석 불릿 4~5개를 배치",
+            "하단 action_box에서 포지션별 실행 우선순위를 제시",
+        ],
+        "strategy_cards": [
+            "전략 옵션 3카드를 동일 폭으로 배치해 비교 가능성 확보",
+            "각 카드에 옵션명/핵심값/리스크 또는 전제조건을 함께 기입",
+            "하단 action_box에 최종 권고안 및 의사결정 조건을 명시",
         ],
         "timeline": [
             "Phase별 목표/KPI/책임조직을 동시에 표기",
             "100일-1년-3년 등 시간축과 의사결정 게이트를 함께 표시",
         ],
-        "process_flow": [
-            "문제 발생 지점 → 개선 액션 → 기대효과를 단계 흐름으로 시각화",
-            "단계별 소유 조직과 KPI를 병기해 실행 가능성 확보",
-        ],
-        "thank_you": [
-            "결론 1문장 + 즉시 의사결정 요청 1문장",
-            "다음 액션/워크숍 일정 등 실무 연결 문구 포함",
+        "kpi_cards": [
+            "4개 KPI 카드를 2x2로 배치해 가치 검증의 가시성 확보",
+            "각 KPI는 baseline 대비 개선값/기간/검증조건을 함께 명시",
+            "하단 assumptions_box에 핵심 가정과 검증 주기를 작성",
         ],
     }
-    return recipes.get(layout, recipes["content"])
+    return recipes.get(layout, recipes["two_column"])
 
 
 def default_slide_title(client_name: str, topic: str, section: str, slide_no: int) -> str:
@@ -1050,36 +1027,15 @@ def section_for_slide(slide_no: int, total_pages: int) -> str:
 
 def governing_message_for_slide(section: str, title: str, client_name: str, topic: str) -> str:
     base_topic = topic or "성장·수익성 동시 달성"
-
-    if section == "Cover":
-        return f"2026-2030 구간에서 {client_name}의 {base_topic}를 동시에 달성하기 위한 실행 프레임을 제시합니다."
-    if section == "Executive":
-        return (
-            "핵심 결론은 단일 해법이 아니라 시장·운영·재무를 연결한 포트폴리오형 접근이며, "
-            "단기 실적 방어와 중장기 경쟁우위 확보를 같은 의사결정 체계로 통합해야 합니다."
-        )
-    if section == "External":
-        return (
-            "외부 환경은 수요/정책/기술 축에서 동시에 변화하고 있으므로, 단일 변수 대응이 아닌 "
-            "복합 시그널 기반 전략 조정 메커니즘이 필요합니다."
-        )
-    if section == "Diagnosis":
-        return (
-            "현재 성과는 구조적 경쟁력과 일시적 요인이 혼재되어 있어, 제품·고객·거점·운영 KPI를 "
-            "같은 프레임에서 재분해해야 실질적 개선 우선순위를 도출할 수 있습니다."
-        )
-    if section == "Options":
-        return (
-            "전략 옵션은 상호배타가 아니라 조합 설계 대상이며, 옵션별 기대효과·난이도·리스크를 "
-            "정량화해 단계적으로 자본과 실행역량을 배분해야 합니다."
-        )
-    if section == "Execution":
-        return (
-            "실행 성패는 계획의 화려함이 아니라 거버넌스·데이터·책임체계의 정합성에 달려 있으므로, "
-            "분기별 리뷰와 게이트 의사결정을 통해 전략을 지속 보정해야 합니다."
-        )
-
-    return f"{title}은(는) {base_topic} 관점에서 실행 우선순위와 성과지표를 함께 정의해야 합니다."
+    messages = {
+        "Cover": f"{client_name}의 {base_topic} 달성을 위한 실행 프레임을 제시합니다.",
+        "Executive": "핵심 결론은 우선순위·재무효과·실행조건을 한 프레임으로 통합해야 합니다.",
+        "External": "수요·정책·기술의 결합 신호를 반영해 전략 조정 속도를 높여야 합니다.",
+        "Diagnosis": "현황 진단은 제품·고객·거점 KPI를 같은 기준선으로 재분해해야 합니다.",
+        "Options": "전략 옵션은 효과·난이도·리스크를 함께 비교해 조합 설계해야 합니다.",
+        "Execution": "실행 성패는 거버넌스·데이터·책임체계를 분기 단위로 보정할 때 확보됩니다.",
+    }
+    return truncate(messages.get(section, f"{title}은(는) {base_topic} 관점에서 실행 우선순위를 명확히 해야 합니다."), 45)
 
 
 def content_prompts_for_layout(layout: str) -> List[str]:
@@ -1088,54 +1044,43 @@ def content_prompts_for_layout(layout: str) -> List[str]:
             "대제목 1개 + 부제 1개 + 기간 프레임 1개",
         ],
         "exec_summary": [
-            "핵심 결론 6~8개를 문장형 불릿으로 작성 (각 90~180자)",
+            "핵심 결론 3~5개를 문장형 불릿으로 작성 (각 18~40자 권장)",
             "각 결론은 근거 지표(수치/기간/출처)를 1개 이상 포함",
             "우선 실행 과제(100일) 2~3개를 하단 바에 배치",
         ],
-        "section_divider": [
-            "해당 섹션에서 답할 질문 2개를 서브텍스트로 명시",
+        "two_column": [
+            "좌/우 컬럼에 각각 3~5개 불릿 배치 (각 18~40자 권장)",
+            "컬럼별 시사점 문장은 원인→영향→시사점 구조를 1개씩 포함",
+            "하단 action_box에 실행 항목 2~3개를 추가",
         ],
-        "content": [
-            "본문 불릿 최소 6개 (각 90~180자)",
-            "요약 문단 최소 2개 (각 180~320자)",
-            "하단 결론 바 1개 (Expected Value 형식)",
-        ],
-        "comparison": [
-            "좌측 문제(As-Is) 3~4개, 우측 해법(To-Be) 3~4개",
-            "중앙 연결 메시지 1개(왜 전환해야 하는지)",
-            "하단에 KPI 비교 1줄(현재 vs 목표) + 실행 전환 조건 1문장",
-        ],
-        "three_column": [
-            "컬럼당 핵심 메시지 2~3개 + 실행 시사점 1문장",
-            "컬럼 하단에는 공통 KPI 또는 리스크 주석을 추가",
-        ],
-        "chart_focus": [
+        "chart_insight": [
             "차트 해석 불릿 4~5개 + 내러티브 문단 1~2개",
             "차트 캡션에 기준 연도/단위/출처 명시",
         ],
-        "image_focus": [
-            "메인 비주얼 해석 불릿 4~5개 + 내러티브 문단 1~2개",
-            "이미지 위/옆에 핵심 라벨(노드/흐름/관계) 부여",
+        "competitor_2x2": [
+            "2x2 축 정의 문장 2개 + 포지션 해석 불릿 4~5개",
+            "포지션별 실행 권고를 action_list 2~3개로 작성",
+        ],
+        "strategy_cards": [
+            "옵션 카드 3개(옵션명/핵심값/전제조건) 작성",
+            "옵션 간 트레이드오프를 action_list 2~3개로 명시",
         ],
         "timeline": [
             "Phase 3~5개, 각 Phase별 목표/KPI/오너 표기",
             "리스크 게이트와 의사결정 시점을 함께 표기",
         ],
-        "process_flow": [
-            "Step 4~5개, 단계별 병목/개선/효과를 한 세트로 작성",
-            "마지막 단계에 성과지표 및 모니터링 루프 추가",
-        ],
-        "thank_you": [
-            "결론 1문장 + 다음 단계 1문장 + 연락 포인트",
+        "kpi_cards": [
+            "KPI 카드 4개(지표명/개선값/기간)를 구조화해 작성",
+            "assumptions_box에 핵심 가정과 재검증 주기를 2~3개 명시",
         ],
     }
-    return prompts.get(layout, prompts["content"])
+    return prompts.get(layout, prompts["two_column"])
 
 
 def layout_intent_defaults(layout: str) -> dict:
-    if layout in {"chart_focus", "image_focus"}:
+    if layout in {"chart_insight"}:
         return {"emphasis": "balanced", "visual_position": "right", "content_density": "dense"}
-    if layout in {"comparison", "three_column", "two_column", "process_flow", "timeline", "content", "exec_summary"}:
+    if layout in {"competitor_2x2", "strategy_cards", "two_column", "timeline", "kpi_cards", "exec_summary"}:
         return {"emphasis": "content", "content_density": "dense"}
     return {"emphasis": "content", "content_density": "normal"}
 
@@ -1205,9 +1150,9 @@ def build_layout_blueprint(
             "top_right_tag": top_right_tag_for_slide(section, idx),
             "layout_intent": layout_intent_defaults(layout),
             "density_target": {
-                "min_body_chars": 700 if layout in {"content", "comparison", "three_column", "two_column", "exec_summary"} else 560,
-                "min_paragraphs": 7 if layout in {"content", "comparison", "three_column", "two_column", "exec_summary"} else 5,
-                "min_bullets": 6 if layout not in {"cover", "section_divider", "thank_you"} else 0,
+                "min_body_chars": 700 if layout in {"two_column", "exec_summary", "competitor_2x2", "strategy_cards"} else 560,
+                "min_paragraphs": 7 if layout in {"two_column", "exec_summary", "competitor_2x2", "strategy_cards"} else 5,
+                "min_bullets": 5 if layout not in {"cover"} else 0,
             },
             "layout_recipe": layout_recipe(layout),
             "content_prompts": content_prompts_for_layout(layout),
@@ -1285,10 +1230,10 @@ def blueprint_to_layout_preferences(blueprint: dict) -> dict:
         "layout_sequence": [],
         "recommended_layout_sequence": sequence,
         "layout_intents": {
-            "chart_focus": {"visual_position": "right", "emphasis": "balanced", "content_density": "dense"},
-            "image_focus": {"visual_position": "right", "emphasis": "balanced", "content_density": "dense"},
-            "comparison": {"emphasis": "content", "content_density": "dense"},
-            "content": {"emphasis": "content", "content_density": "dense"},
+            "chart_insight": {"visual_position": "right", "emphasis": "balanced", "content_density": "dense"},
+            "competitor_2x2": {"emphasis": "content", "content_density": "dense"},
+            "strategy_cards": {"emphasis": "content", "content_density": "dense"},
+            "two_column": {"emphasis": "content", "content_density": "dense"},
         },
         "title_keyword_overrides": [],
         "slide_overrides": {},
@@ -1297,7 +1242,7 @@ def blueprint_to_layout_preferences(blueprint: dict) -> dict:
 
 def _bullet(text: str, anchor: str) -> dict:
     return {
-        "text": truncate(text, 176),
+        "text": truncate(text, 110),
         "icon": "insight",
         "emphasis": "normal",
         "evidence": {
@@ -1305,6 +1250,198 @@ def _bullet(text: str, anchor: str) -> dict:
             "confidence": "medium",
         },
     }
+
+
+def _seed_blocks_for_layout(layout: str, anchor_primary: str, anchor_secondary: str) -> List[dict]:
+    def _item(text: str, anchor: str) -> dict:
+        return _bullet(text, anchor)
+
+    if layout == "exec_summary":
+        return [
+            {
+                "type": "bullets",
+                "slot": "main_bullets",
+                "items": [
+                    _item("핵심 결론은 시장·운영·재무를 연결한 통합 의사결정 프레임에서 도출해야 단기 성과와 중장기 경쟁력의 균형을 동시에 달성할 수 있습니다.", anchor_primary),
+                    _item("현재 데이터 구조를 표준 KPI 기준선으로 정렬하면 실행 우선순위의 논리성이 높아지고, 분기 리뷰에서 보정 의사결정을 빠르게 수행할 수 있습니다.", anchor_secondary),
+                    _item("옵션별 가치와 리스크를 같은 단위로 비교해 자본 배분 기준을 명확히 하면 전략 실행의 일관성과 투자 효율을 동시에 확보할 수 있습니다.", anchor_primary),
+                    _item("거버넌스 체계는 과제 오너·검증 지표·의사결정 게이트를 함께 설계해야 하며, 실행 편차가 발생할 때 즉시 교정 가능한 운영 리듬을 제공해야 합니다.", anchor_secondary),
+                ],
+            },
+            {
+                "type": "action_list",
+                "slot": "action_box",
+                "items": [
+                    _item("100일 내 우선순위 과제와 KPI 기준선을 확정합니다.", anchor_primary),
+                    _item("분기 단위 Value Review와 투자 게이트를 정례화합니다.", anchor_secondary),
+                ],
+            },
+        ]
+
+    if layout == "two_column":
+        return [
+            {
+                "type": "bullets",
+                "slot": "left_column",
+                "items": [
+                    _item("현재 운영 구조는 데이터·프로세스·의사결정 기준이 분절되어 과제 우선순위 판단이 조직별로 상이하게 나타나고 있습니다.", anchor_primary),
+                    _item("수요·원가·정책 변수가 동시에 변동하는 환경에서 단일 지표 중심 관리 방식은 실행 편차를 확대하고 대응 지연을 유발합니다.", anchor_secondary),
+                    _item("핵심 KPI의 기준선과 산식이 통일되어 있지 않아 현업과 경영진 간 성과 해석 차이가 반복적으로 발생합니다.", anchor_primary),
+                ],
+            },
+            {
+                "type": "bullets",
+                "slot": "right_column",
+                "items": [
+                    _item("단일 KPI 체계와 표준 운영 절차를 결합한 실행 프레임을 도입해 의사결정 기준을 통일하고 과제 간 충돌을 최소화해야 합니다.", anchor_secondary),
+                    _item("월간 리뷰에서 선행지표와 결과지표를 함께 점검하도록 운영 구조를 전환해 조기 경보와 즉시 보정이 가능한 관리 체계를 확보해야 합니다.", anchor_primary),
+                    _item("우선순위 재조정 기준을 수치화해 자본·인력 재배분 의사결정을 빠르게 수행하면 전략 실행의 속도와 정확도를 동시에 개선할 수 있습니다.", anchor_secondary),
+                ],
+            },
+            {
+                "type": "action_list",
+                "slot": "action_box",
+                "items": [
+                    _item("표준 KPI/용어 사전을 확정하고 대시보드를 통합합니다.", anchor_primary),
+                    _item("분기별 투자/실행 게이트 운영 규칙을 명문화합니다.", anchor_secondary),
+                ],
+            },
+        ]
+
+    if layout == "chart_insight":
+        return [
+            {
+                "type": "chart",
+                "slot": "chart_box",
+                "chart": {
+                    "type": "bar_chart",
+                    "title": "핵심 지표 추이",
+                    "caption": "기준연도·단위·출처 명시 필요",
+                    "evidence": {"source_anchor": anchor_primary, "confidence": "medium"},
+                },
+            },
+            {
+                "type": "bullets",
+                "slot": "insight_box",
+                "items": [
+                    _item("핵심 지표의 변동은 단일 요인이 아니라 수요·원가·정책 변화의 복합 영향으로 해석해야 실행 방향을 정확히 설정할 수 있습니다.", anchor_primary),
+                    _item("현재 추세는 단기 방어 중심 운영만으로는 지속 가능하지 않으며, 구조적 경쟁력 개선 과제를 병행해야 성과 변동성을 완화할 수 있습니다.", anchor_secondary),
+                    _item("지표 해석 시 기준시점과 비교군을 명확히 정의해 현업과 경영진의 판단 기준을 일치시켜야 의사결정 품질을 높일 수 있습니다.", anchor_primary),
+                    _item("시사점은 즉시 실행 가능한 액션과 연결되어야 하며, 검증 가능한 KPI와 책임조직이 함께 제시되어야 합니다.", anchor_secondary),
+                ],
+            },
+            {
+                "type": "action_list",
+                "slot": "action_box",
+                "items": [
+                    _item("핵심 지표 모니터링 주기를 월간으로 단축합니다.", anchor_primary),
+                    _item("지표 편차 발생 시 즉시 보정 액션을 트리거합니다.", anchor_secondary),
+                ],
+            },
+        ]
+
+    if layout == "competitor_2x2":
+        return [
+            {
+                "type": "matrix_2x2",
+                "slot": "matrix_box",
+                "matrix_2x2": {
+                    "x_axis": "시장 매력도",
+                    "y_axis": "실행 역량",
+                    "quadrants": ["Defend", "Harvest", "Build", "Invest"],
+                    "points": [
+                        {"label": "Client", "x": 62, "y": 58, "color": "#008FD3"},
+                        {"label": "Peer A", "x": 74, "y": 72, "color": "#0A5E9C"},
+                        {"label": "Peer B", "x": 48, "y": 64, "color": "#3C8DBC"},
+                    ],
+                },
+            },
+            {
+                "type": "bullets",
+                "slot": "insight_box",
+                "items": [
+                    _item("현재 포지션은 실행 역량 대비 시장 매력도가 높은 영역에 근접해 있으며, 선택과 집중을 통해 상위 사분면으로 이동할 여지가 존재합니다.", anchor_primary),
+                    _item("경쟁사 대비 약점은 운영 민첩성과 데이터 활용 속도에서 나타나며, 이를 개선하지 않으면 중장기 가치 창출의 속도가 제한될 수 있습니다.", anchor_secondary),
+                    _item("강점 영역은 기존 고객 기반과 생산 역량에 있으므로, 고부가 포트폴리오 중심으로 자원 배분을 재설계해야 경쟁우위를 유지할 수 있습니다.", anchor_primary),
+                    _item("포지션 이동 전략은 투자 우선순위와 리스크 관리 체계를 함께 설계할 때 실행 가능성이 높아집니다.", anchor_secondary),
+                ],
+            },
+            {
+                "type": "action_list",
+                "slot": "action_box",
+                "items": [
+                    _item("핵심 경쟁축별 개선 과제를 분기별로 추적합니다.", anchor_primary),
+                    _item("포지션 변화 KPI를 경영회의 안건으로 고정합니다.", anchor_secondary),
+                ],
+            },
+        ]
+
+    if layout == "strategy_cards":
+        return [
+            {
+                "type": "kpi_cards",
+                "slot": "kpi_cards",
+                "cards": [
+                    {"label": "Option A", "value": "수익성 방어", "comparison": "단기 마진 안정화"},
+                    {"label": "Option B", "value": "성장 확장", "comparison": "중기 CAPA/고객 확대"},
+                    {"label": "Option C", "value": "포트폴리오 재편", "comparison": "자본 효율 최적화"},
+                ],
+            },
+            {
+                "type": "action_list",
+                "slot": "action_box",
+                "items": [
+                    _item("옵션별 기대효과·난이도·리스크를 동일 지표로 평가합니다.", anchor_primary),
+                    _item("최종 권고안은 조합형 포트폴리오로 설계합니다.", anchor_secondary),
+                ],
+            },
+        ]
+
+    if layout == "timeline":
+        return [
+            {
+                "type": "timeline_steps",
+                "slot": "timeline_box",
+                "timeline": [
+                    {"phase": "Phase 1", "title": "0-100일", "description": "우선순위 과제·KPI 기준선 확정"},
+                    {"phase": "Phase 2", "title": "3-6개월", "description": "파일럿 실행 및 성과 검증"},
+                    {"phase": "Phase 3", "title": "6-12개월", "description": "전사 표준화와 확산"},
+                    {"phase": "Phase 4", "title": "12개월+", "description": "고도화 및 포트폴리오 재조정"},
+                ],
+            },
+            {
+                "type": "action_list",
+                "slot": "action_box",
+                "items": [
+                    _item("단계별 게이트와 의사결정 주체를 사전 합의합니다.", anchor_primary),
+                    _item("분기별 성과 리뷰와 보정 루프를 고정합니다.", anchor_secondary),
+                ],
+            },
+        ]
+
+    if layout == "kpi_cards":
+        return [
+            {
+                "type": "kpi_cards",
+                "slot": "kpi_cards",
+                "cards": [
+                    {"label": "Revenue Uplift", "value": "+6~10%", "comparison": "3Y cumulative"},
+                    {"label": "EBITDA Margin", "value": "+1.5~2.5%p", "comparison": "Year 3"},
+                    {"label": "Inventory Turn", "value": "+12~18%", "comparison": "Year 2"},
+                    {"label": "Payback", "value": "24~30M", "comparison": "scenario range"},
+                ],
+            },
+            {
+                "type": "action_list",
+                "slot": "assumptions_box",
+                "items": [
+                    _item("시장·정책 가정은 분기 단위로 재검증합니다.", anchor_primary),
+                    _item("핵심 KPI 미달 시 투자 게이트를 재평가합니다.", anchor_secondary),
+                ],
+            },
+        ]
+
+    return []
 
 
 def apply_blueprint_to_spec(
@@ -1333,8 +1470,8 @@ def apply_blueprint_to_spec(
 
     # 본문 밀도 상향: global_constraints 기본값 보정
     global_constraints = spec.get("global_constraints", {}) if isinstance(spec.get("global_constraints"), dict) else {}
-    if int(global_constraints.get("default_max_bullets", 0) or 0) < 9:
-        global_constraints["default_max_bullets"] = 9
+    if int(global_constraints.get("default_max_bullets", 0) or 0) < 8:
+        global_constraints["default_max_bullets"] = 8
     if int(global_constraints.get("default_max_chars_per_bullet", 0) or 0) < 180:
         global_constraints["default_max_chars_per_bullet"] = 180
     spec["global_constraints"] = global_constraints
@@ -1346,7 +1483,15 @@ def apply_blueprint_to_spec(
     if not slides:
         new_slides = []
         for item in bp_slides:
-            layout = item.get("layout", "content")
+            layout = normalize_layout_name(item.get("layout", "two_column"))
+            layout = {
+                "chart_focus": "chart_insight",
+                "image_focus": "chart_insight",
+                "comparison": "competitor_2x2",
+                "three_column": "strategy_cards",
+                "process_flow": "timeline",
+                "content": "two_column",
+            }.get(layout, layout)
             title = item.get("title", "")
             gm = item.get("governing_message", "")
             prompts = item.get("content_prompts", [])
@@ -1364,13 +1509,26 @@ def apply_blueprint_to_spec(
 
             if layout not in {"cover", "section_divider", "thank_you", "quote"}:
                 prompt_text = "; ".join(prompts[:2]) if prompts else "핵심 근거 기반 상세 본문 작성"
-                slide["bullets"] = [
-                    _bullet(f"핵심 주장 1: {prompt_text}", anchor_client or anchor_market or "sources.md#client"),
-                    _bullet("핵심 주장 2: 최신 지표와 추세 변화를 근거로 실행 우선순위를 제시합니다.", anchor_market or anchor_client or "sources.md#market"),
-                    _bullet("핵심 주장 3: 반증 시나리오와 리스크 완화 액션을 함께 명시합니다.", anchor_policy or anchor_market or "sources.md#policy"),
-                    _bullet("핵심 주장 4: KPI와 책임조직을 연결해 실행 가능성을 높입니다.", anchor_client or anchor_market or "sources.md#client"),
-                    _bullet("핵심 주장 5: Expected Value를 수치/기간/검증조건으로 명확히 정의합니다.", anchor_competitors or anchor_market or "sources.md#competitors"),
-                ]
+                blocks = _seed_blocks_for_layout(
+                    layout,
+                    anchor_primary=anchor_market or anchor_client or "sources.md#market",
+                    anchor_secondary=anchor_client or anchor_policy or "sources.md#client",
+                )
+                if not blocks:
+                    blocks = [
+                        {
+                            "type": "bullets",
+                            "slot": "main_bullets",
+                            "items": [
+                                _bullet(f"핵심 주장 1: {prompt_text}", anchor_client or anchor_market or "sources.md#client"),
+                                _bullet("핵심 주장 2: 최신 지표와 추세 변화를 근거로 실행 우선순위를 제시합니다.", anchor_market or anchor_client or "sources.md#market"),
+                                _bullet("핵심 주장 3: 반증 시나리오와 리스크 완화 액션을 함께 명시합니다.", anchor_policy or anchor_market or "sources.md#policy"),
+                                _bullet("핵심 주장 4: KPI와 책임조직을 연결해 실행 가능성을 높입니다.", anchor_client or anchor_market or "sources.md#client"),
+                            ],
+                        }
+                    ]
+                slide["blocks"] = blocks
+                slide["bullets"] = []
             new_slides.append(slide)
 
         spec["slides"] = new_slides
@@ -1382,9 +1540,36 @@ def apply_blueprint_to_spec(
                 break
             bp = bp_slides[idx]
             changed = False
+            bp_layout = normalize_layout_name(bp.get("layout", "two_column"))
+            bp_layout = {
+                "chart_focus": "chart_insight",
+                "image_focus": "chart_insight",
+                "comparison": "competitor_2x2",
+                "three_column": "strategy_cards",
+                "process_flow": "timeline",
+                "content": "two_column",
+            }.get(bp_layout, bp_layout)
 
-            if force_layout and slide.get("layout") != bp.get("layout"):
-                slide["layout"] = bp.get("layout")
+            current_layout = normalize_layout_name(slide.get("layout", ""))
+            current_layout = {
+                "chart_focus": "chart_insight",
+                "image_focus": "chart_insight",
+                "comparison": "competitor_2x2",
+                "three_column": "strategy_cards",
+                "process_flow": "timeline",
+                "content": "two_column",
+            }.get(current_layout, current_layout)
+
+            if force_layout and current_layout != bp_layout:
+                slide["layout"] = bp_layout
+                current_layout = bp_layout
+                changed = True
+            elif not current_layout:
+                slide["layout"] = bp_layout
+                current_layout = bp_layout
+                changed = True
+            elif slide.get("layout") != current_layout:
+                slide["layout"] = current_layout
                 changed = True
 
             if not normalize_ws(slide.get("title", "")):
@@ -1430,10 +1615,10 @@ def apply_blueprint_to_spec(
 
             if layout_name in {"cover", "section_divider", "thank_you", "quote"}:
                 target_max_bullets = 0
-            elif layout_name in {"chart_focus", "image_focus"}:
+            elif layout_name in {"chart_insight", "competitor_2x2", "kpi_cards"}:
                 target_max_bullets = 8
-            elif layout_name in {"content", "comparison", "two_column", "three_column", "process_flow", "timeline", "exec_summary"}:
-                target_max_bullets = 10
+            elif layout_name in {"two_column", "strategy_cards", "timeline", "exec_summary"}:
+                target_max_bullets = 8
             else:
                 target_max_bullets = 8
 
@@ -1460,6 +1645,19 @@ def apply_blueprint_to_spec(
                     sc.update(desired)
                     slide["slide_constraints"] = sc
                     changed = True
+
+            # block-first 기본 구조 보강
+            if layout_name not in {"cover", "section_divider", "thank_you", "quote"}:
+                existing_blocks = slide.get("blocks", [])
+                if not isinstance(existing_blocks, list) or not existing_blocks:
+                    seeded = _seed_blocks_for_layout(
+                        layout_name,
+                        anchor_primary=anchor_market or anchor_client or "sources.md#market",
+                        anchor_secondary=anchor_client or anchor_policy or "sources.md#client",
+                    )
+                    if seeded:
+                        slide["blocks"] = seeded
+                        changed = True
 
             md = slide.get("metadata", {}) if isinstance(slide.get("metadata"), dict) else {}
             if not md.get("section"):

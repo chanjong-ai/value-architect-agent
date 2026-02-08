@@ -16,13 +16,11 @@ layout_sequence: []
 #   - cover
 #   - exec_summary
 #   - two_column
-#   - content
-#   - comparison
-#   - section_divider
-#   - content
+#   - chart_insight
+#   - competitor_2x2
+#   - strategy_cards
 #   - timeline
-#   - chart_focus
-#   - thank_you
+#   - kpi_cards
 
 # 특정 슬라이드(1-based) 오버라이드
 slide_overrides: {}
@@ -31,7 +29,7 @@ slide_overrides: {}
 #   "3":
 #     layout: "two_column"
 #   "9":
-#     layout: "chart_focus"
+#     layout: "chart_insight"
 #     layout_intent:
 #       visual_position: "right"
 #       emphasis: "balanced"
@@ -49,15 +47,18 @@ title_keyword_overrides: []
 #     layout_intent:
 #       emphasis: "balanced"
 #   - keywords: ["Value Case", "ROI", "기대 효과"]
-#     layout: "chart_focus"
+#     layout: "kpi_cards"
 #     layout_intent:
 #       visual_position: "right"
 #       emphasis: "balanced"
 
 layout_intents:
-  chart_focus:
+  chart_insight:
     visual_position: "right"
     emphasis: "balanced"
-  image_focus:
-    visual_position: "right"
-    emphasis: "visual"
+  competitor_2x2:
+    emphasis: "content"
+  strategy_cards:
+    emphasis: "content"
+  two_column:
+    emphasis: "content"

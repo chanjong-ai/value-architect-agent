@@ -42,12 +42,15 @@ try:
     from constants import (
         BULLET_MAX_CHARS, BULLET_MAX_COUNT, BULLET_MIN_COUNT,
         BULLET_CHARS_PER_LINE, BULLET_MAX_LINES,
+        BULLET_RECOMMENDED_MIN_CHARS, BULLET_RECOMMENDED_MAX_CHARS,
+        BULLET_BLOCK_MIN_ITEMS, BULLET_BLOCK_MAX_ITEMS,
+        ACTION_LIST_MIN_ITEMS, ACTION_LIST_MAX_ITEMS,
         TITLE_FONT_SIZE_PT, GOVERNING_FONT_SIZE_PT, BODY_FONT_SIZE_PT,
         FONT_SIZE_TOLERANCE_PT, ALLOWED_FONTS,
         DENSITY_MAX_CHARS, DENSITY_MIN_CHARS, DENSITY_MIN_PARAGRAPHS,
         NO_BULLET_LAYOUTS, COLUMN_LAYOUTS, EVIDENCE_ANCHOR_PATTERN,
         get_max_bullets, get_max_chars_per_bullet, get_forbidden_words, get_bullet_bounds,
-        get_column_bullet_limit
+        get_column_bullet_limit, normalize_layout_name, LAYOUT_REQUIRED_BLOCKS
     )
 except ImportError:
     # 폴백 상수
@@ -56,6 +59,12 @@ except ImportError:
     BULLET_MIN_COUNT = 3
     BULLET_CHARS_PER_LINE = 38
     BULLET_MAX_LINES = 4
+    BULLET_RECOMMENDED_MIN_CHARS = 18
+    BULLET_RECOMMENDED_MAX_CHARS = 110
+    BULLET_BLOCK_MIN_ITEMS = 3
+    BULLET_BLOCK_MAX_ITEMS = 5
+    ACTION_LIST_MIN_ITEMS = 2
+    ACTION_LIST_MAX_ITEMS = 3
     TITLE_FONT_SIZE_PT = 24
     GOVERNING_FONT_SIZE_PT = 16
     BODY_FONT_SIZE_PT = 12
@@ -67,6 +76,15 @@ except ImportError:
     NO_BULLET_LAYOUTS = ["cover", "section_divider", "thank_you", "quote"]
     COLUMN_LAYOUTS = ["two_column", "three_column", "comparison"]
     EVIDENCE_ANCHOR_PATTERN = r"^sources\.md#[\w-]+$"
+    LAYOUT_REQUIRED_BLOCKS = {
+        "exec_summary": ["bullets", "action_list"],
+        "two_column": ["bullets", "action_list"],
+        "chart_insight": ["chart", "bullets", "action_list"],
+        "competitor_2x2": ["matrix_2x2", "bullets", "action_list"],
+        "strategy_cards": ["kpi_cards", "action_list"],
+        "timeline": ["timeline_steps", "action_list"],
+        "kpi_cards": ["kpi_cards", "action_list"],
+    }
 
     def get_max_bullets(gc=None, sc=None):
         if sc and "max_bullets" in sc:
@@ -91,12 +109,12 @@ except ImportError:
         return list(set(words))
 
     def get_bullet_bounds(layout, gc=None, sc=None):
-        layout = (layout or "").strip().lower()
+        layout = normalize_layout_name(layout)
         max_bullets = get_max_bullets(gc, sc)
         min_bullets = BULLET_MIN_COUNT
         if layout in NO_BULLET_LAYOUTS:
             return 0, 0
-        if layout in ("chart_focus", "image_focus"):
+        if layout in ("chart_focus", "image_focus", "chart_insight", "competitor_2x2", "kpi_cards"):
             return 0, min(max_bullets, 8)
         return min_bullets, max_bullets
 
@@ -104,6 +122,17 @@ except ImportError:
         if max_bullets <= 0:
             return 0
         return max(3, min(8, max_bullets))
+
+    def normalize_layout_name(layout):
+        key = str(layout or "").strip().lower()
+        return {"chart_focus": "chart_insight", "strategy_options": "strategy_cards"}.get(key, key)
+
+try:
+    from block_utils import normalize_slide_blocks, block_types_in_slide, iter_bullet_texts
+except ImportError:
+    normalize_slide_blocks = None
+    block_types_in_slide = None
+    iter_bullet_texts = None
 
 
 class Severity(Enum):
@@ -224,15 +253,18 @@ class PPTQAChecker:
     """PPT QA 검사기 v2.1"""
 
     def __init__(self, pptx_path: str, spec_path: Optional[str] = None,
-                 tokens_path: Optional[str] = None, sources_path: Optional[str] = None):
+                 tokens_path: Optional[str] = None, sources_path: Optional[str] = None,
+                 layouts_path: Optional[str] = None):
         self.pptx_path = Path(pptx_path)
         self.spec_path = Path(spec_path) if spec_path else None
         self.tokens_path = Path(tokens_path) if tokens_path else None
         self.sources_path = Path(sources_path) if sources_path else None
+        self.layouts_path = Path(layouts_path) if layouts_path else None
 
         self.prs = Presentation(str(self.pptx_path))
         self.spec = self._load_spec() if self.spec_path else None
         self.tokens = self._load_tokens() if self.tokens_path else None
+        self.layouts = self._load_layouts() if self.layouts_path else None
         self.sources_anchors = self._parse_sources_anchors() if self.sources_path else set()
 
         # 전역 제약조건
@@ -280,6 +312,13 @@ class PPTQAChecker:
             anchors.add(f"sources.md#{anchor}")
 
         return anchors
+
+    def _load_layouts(self) -> Optional[dict]:
+        """layouts.yaml 로드"""
+        if not self.layouts_path or not self.layouts_path.exists():
+            return None
+        with open(self.layouts_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
 
     def _get_font_from_tokens(self, font_key: str) -> Tuple[str, int]:
         """
@@ -405,10 +444,19 @@ class PPTQAChecker:
         # 4. 레이아웃 경계 검사
         self._check_layout_bounds(slide_idx, slide)
 
-        # 5. 금지어 검사 (slide_constraints 포함)
+        # 5. 레이아웃 필수 블록 검사 (spec 기반)
+        self._check_required_blocks(slide_idx)
+
+        # 6. 블록 구조/밀도 규칙 검사 (spec 기반)
+        self._check_block_density_rules(slide_idx)
+
+        # 7. 텍스트 오버플로우 추정
+        self._check_text_overflow(slide_idx, slide)
+
+        # 8. 금지어 검사 (slide_constraints 포함)
         self._check_forbidden_words(slide_idx, slide, slide_constraints)
 
-        # 6. Spec과의 일치 검사 (고도화된 로직)
+        # 9. Spec과의 일치 검사 (고도화된 로직)
         if self.spec:
             self._check_spec_alignment(slide_idx, slide)
 
@@ -449,6 +497,15 @@ class PPTQAChecker:
         for block in spec_slide.get("content_blocks", []):
             if block.get("type") == "bullets":
                 _append_bullets(block.get("bullets", []))
+
+        # New blocks bullets/action_list
+        normalized_blocks = normalize_slide_blocks(spec_slide) if normalize_slide_blocks else spec_slide.get("blocks", [])
+        for block in normalized_blocks if isinstance(normalized_blocks, list) else []:
+            if not isinstance(block, dict):
+                continue
+            b_type = str(block.get("type", "")).strip().lower()
+            if b_type == "bullets":
+                _append_bullets(block.get("items", []))
 
         return bullet_texts
 
@@ -499,6 +556,13 @@ class PPTQAChecker:
 
         for block in spec_slide.get("content_blocks", []):
             if str(block.get("type", "")).strip().lower() != "bullets":
+                return True
+
+        normalized_blocks = normalize_slide_blocks(spec_slide) if normalize_slide_blocks else spec_slide.get("blocks", [])
+        for block in normalized_blocks if isinstance(normalized_blocks, list) else []:
+            if not isinstance(block, dict):
+                continue
+            if str(block.get("type", "")).strip().lower() not in {"bullets", "action_list"}:
                 return True
 
         for column in spec_slide.get("columns", []):
@@ -592,9 +656,9 @@ class PPTQAChecker:
             elif font_size_pt and abs(font_size_pt - governing_size) <= tolerance:
                 # 위치 기반 추가 검증: 상단 영역이면 거버닝
                 if hasattr(shape, 'top'):
-                    # 상단 1/3 영역 (슬라이드 높이 기준)
+                    # 거버닝은 헤더 구간(상단 약 20%)으로 제한해 카드/본문 오탐을 줄임
                     slide_height = self.prs.slide_height
-                    if shape.top < slide_height * 0.25:
+                    if shape.top < slide_height * 0.20:
                         governing_boxes.append(tf)
                     else:
                         bullet_boxes.append(tf)
@@ -620,7 +684,7 @@ class PPTQAChecker:
         spec_slide = self._get_spec_slide(slide_idx)
 
         if spec_slide:
-            layout_name = spec_slide.get("layout", "content")
+            layout_name = normalize_layout_name(spec_slide.get("layout", "content"))
             min_bullets, max_bullets = get_bullet_bounds(
                 layout_name, self.global_constraints, slide_constraints
             )
@@ -778,13 +842,270 @@ class PPTQAChecker:
                                 auto_fixable=True
                             ))
 
+        # 제목/거버닝/본문 기준 크기 준수 검사
+        title_boxes, governing_boxes, bullet_boxes = self._classify_text_boxes(slide)
+        tolerance = float(self.constraints["font_size_tolerance_pt"])
+        title_target = float(self.constraints["title_font_size_pt"])
+        governing_target = float(self.constraints["governing_font_size_pt"])
+        body_target = float(self.constraints["body_font_size_pt"])
+
+        def _collect_sizes(text_frames, min_text_len: int = 1) -> List[float]:
+            sizes: List[float] = []
+            for tf in text_frames:
+                for para in tf.paragraphs:
+                    text = para.text.strip()
+                    if len(text) < min_text_len:
+                        continue
+                    for run in para.runs:
+                        if not run.text.strip():
+                            continue
+                        if run.font.size:
+                            sizes.append(float(run.font.size.pt))
+            return sizes
+
+        title_sizes = _collect_sizes(title_boxes, min_text_len=2)
+        governing_sizes = _collect_sizes(governing_boxes, min_text_len=4)
+        body_sizes = _collect_sizes(bullet_boxes, min_text_len=6)
+
+        if title_sizes:
+            median_title = sorted(title_sizes)[len(title_sizes) // 2]
+            if abs(median_title - title_target) > tolerance:
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="타이포 규격",
+                    message=f"제목 폰트 크기가 기준({title_target:.0f}pt)과 다를 수 있습니다 (관측 {median_title:.1f}pt)",
+                    details={"expected_pt": title_target, "observed_pt": round(median_title, 1)},
+                    auto_fixable=False,
+                ))
+
+        if governing_sizes:
+            median_governing = sorted(governing_sizes)[len(governing_sizes) // 2]
+            if abs(median_governing - governing_target) > tolerance:
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="타이포 규격",
+                    message=f"거버닝 폰트 크기가 기준({governing_target:.0f}pt)과 다를 수 있습니다 (관측 {median_governing:.1f}pt)",
+                    details={"expected_pt": governing_target, "observed_pt": round(median_governing, 1)},
+                    auto_fixable=False,
+                ))
+
+        if body_sizes:
+            median_body = sorted(body_sizes)[len(body_sizes) // 2]
+            # body는 12 또는 14 허용
+            if not (abs(median_body - body_target) <= tolerance or abs(median_body - (body_target + 2)) <= tolerance):
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="타이포 규격",
+                    message=f"본문 폰트 크기가 기준(12~14pt) 범위를 벗어날 수 있습니다 (관측 {median_body:.1f}pt)",
+                    details={"expected_pt": [body_target, body_target + 2], "observed_pt": round(median_body, 1)},
+                    auto_fixable=False,
+                ))
+
+    def _check_required_blocks(self, slide_idx: int):
+        """레이아웃별 필수 블록 존재 여부 검사 (spec 기반)"""
+        if not self.spec:
+            return
+        spec_slide = self._get_spec_slide(slide_idx)
+        if not spec_slide:
+            return
+
+        layout_name = normalize_layout_name(spec_slide.get("layout", "content"))
+        required_blocks = []
+
+        if self.layouts:
+            layout_map = self.layouts.get("layout_map", {}) if isinstance(self.layouts.get("layout_map", {}), dict) else {}
+            cfg = layout_map.get(layout_name, {}) if isinstance(layout_map.get(layout_name, {}), dict) else {}
+            if isinstance(cfg.get("required_blocks"), list):
+                required_blocks = [str(x).strip().lower() for x in cfg.get("required_blocks", []) if str(x).strip()]
+
+        if not required_blocks:
+            required_blocks = LAYOUT_REQUIRED_BLOCKS.get(layout_name, [])
+        if not required_blocks:
+            return
+
+        available_types = set(block_types_in_slide(spec_slide) if block_types_in_slide else self._collect_spec_block_types(spec_slide))
+
+        for req in required_blocks:
+            if req == "bullets":
+                has_req = bool(self._extract_spec_bullet_texts(slide_idx))
+            elif req == "kpi_cards":
+                has_req = bool({"kpi_cards", "kpi"} & available_types)
+            elif req == "timeline_steps":
+                has_req = bool({"timeline_steps", "timeline"} & available_types) or (layout_name == "timeline" and bool(self._extract_spec_bullet_texts(slide_idx)))
+            else:
+                has_req = req in available_types
+            if not has_req:
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="레이아웃 필수 블록",
+                    message=f"{layout_name} 레이아웃 필수 블록 누락: {req}",
+                    details={"layout": layout_name, "required": req, "available": sorted(list(available_types))[:8]},
+                    auto_fixable=False,
+                ))
+
+    def _check_block_density_rules(self, slide_idx: int):
+        """blocks 기반 문장/아이템 밀도 규칙 검사"""
+        if not self.spec:
+            return
+        spec_slide = self._get_spec_slide(slide_idx)
+        if not spec_slide:
+            return
+
+        blocks = normalize_slide_blocks(spec_slide) if normalize_slide_blocks else spec_slide.get("blocks", [])
+        if not isinstance(blocks, list):
+            return
+
+        cai_keywords = ("원인", "영향", "시사점")
+        cai_count = 0
+
+        for block_idx, block in enumerate(blocks):
+            if not isinstance(block, dict):
+                continue
+            b_type = str(block.get("type", "")).strip().lower()
+            if b_type not in {"bullets", "action_list"}:
+                continue
+
+            items = block.get("items", []) if isinstance(block.get("items", []), list) else []
+            if not items:
+                continue
+
+            if b_type == "bullets" and (len(items) < BULLET_BLOCK_MIN_ITEMS or len(items) > BULLET_BLOCK_MAX_ITEMS):
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="블록 밀도",
+                    message=f"bullets 블록 아이템 수 권장 범위({BULLET_BLOCK_MIN_ITEMS}~{BULLET_BLOCK_MAX_ITEMS}) 벗어남 ({len(items)}개)",
+                    details={"block_index": block_idx, "block_type": b_type, "count": len(items)},
+                    auto_fixable=False,
+                ))
+            if b_type == "action_list" and (len(items) < ACTION_LIST_MIN_ITEMS or len(items) > ACTION_LIST_MAX_ITEMS):
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="블록 밀도",
+                    message=f"action_list 아이템 수 권장 범위({ACTION_LIST_MIN_ITEMS}~{ACTION_LIST_MAX_ITEMS}) 벗어남 ({len(items)}개)",
+                    details={"block_index": block_idx, "block_type": b_type, "count": len(items)},
+                    auto_fixable=False,
+                ))
+
+            for item_idx, item in enumerate(items):
+                text = item if isinstance(item, str) else item.get("text", "")
+                text = str(text or "").strip()
+                if not text:
+                    continue
+
+                if len(text) < BULLET_RECOMMENDED_MIN_CHARS or len(text) > BULLET_RECOMMENDED_MAX_CHARS:
+                    self.report.add_issue(QAIssue(
+                        slide_index=slide_idx,
+                        severity=Severity.INFO,
+                        category="문장 규격",
+                        message=f"불릿 길이 권장 범위({BULLET_RECOMMENDED_MIN_CHARS}~{BULLET_RECOMMENDED_MAX_CHARS}자) 벗어남 ({len(text)}자)",
+                        details={"block_index": block_idx, "item_index": item_idx},
+                        auto_fixable=False,
+                    ))
+
+                if all(k in text for k in cai_keywords):
+                    cai_count += 1
+
+        if cai_count > 1:
+            self.report.add_issue(QAIssue(
+                slide_index=slide_idx,
+                severity=Severity.INFO,
+                category="문장 구조",
+                message="원인→영향→시사점 구조 불릿은 슬라이드당 1개를 권장합니다",
+                details={"detected_count": cai_count},
+                auto_fixable=False,
+            ))
+
+    def _collect_spec_block_types(self, spec_slide: dict) -> List[str]:
+        types: List[str] = []
+        if not spec_slide:
+            return types
+        for block in spec_slide.get("blocks", []) if isinstance(spec_slide.get("blocks", []), list) else []:
+            if isinstance(block, dict):
+                b_type = str(block.get("type", "")).strip().lower()
+                if b_type:
+                    types.append(b_type)
+        for block in spec_slide.get("content_blocks", []) if isinstance(spec_slide.get("content_blocks", []), list) else []:
+            if isinstance(block, dict):
+                b_type = str(block.get("type", "")).strip().lower()
+                if b_type:
+                    types.append(b_type)
+        if isinstance(spec_slide.get("bullets"), list) and spec_slide.get("bullets"):
+            types.append("bullets")
+        if isinstance(spec_slide.get("columns"), list) and spec_slide.get("columns"):
+            types.append("columns")
+        out: List[str] = []
+        seen = set()
+        for t in types:
+            if t and t not in seen:
+                seen.add(t)
+                out.append(t)
+        return out
+
+    def _check_text_overflow(self, slide_idx: int, slide):
+        """
+        텍스트 오버플로우 추정:
+        - 텍스트 길이/폰트 크기/박스 크기 기반 휴리스틱
+        - 실제 PPT 엔진 줄바꿈과 100% 일치하지 않으므로 warning 수준으로 제공
+        """
+        for shape in slide.shapes:
+            if not shape.has_text_frame:
+                continue
+            text_frame = shape.text_frame
+            text = "\\n".join([p.text for p in text_frame.paragraphs if p.text and p.text.strip()]).strip()
+            if not text:
+                continue
+
+            width = getattr(shape, "width", None)
+            height = getattr(shape, "height", None)
+            if not width or not height:
+                continue
+
+            # 대표 폰트 크기 추정
+            font_size_pt = float(self.constraints.get("body_font_size_pt", BODY_FONT_SIZE_PT))
+            for para in text_frame.paragraphs:
+                for run in para.runs:
+                    if run.font.size:
+                        font_size_pt = float(run.font.size.pt)
+                        break
+                if font_size_pt:
+                    break
+
+            width_pt = float(width.pt)
+            height_pt = float(height.pt)
+            effective_width = max(40.0, width_pt - 8.0)
+            chars_per_line = max(8.0, effective_width / max(4.8, font_size_pt * 0.55))
+            estimated_lines = max(1.0, len(text) / chars_per_line)
+            line_height = font_size_pt * 1.32
+            estimated_height = estimated_lines * line_height
+
+            if estimated_height > (height_pt * 1.08):
+                self.report.add_issue(QAIssue(
+                    slide_index=slide_idx,
+                    severity=Severity.WARNING,
+                    category="텍스트 오버플로우",
+                    message=f"텍스트가 박스 높이를 초과할 가능성이 높습니다 (추정 {int(round(estimated_height))}pt > 박스 {int(round(height_pt))}pt)",
+                    details={
+                        "shape_width_pt": int(round(width_pt)),
+                        "shape_height_pt": int(round(height_pt)),
+                        "font_size_pt": round(font_size_pt, 1),
+                        "estimated_lines": int(round(estimated_lines)),
+                    },
+                    auto_fixable=False,
+                ))
+
     def _check_density(self, slide_idx: int, slide):
         """콘텐츠 밀도 검사"""
         total_chars = 0
         total_paragraphs = 0
         layout_name = ""
         if self.spec and "slides" in self.spec and 0 <= slide_idx - 1 < len(self.spec["slides"]):
-            layout_name = str(self.spec["slides"][slide_idx - 1].get("layout", "")).strip().lower()
+            layout_name = normalize_layout_name(str(self.spec["slides"][slide_idx - 1].get("layout", "")).strip().lower())
 
         for shape in slide.shapes:
             if not shape.has_text_frame:
@@ -815,7 +1136,7 @@ class PPTQAChecker:
             min_chars = max(min_chars, 220)
             min_paragraphs = max(min_paragraphs, 6)
             severity = Severity.WARNING
-        elif layout_name in {"chart_focus", "image_focus"}:
+        elif layout_name in {"chart_focus", "image_focus", "chart_insight", "competitor_2x2", "kpi_cards"}:
             min_chars = max(min_chars, 190)
             min_paragraphs = max(min_paragraphs, 5)
             severity = Severity.WARNING
@@ -997,7 +1318,7 @@ class PPTQAChecker:
             required_sections = self.global_constraints.get("required_sections", [])
             if self.spec and isinstance(required_sections, list) and required_sections:
                 slides = self.spec.get("slides", [])
-                available_layouts = {str(slide.get("layout", "")).strip().lower() for slide in slides}
+                available_layouts = {normalize_layout_name(str(slide.get("layout", "")).strip().lower()) for slide in slides}
                 available_sections = set()
                 for slide in slides:
                     metadata = slide.get("metadata", {})
@@ -1059,6 +1380,27 @@ class PPTQAChecker:
             # content_blocks 내 evidence 검사
             for block in spec_slide.get("content_blocks", []):
                 self._check_content_block_evidence(slide_idx, block, evidence_pattern)
+
+            # blocks 내 evidence 검사
+            normalized_blocks = normalize_slide_blocks(spec_slide) if normalize_slide_blocks else spec_slide.get("blocks", [])
+            for block in normalized_blocks if isinstance(normalized_blocks, list) else []:
+                if not isinstance(block, dict):
+                    continue
+                if "evidence" in block:
+                    self._validate_evidence(slide_idx, block["evidence"], evidence_pattern)
+
+                for item in block.get("items", []) if isinstance(block.get("items", []), list) else []:
+                    if isinstance(item, dict) and "evidence" in item:
+                        self._validate_evidence(slide_idx, item["evidence"], evidence_pattern)
+
+                for card in block.get("cards", []) if isinstance(block.get("cards", []), list) else []:
+                    if isinstance(card, dict) and "evidence" in card:
+                        self._validate_evidence(slide_idx, card["evidence"], evidence_pattern)
+
+                if isinstance(block.get("chart"), dict):
+                    self._check_visual_evidence(slide_idx, block.get("chart"), evidence_pattern)
+                if isinstance(block.get("image"), dict):
+                    self._check_visual_evidence(slide_idx, block.get("image"), evidence_pattern)
 
             # footnotes 내 evidence 검사
             for footnote in spec_slide.get("footnotes", []):
@@ -1171,7 +1513,7 @@ def validate_spec_business_rules(spec: dict, global_constraints: dict = None) ->
     gc = global_constraints or spec.get("global_constraints", {})
 
     for slide_idx, slide in enumerate(spec.get("slides", []), start=1):
-        layout = slide.get("layout", "content")
+        layout = normalize_layout_name(slide.get("layout", "content"))
         slide_constraints = slide.get("slide_constraints", {})
 
         # 슬라이드별 제약 적용
@@ -1200,6 +1542,20 @@ def validate_spec_business_rules(spec: dict, global_constraints: dict = None) ->
                     _validate_bullets_list(
                         issues, slide_idx, block_bullets, max_bullets, max_chars,
                         f"content_blocks[{block_idx}].bullets"
+                    )
+
+        # blocks 내 bullets/action_list 검사
+        normalized_blocks = normalize_slide_blocks(slide) if normalize_slide_blocks else slide.get("blocks", [])
+        for block_idx, block in enumerate(normalized_blocks if isinstance(normalized_blocks, list) else [], start=1):
+            if not isinstance(block, dict):
+                continue
+            b_type = str(block.get("type", "")).strip().lower()
+            if b_type in {"bullets", "action_list"}:
+                block_items = block.get("items", [])
+                if block_items:
+                    _validate_bullets_list(
+                        issues, slide_idx, block_items, max_bullets, max_chars,
+                        f"blocks[{block_idx}].items"
                     )
 
     return issues
@@ -1245,6 +1601,7 @@ def main():
     parser.add_argument("pptx_path", help="검사할 PPTX 파일 경로")
     parser.add_argument("--spec", help="deck_spec.yaml 경로 (선택)")
     parser.add_argument("--tokens", help="tokens.yaml 경로 (선택)")
+    parser.add_argument("--layouts", help="layouts.yaml 경로 (선택)")
     parser.add_argument("--sources", help="sources.md 경로 (Evidence 검증용, 선택)")
     parser.add_argument("--output", "-o", help="보고서 출력 경로 (JSON)")
     parser.add_argument("--markdown", "-m", help="마크다운 보고서 출력 경로")
@@ -1263,7 +1620,8 @@ def main():
         pptx_path=args.pptx_path,
         spec_path=args.spec,
         tokens_path=args.tokens,
-        sources_path=args.sources
+        sources_path=args.sources,
+        layouts_path=args.layouts
     )
 
     report = checker.run_all_checks()

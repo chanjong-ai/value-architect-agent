@@ -14,6 +14,8 @@ constants.py - 전역 상수 및 정책 정의
 # 컨설팅 톤의 서술형 문장을 허용하기 위해 상향
 BULLET_MAX_CHARS = 180  # 기본 최대 길이
 BULLET_RECOMMENDED_CHARS = 130  # 권장 길이
+BULLET_RECOMMENDED_MIN_CHARS = 18
+BULLET_RECOMMENDED_MAX_CHARS = 110
 BULLET_CHARS_PER_LINE = 38  # 줄 수 추정용 기준 문자수 (휴리스틱)
 BULLET_MAX_LINES = 4  # 불릿 최대 줄 수
 
@@ -22,6 +24,10 @@ BULLET_MIN_COUNT = 3  # 컨텐츠 슬라이드 최소 개수
 BULLET_MAX_COUNT = 9  # 기본 최대 개수 (global_constraints로 오버라이드 가능)
 VISUAL_BULLET_MAX_COUNT = 8  # chart_focus/image_focus 기본 최대 개수
 COLUMN_BULLET_MAX_COUNT = 8  # 컬럼당 최대 불릿 수 (밀도형 덱 허용)
+BULLET_BLOCK_MIN_ITEMS = 3
+BULLET_BLOCK_MAX_ITEMS = 5
+ACTION_LIST_MIN_ITEMS = 2
+ACTION_LIST_MAX_ITEMS = 3
 
 # =============================================================================
 # 폰트 정책
@@ -34,12 +40,14 @@ TITLE_MAX_CHARS = 100
 # 거버닝 메시지 폰트
 GOVERNING_FONT_SIZE_PT = 16
 GOVERNING_MAX_CHARS = 200
+GOVERNING_RECOMMENDED_MIN_CHARS = 28
+GOVERNING_RECOMMENDED_MAX_CHARS = 45
 
 # 본문 폰트
 BODY_FONT_SIZE_PT = 12
 
 # 각주 폰트
-FOOTNOTE_FONT_SIZE_PT = 10
+FOOTNOTE_FONT_SIZE_PT = 9
 
 # 폰트 크기 허용 오차
 FONT_SIZE_TOLERANCE_PT = 2
@@ -75,7 +83,24 @@ NO_BULLET_LAYOUTS = ["cover", "section_divider", "thank_you", "quote"]
 COLUMN_LAYOUTS = ["two_column", "three_column", "comparison"]
 
 # 시각 자료 중심 레이아웃
-VISUAL_LAYOUTS = ["chart_focus", "image_focus"]
+VISUAL_LAYOUTS = ["chart_focus", "image_focus", "chart_insight", "competitor_2x2", "kpi_cards"]
+
+# 레이아웃 alias (신규 practical layout 우선)
+LAYOUT_ALIASES = {
+    "chart_focus": "chart_insight",
+    "strategy_options": "strategy_cards",
+}
+
+# 레이아웃별 필수 블록 규칙
+LAYOUT_REQUIRED_BLOCKS = {
+    "exec_summary": ["bullets", "action_list"],
+    "two_column": ["bullets", "action_list"],
+    "chart_insight": ["chart", "bullets", "action_list"],
+    "competitor_2x2": ["matrix_2x2", "bullets", "action_list"],
+    "strategy_cards": ["kpi_cards", "action_list"],
+    "timeline": ["timeline_steps", "action_list"],
+    "kpi_cards": ["kpi_cards", "action_list"],
+}
 
 # =============================================================================
 # Evidence 정책
@@ -150,7 +175,7 @@ def get_bullet_bounds(
     레이아웃 + global_constraints + slide_constraints를 반영한 불릿 범위 반환.
     반환값: (min_bullets, max_bullets)
     """
-    normalized_layout = (layout or "").strip().lower()
+    normalized_layout = normalize_layout_name(layout)
     max_bullets = get_max_bullets(global_constraints, slide_constraints)
     min_bullets = BULLET_MIN_COUNT
 
@@ -173,3 +198,8 @@ def get_column_bullet_limit(max_bullets: int) -> int:
     if max_bullets <= 0:
         return 0
     return max(3, min(COLUMN_BULLET_MAX_COUNT, max_bullets))
+
+
+def normalize_layout_name(layout: str) -> str:
+    key = (layout or "").strip().lower()
+    return LAYOUT_ALIASES.get(key, key)

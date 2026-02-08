@@ -1,16 +1,16 @@
 # 제약사항 및 스타일 가이드
 
 ## 덱 스타일
-- 템플릿: templates/company/base-template.pptx
+- 렌더 기준: layout-driven (`templates/company/layouts.yaml` + `templates/company/tokens.yaml`)
 - 슬라이드 비율: 16:9
 - 배경: 흰색
 - 색상 톤: 회사 승인 블루톤만 사용
 
 ## 타이포그래피 (필수)
-- 제목: Noto Sans KR Bold 24pt
-- 거버닝 메시지: Noto Sans KR Bold 16pt
+- 제목: Noto Sans KR Regular 24pt
+- 거버닝 메시지: Noto Sans KR Regular 16pt
 - 본문: Noto Sans KR Regular 12pt (기본), 필요시 최대 14pt
-- 각주: Noto Sans KR 10pt
+- 각주: Noto Sans KR Regular 9pt
 
 ## 밀도 규칙
 - 슬라이드당 불릿: 3-6개

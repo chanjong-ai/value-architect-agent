@@ -9,8 +9,8 @@ client_meta:
   confidentiality: confidential
 global_constraints:
   max_slides: 35
-  default_max_bullets: 6
-  default_max_chars_per_bullet: 100
+  default_max_bullets: 8
+  default_max_chars_per_bullet: 180
   forbidden_words:
   - 아마
   - 대충
@@ -18,8 +18,6 @@ global_constraints:
   required_sections:
   - cover
   - exec_summary
-  - content
-  - thank_you
   tone: professional
 assumptions:
 - 내부 상세 원가/계약 데이터는 제한적으로 접근 가능하므로 범위형 시나리오를 사용함
@@ -35,687 +33,2036 @@ slides:
 - layout: cover
   title: 세아베스틸 C-Level 전문 컨설팅 보고서
   subtitle: 2026~2028 수익성·운영·디지털 전환 통합 실행안
-  governing_message: 본 보고서는 현재 에이전트 코드의 실제 성능과 제약을 기준으로, 세아베스틸의 실행 가능한 경영 아젠다를 제시한다.
+  governing_message: 본 보고서는 현재 에이전트 코드의 실제 성능과 제약을 기준으로, 세아베스틸의 실…
   layout_intent:
     emphasis: balanced
     content_density: normal
   bullets: []
+  metadata:
+    source_refs:
+    - sources.md#market
 - layout: exec_summary
   title: Executive Summary (결론 먼저)
-  governing_message: 현재 코드베이스는 컨설팅형 산출물 자동화 역량이 높고, `validate → render → qa → polish`
-    품질 파이프라인이 내장되어 있어 경영진 보고서 생산의 속도/일관성 측면에서 즉시 활용 가능하다.
+  governing_message: 현재 코드베이스는 컨설팅형 산출물 자동화 역량이 높고, `validate → r…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 현재 코드베이스는 컨설팅형 산출물 자동화 역량이 높고, `validate → render → qa → polish` 품질 파이프라인이
-      내장되어 있어…
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 다만 세아베스틸 요구 수준(약 30페이지)과 비교하면 추천 엔진이 20장 상한으로 제한되는 구조적 제약이 존재한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 따라서 단기적으로는 20장 핵심 의사결정 덱 + 10장 상세 부록 체계로 운영하고, 중기적으로는 코드 상한 완화 및 제조(철강)
-      전용 분석모듈을 추가…
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 핵심 결정과제를 우선순위 기준으로 정렬하고 실행 게이트를 사전에 합의해야 합니다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 핵심 결정과제를 우선순위 기준으로 정렬하고 실행 게이트를 사전에 합의해야 합니다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 7
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: main_bullets
+    items:
+    - text: 현재 코드베이스는 컨설팅형 산출물 자동화 역량이 높고, `validate → render → qa → polish` 품질 파이프라인이
+        내장되어 있어…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 다만 세아베스틸 요구 수준(약 30페이지)과 비교하면 추천 엔진이 20장 상한으로 제한되는 구조적 제약이 존재한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 따라서 단기적으로는 20장 핵심 의사결정 덱 + 10장 상세 부록 체계로 운영하고, 중기적으로는 코드 상한 완화 및 제조(철강)
+        전용 분석모듈을 추가…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 결정과제를 우선순위 기준으로 정렬하고 실행 게이트를 사전에 합의해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: Executive Summary (결론 먼저) 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: 이번 보고서의 근거 데이터
   governing_message: 근거는 정적 코드와 실제 실행 결과를 함께 사용했다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 근거는 정적 코드와 실제 실행 결과를 함께 사용했다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 정적 기준으로 `scripts/` 하위 13개 파이썬 파일, 총 8,843라인을 점검했다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 동적 기준으로 `python3 scripts/deck_cli.py list`, `python3 scripts/deck_cli.py
-      analyze --…
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 특히 세아베스틸 신규 클라이언트 팩을 생성한 뒤 입력값을 채워 실제 추천/진단 결과를 확보했다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 근거는 정적 코드와 실제 실행 결과를 함께 사용했다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 정적 기준으로 `scripts/` 하위 13개 파이썬 파일, 총 8,843라인을 점검했다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 동적 기준으로 `python3 scripts/deck_cli.py list`, `python3 scripts/deck_cli.py
+        analyze --…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 특히 세아베스틸 신규 클라이언트 팩을 생성한 뒤 입력값을 채워 실제 추천/진단 결과를 확보했다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 이번 보고서의 근거 데이터 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 이번 보고서의 근거 데이터 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 이번 보고서의 근거 데이터 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '코드 현황 진단: 강점'
-  governing_message: 첫째, 파이프라인 오케스트레이션이 명확해 실무 반복 운영이 용이하다(`scripts/deck_cli.py`).
+  governing_message: 첫째, 파이프라인 오케스트레이션이 명확해 실무 반복 운영이 용이하다(`scrip…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 첫째, 파이프라인 오케스트레이션이 명확해 실무 반복 운영이 용이하다(`scripts/deck_cli.py`).
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 둘째, 품질 기준이 수치화되어 있어 산출물 검수가 자동화된다(`scripts/validate_spec.py`, `scripts/qa_ppt.py`).
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 셋째, 근거 연결(evidence) 자동 보강 기능으로 주장-출처 추적성이 확보된다(`scripts/enrich_evidence.py`).
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 넷째, 추천-분석-렌더가 CLI로 일원화되어 현업 확산 장벽이 낮다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 첫째, 파이프라인 오케스트레이션이 명확해 실무 반복 운영이 용이하다(`scripts/deck_cli.py`).
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 둘째, 품질 기준이 수치화되어 있어 산출물 검수가 자동화된다(`scripts/validate_spec.py`, `scripts/qa_ppt.py`).
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 셋째, 근거 연결(evidence) 자동 보강 기능으로 주장-출처 추적성이 확보된다(`scripts/enrich_evidence.py`).
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 넷째, 추천-분석-렌더가 CLI로 일원화되어 현업 확산 장벽이 낮다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 코드 현황 진단: 강점 실행 범위를 단계적으로 확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 코드 현황 진단: 강점 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '코드 현황 진단: 강점 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#client
+- layout: two_column
   title: '코드 현황 진단: 제약'
-  governing_message: 첫째, `scripts/recommend_strategy.py`에서 권장 슬라이드 수가 20장으로 강제되어 30페이지
-    경영진 보고서 구조와 불일치한다.
+  governing_message: 첫째, `scripts/recommend_strategy.py`에서 권장 슬라이…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 첫째, `scripts/recommend_strategy.py`에서 권장 슬라이드 수가 20장으로 강제되어 30페이지 경영진 보고서
-      구조와 불일치한다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 둘째, brief 파싱이 정규식 라벨 의존형이라 입력 문구가 조금만 달라도 점수 왜곡이 발생한다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 셋째, `scripts/analyze_client.py`의 sources 섹션 기대값이 고정돼 산업별 커스텀 섹션 반영이 제한된다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 넷째, 표/이미지 블록은 일부가 플레이스홀더 중심이라 시각 완성도 보정이 추가 필요하다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 첫째, `scripts/recommend_strategy.py`에서 권장 슬라이드 수가 20장으로 강제되어 30페이지 경영진
+        보고서 구조와 불일치한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 둘째, brief 파싱이 정규식 라벨 의존형이라 입력 문구가 조금만 달라도 점수 왜곡이 발생한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 셋째, `scripts/analyze_client.py`의 sources 섹션 기대값이 고정돼 산업별 커스텀 섹션 반영이 제한된다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 넷째, 표/이미지 블록은 일부가 플레이스홀더 중심이라 시각 완성도 보정이 추가 필요하다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 코드 현황 진단: 제약 실행 범위를 단계적으로 확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 코드 현황 진단: 제약 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '코드 현황 진단: 제약 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#client
+- layout: two_column
   title: '벤치마크 결과: 기존 클라이언트 편차'
   governing_message: 동일 코드 기반에서도 운영 완성도 편차가 확인된다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 동일 코드 기반에서도 운영 완성도 편차가 확인된다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: '`ecopro`는 Readiness 100, QA 경고 0으로 최고 수준이며, `acme-demo`도 99점으로 안정적이다.'
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 반면 `posco-futurem`은 최근 분석 기준 57점, Spec 경고 29건으로 품질 편차가 크다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 코드 자체보다 입력 아티팩트 품질(brief/sources/spec)과 운영 규율이 성과를 좌우한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 동일 코드 기반에서도 운영 완성도 편차가 확인된다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '`ecopro`는 Readiness 100, QA 경고 0으로 최고 수준이며, `acme-demo`도 99점으로 안정적이다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 반면 `posco-futurem`은 최근 분석 기준 57점, Spec 경고 29건으로 품질 편차가 크다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 코드 자체보다 입력 아티팩트 품질(brief/sources/spec)과 운영 규율이 성과를 좌우한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 벤치마크 결과: 기존 클라이언트 편차 실행 범위를 단계적으로 확장해야
+        합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 벤치마크 결과: 기존 클라이언트 편차 과제는 조기 경보 기준과 대응 액션을 함께 관리해야
+        합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '벤치마크 결과: 기존 클라이언트 편차 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: 세아베스틸 현재 상태 (코드 실행 기준)
-  governing_message: 세아베스틸 신규 팩 기준 `recommend` 결과는 핵심 집중영역이 비용절감, 운영혁신, 데이터거버넌스, AI확산,
-    리스크통제 순으로 도출됐다.
+  governing_message: 세아베스틸 신규 팩 기준 `recommend` 결과는 핵심 집중영역이 비용절감,…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 세아베스틸 신규 팩 기준 `recommend` 결과는 핵심 집중영역이 비용절감, 운영혁신, 데이터거버넌스, AI확산, 리스크통제
-      순으로 도출됐다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 그러나 `analyze` 결과 Readiness는 50점(Partial Ready)으로, `deck_spec.yaml` 미작성 상태가
-      직접 원인이다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 즉, 전략 방향성은 확보됐지만 실행 산출물(30슬라이드 스펙)로 전환되지 않은 상태다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 따라서 본 프로젝트의 1차 성공조건은 “전략 방향 합의”가 아니라 “스펙 완성 + QA 통과”다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 세아베스틸 신규 팩 기준 `recommend` 결과는 핵심 집중영역이 비용절감, 운영혁신, 데이터거버넌스, AI확산, 리스크통제
+        순으로 도출됐다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 그러나 `analyze` 결과 Readiness는 50점(Partial Ready)으로, `deck_spec.yaml` 미작성
+        상태가 직접 원인이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 즉, 전략 방향성은 확보됐지만 실행 산출물(30슬라이드 스펙)로 전환되지 않은 상태다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 따라서 본 프로젝트의 1차 성공조건은 “전략 방향 합의”가 아니라 “스펙 완성 + QA 통과”다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 세아베스틸 현재 상태 (코드 실행 기준) 실행 범위를 단계적으로 확장해야
+        합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 세아베스틸 현재 상태 (코드 실행 기준) 과제는 조기 경보 기준과 대응 액션을 함께 관리해야
+        합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 세아베스틸 현재 상태 (코드 실행 기준) 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: 경영진 의사결정 프레임
-  governing_message: 1층은 재무성과(마진, 원가, 현금효율), 2층은 운영성과(수율, 납기, 품질, 재고), 3층은 전환역량(데이터
-    표준, AI 유스케이스 확산, 거버넌스)이다.
+  governing_message: 1층은 재무성과(마진, 원가, 현금효율), 2층은 운영성과(수율, 납기, 품질,…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 1층은 재무성과(마진, 원가, 현금효율), 2층은 운영성과(수율, 납기, 품질, 재고), 3층은 전환역량(데이터 표준, AI 유스케이스
-      확산, 거버넌…
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 각 층은 독립 KPI로 측정하되 투자승인은 통합 게이트로 관리해야 한다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 통합 게이트 기준은 “재무효과 + 실행가능성 + 리스크 통제” 3요소이며, 어느 하나 미달 시 단계승인을 보류하는 원칙을 권고한다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 1층은 재무성과(마진, 원가, 현금효율), 2층은 운영성과(수율, 납기, 품질, 재고), 3층은 전환역량(데이터 표준, AI
+        유스케이스 확산, 거버넌…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 각 층은 독립 KPI로 측정하되 투자승인은 통합 게이트로 관리해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 통합 게이트 기준은 “재무효과 + 실행가능성 + 리스크 통제” 3요소이며, 어느 하나 미달 시 단계승인을 보류하는 원칙을 권고한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 경영진 의사결정 프레임 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 경영진 의사결정 프레임 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 경영진 의사결정 프레임 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '가치창출 레버 1: 수익성 복원'
   governing_message: 세아베스틸의 1순위 레버는 원가구조 개선과 믹스 최적화다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 세아베스틸의 1순위 레버는 원가구조 개선과 믹스 최적화다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 실행 초점은 공정별 손실요인 분해, 재작업/불량 원인 상위 항목 집중, 에너지 원단위 최적화, 제품/고객 믹스 재정렬이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 보고서 단계에서는 절대수치보다 “개선폭” 중심으로 설계하고, 본 실행단계에서 라인별 데이터로 정밀화한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 권장 KPI는 영업이익률 개선(+1.5~2.5%p), 제조원가 3~5% 절감, 에너지 원단위 4~7% 절감이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 세아베스틸의 1순위 레버는 원가구조 개선과 믹스 최적화다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 실행 초점은 공정별 손실요인 분해, 재작업/불량 원인 상위 항목 집중, 에너지 원단위 최적화, 제품/고객 믹스 재정렬이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 보고서 단계에서는 절대수치보다 “개선폭” 중심으로 설계하고, 본 실행단계에서 라인별 데이터로 정밀화한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 권장 KPI는 영업이익률 개선(+1.5~2.5%p), 제조원가 3~5% 절감, 에너지 원단위 4~7% 절감이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 가치창출 레버 1: 수익성 복원 실행 범위를 단계적으로 확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 가치창출 레버 1: 수익성 복원 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '가치창출 레버 1: 수익성 복원 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '가치창출 레버 2: 운영 안정화'
   governing_message: 운영 측면의 핵심은 본사와 현장 간 KPI 정의 통일이다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 운영 측면의 핵심은 본사와 현장 간 KPI 정의 통일이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 동일 지표를 서로 다르게 산출하면 실행조직 간 갈등이 반복된다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 따라서 KPI 데이터 사전, 집계주기, 책임조직(RACI)을 먼저 고정해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 라인별로는 OEE 분해(가동/성능/품질), 납기 준수율, 재고회전일수, 클레임 재발률을 통합 모니터링 대상으로 묶고, 월간 운영회의에서
-      편차 원인과…
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 운영 측면의 핵심은 본사와 현장 간 KPI 정의 통일이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 동일 지표를 서로 다르게 산출하면 실행조직 간 갈등이 반복된다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 따라서 KPI 데이터 사전, 집계주기, 책임조직(RACI)을 먼저 고정해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 라인별로는 OEE 분해(가동/성능/품질), 납기 준수율, 재고회전일수, 클레임 재발률을 통합 모니터링 대상으로 묶고, 월간 운영회의에서
+        편차 원인과…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 가치창출 레버 2: 운영 안정화 실행 범위를 단계적으로 확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 가치창출 레버 2: 운영 안정화 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '가치창출 레버 2: 운영 안정화 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '가치창출 레버 3: 데이터 기반 경영'
-  governing_message: 현재 코드 파이프라인은 evidence 기반 보고 체계에 강점이 있으므로, 세아베스틸 데이터 거버넌스 설계와
-    궁합이 좋다.
+  governing_message: 현재 코드 파이프라인은 evidence 기반 보고 체계에 강점이 있으므로, 세아…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 현재 코드 파이프라인은 evidence 기반 보고 체계에 강점이 있으므로, 세아베스틸 데이터 거버넌스 설계와 궁합이 좋다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 첫째, 데이터 도메인 오너를 지정해 지표 산식 분쟁을 차단한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 둘째, 의사결정 핵심 지표만 우선 표준화해 과도한 범위 확장을 방지한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 셋째, 경영회의 보고서와 운영 대시보드의 지표 정의를 동일화해 보고-실행 간 단절을 없앤다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 현재 코드 파이프라인은 evidence 기반 보고 체계에 강점이 있으므로, 세아베스틸 데이터 거버넌스 설계와 궁합이 좋다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 첫째, 데이터 도메인 오너를 지정해 지표 산식 분쟁을 차단한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 둘째, 의사결정 핵심 지표만 우선 표준화해 과도한 범위 확장을 방지한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 셋째, 경영회의 보고서와 운영 대시보드의 지표 정의를 동일화해 보고-실행 간 단절을 없앤다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 가치창출 레버 3: 데이터 기반 경영 실행 범위를 단계적으로 확장해야
+        합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 가치창출 레버 3: 데이터 기반 경영 과제는 조기 경보 기준과 대응 액션을 함께 관리해야
+        합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '가치창출 레버 3: 데이터 기반 경영 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '가치창출 레버 4: AI 유스케이스 확산'
   governing_message: AI는 기술 실험이 아니라 재무효과 중심 포트폴리오로 운영해야 한다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: AI는 기술 실험이 아니라 재무효과 중심 포트폴리오로 운영해야 한다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 세아베스틸 우선 유스케이스는 품질 이상징후 조기탐지, 수요/생산/재고 동시 최적화, 설비고장 예측, 원재료 가격변동 시나리오 대응이다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 각 유스케이스는 “문제정의-데이터준비-모델실행-현장정착” 4단계 게이트를 통과해야 하며, 12개월 내 현장 정착률과 재무효과를 KPI로
-      관리해야 한다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: AI는 기술 실험이 아니라 재무효과 중심 포트폴리오로 운영해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 세아베스틸 우선 유스케이스는 품질 이상징후 조기탐지, 수요/생산/재고 동시 최적화, 설비고장 예측, 원재료 가격변동 시나리오
+        대응이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 각 유스케이스는 “문제정의-데이터준비-모델실행-현장정착” 4단계 게이트를 통과해야 하며, 12개월 내 현장 정착률과 재무효과를
+        KPI로 관리해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 가치창출 레버 4: AI 유스케이스 확산 실행 범위를 단계적으로 확장해야
+        합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 가치창출 레버 4: AI 유스케이스 확산 과제는 조기 경보 기준과 대응 액션을 함께 관리해야
+        합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '가치창출 레버 4: AI 유스케이스 확산 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#tech-trends
+- layout: two_column
   title: 30페이지 보고서 아키텍처 제안
-  governing_message: 현재 코드 추천엔진은 20장을 제안하므로, 세아베스틸의 30페이지 요구는 아키텍처를 분리해 대응한다.
+  governing_message: 현재 코드 추천엔진은 20장을 제안하므로, 세아베스틸의 30페이지 요구는 아키텍…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 현재 코드 추천엔진은 20장을 제안하므로, 세아베스틸의 30페이지 요구는 아키텍처를 분리해 대응한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 권장 구조는 20장 본편(결정용) + 10장 부록(근거용)이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 본편에는 결정사항, 투자안, 로드맵, 리스크를 담고, 부록에는 가정/민감도/세부 KPI/데이터 정의를 배치한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 이 구조는 임원 의사결정 집중도를 유지하면서 감사추적성과 실행력을 동시에 확보한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 현재 코드 추천엔진은 20장을 제안하므로, 세아베스틸의 30페이지 요구는 아키텍처를 분리해 대응한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 권장 구조는 20장 본편(결정용) + 10장 부록(근거용)이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 본편에는 결정사항, 투자안, 로드맵, 리스크를 담고, 부록에는 가정/민감도/세부 KPI/데이터 정의를 배치한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 이 구조는 임원 의사결정 집중도를 유지하면서 감사추적성과 실행력을 동시에 확보한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 30페이지 보고서 아키텍처 제안 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 30페이지 보고서 아키텍처 제안 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 30페이지 보고서 아키텍처 제안 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '코드 개선 과제 1: 슬라이드 상한 조정'
-  governing_message: '`scripts/recommend_strategy.py`의 `target_count = max(8, min(20,
-    target_count))`는 본 과제의 직접 병목이다.'
+  governing_message: '`scripts/recommend_strategy.py`의 `target_cou…'
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: '`scripts/recommend_strategy.py`의 `target_count = max(8, min(20, target_count))`는
-      본…'
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 세아베스틸 기준으로 상한을 35로 조정하고, 20장 초과 시 자동으로 appendix 비중을 높이는 규칙을 추가해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 이렇게 하면 임원용 핵심 메시지는 간결하게 유지하면서도, 30페이지 요청을 코드 레벨에서 자연스럽게 수용할 수 있다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: '`scripts/recommend_strategy.py`의 `target_count = max(8, min(20, target_count))`는
+        본…'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 세아베스틸 기준으로 상한을 35로 조정하고, 20장 초과 시 자동으로 appendix 비중을 높이는 규칙을 추가해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 이렇게 하면 임원용 핵심 메시지는 간결하게 유지하면서도, 30페이지 요청을 코드 레벨에서 자연스럽게 수용할 수 있다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 코드 개선 과제 1: 슬라이드 상한 조정 실행 범위를 단계적으로 확장해야
+        합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 코드 개선 과제 1: 슬라이드 상한 조정 과제는 조기 경보 기준과 대응 액션을 함께 관리해야
+        합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '코드 개선 과제 1: 슬라이드 상한 조정 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '코드 개선 과제 2: 산업별 템플릿 고도화'
-  governing_message: '`analyze_client.py`의 제조 addon(X1)을 확장해 탄소/에너지/원재료 변동/고객품질 요구를
-    포함한 steel 전용 모듈(X2)을 추가하는 것이 바람직하다.'
+  governing_message: '`analyze_client.py`의 제조 addon(X1)을 확장해 탄소/에너…'
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: '`analyze_client.py`의 제조 addon(X1)을 확장해 탄소/에너지/원재료 변동/고객품질 요구를 포함한 steel
-      전용 모듈(X2)을…'
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 동시에 `layout_preferences`에 철강 의사결정 관점의 비교/시나리오/공정흐름 레이아웃 프리셋을 제공하면 보고서 제작
-      리드타임을 크게 단…
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: '`analyze_client.py`의 제조 addon(X1)을 확장해 탄소/에너지/원재료 변동/고객품질 요구를 포함한 steel
+        전용 모듈(X2)을…'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 동시에 `layout_preferences`에 철강 의사결정 관점의 비교/시나리오/공정흐름 레이아웃 프리셋을 제공하면 보고서
+        제작 리드타임을 크게 단…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: '`analyze_client.py`의 제조 addon(X1)을 확장해 탄소/에너…을 실행으로 연결하려면 사업·재무·운영 데이터의
+        기준선을 통일해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 코드 개선 과제 2: 산업별 템플릿 고도화 실행 범위를 단계적으로 확장해야
+        합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 코드 개선 과제 2: 산업별 템플릿 고도화 과제는 조기 경보 기준과 대응 액션을 함께
+        관리해야 합니다.'
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '코드 개선 과제 2: 산업별 템플릿 고도화 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#client
+- layout: two_column
   title: '코드 개선 과제 3: 입력 안정성 강화'
-  governing_message: brief 파싱을 정규식 라벨 기반에서 YAML 구조 기반으로 전환해야 입력 변동에 강해진다.
+  governing_message: brief 파싱을 정규식 라벨 기반에서 YAML 구조 기반으로 전환해야 입력 변…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: brief 파싱을 정규식 라벨 기반에서 YAML 구조 기반으로 전환해야 입력 변동에 강해진다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 현재는 라벨 문구 차이로 Audience가 누락되는 현상이 실제 발생한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 또한 sources 섹션 기대값(`market/client/competitors/tech-trends`)을 설정파일로 분리해 산업별
-      커스터마이징을 허…
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 이를 통해 점수 왜곡을 줄이고, 경영진 신뢰도를 높일 수 있다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: brief 파싱을 정규식 라벨 기반에서 YAML 구조 기반으로 전환해야 입력 변동에 강해진다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 현재는 라벨 문구 차이로 Audience가 누락되는 현상이 실제 발생한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 또한 sources 섹션 기대값(`market/client/competitors/tech-trends`)을 설정파일로 분리해
+        산업별 커스터마이징을 허…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 이를 통해 점수 왜곡을 줄이고, 경영진 신뢰도를 높일 수 있다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 코드 개선 과제 3: 입력 안정성 강화 실행 범위를 단계적으로 확장해야
+        합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 코드 개선 과제 3: 입력 안정성 강화 과제는 조기 경보 기준과 대응 액션을 함께 관리해야
+        합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '코드 개선 과제 3: 입력 안정성 강화 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '코드 개선 과제 4: Value Case 자동화'
-  governing_message: 세아베스틸 과제의 핵심은 재무 정당성이다.
+  governing_message: 세아베스틸 과제의 핵심은 재무 정당성이다. 핵심 지표와 실행책임을 함께 정의해야…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 세아베스틸 과제의 핵심은 재무 정당성이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 따라서 Value Case 산정 스크립트를 별도 모듈로 분리해 시나리오(보수/기준/공격)별 효과를 자동 계산하도록 권고한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 입력은 KPI baseline, 개선율 가정, 투자비, 램프업 기간이며, 출력은 EBITDA 개선, 현금효과, payback 범위다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 현재 프레임워크에 이 모듈이 추가되면 C레벨 투자의사결정 속도가 크게 개선된다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 세아베스틸 과제의 핵심은 재무 정당성이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 따라서 Value Case 산정 스크립트를 별도 모듈로 분리해 시나리오(보수/기준/공격)별 효과를 자동 계산하도록 권고한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 입력은 KPI baseline, 개선율 가정, 투자비, 램프업 기간이며, 출력은 EBITDA 개선, 현금효과, payback
+        범위다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 현재 프레임워크에 이 모듈이 추가되면 C레벨 투자의사결정 속도가 크게 개선된다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 코드 개선 과제 4: Value Case 자동화 실행 범위를 단계적으로
+        확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 코드 개선 과제 4: Value Case 자동화 과제는 조기 경보 기준과 대응 액션을
+        함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '코드 개선 과제 4: Value Case 자동화 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '실행전략 Wave 0 (4주): Baseline 고정'
-  governing_message: 첫 4주 목표는 분석 정확도보다 기준선 합의다.
+  governing_message: 첫 4주 목표는 분석 정확도보다 기준선 합의다. 핵심 지표와 실행책임을 함께 정…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 첫 4주 목표는 분석 정확도보다 기준선 합의다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 산출물은 공통 KPI 사전, 데이터 소스 매핑, 의사결정 RACI, 30페이지 스토리라인 초안이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 기술 관점에서는 `deck_spec` 최소 골격(30슬라이드)을 먼저 채우고, evidence 앵커를 우선 연결한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 운영 관점에서는 CFO/COO/CIO 공동 승인회의를 주 1회 고정해 범위변경을 통제한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 첫 4주 목표는 분석 정확도보다 기준선 합의다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 산출물은 공통 KPI 사전, 데이터 소스 매핑, 의사결정 RACI, 30페이지 스토리라인 초안이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 기술 관점에서는 `deck_spec` 최소 골격(30슬라이드)을 먼저 채우고, evidence 앵커를 우선 연결한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 운영 관점에서는 CFO/COO/CIO 공동 승인회의를 주 1회 고정해 범위변경을 통제한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 실행전략 Wave 0 (4주): Baseline 고정 실행 범위를 단계적으로
+        확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 실행전략 Wave 0 (4주): Baseline 고정 과제는 조기 경보 기준과 대응 액션을
+        함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '실행전략 Wave 0 (4주): Baseline 고정 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '실행전략 Wave 1 (8주): 핵심 Use Case 파일럿'
   governing_message: 권장 조합은 품질예측, 에너지최적화, 생산-재고 동기화다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 권장 조합은 품질예측, 에너지최적화, 생산-재고 동기화다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 각 파일럿은 효과지표를 사전에 합의하고, 효과 미달 시 중단 기준을 명시해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 본 단계의 성공조건은 기술 데모가 아니라 KPI 개선 실증이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 문서화는 `strategy_report`, `analysis_report`, `deck_spec`을 동기화해 경영진과 현장이 동일
-      메시지를 공유하도록…
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 권장 조합은 품질예측, 에너지최적화, 생산-재고 동기화다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 각 파일럿은 효과지표를 사전에 합의하고, 효과 미달 시 중단 기준을 명시해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 본 단계의 성공조건은 기술 데모가 아니라 KPI 개선 실증이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 문서화는 `strategy_report`, `analysis_report`, `deck_spec`을 동기화해 경영진과 현장이
+        동일 메시지를 공유하도록…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 실행전략 Wave 1 (8주): 핵심 Use Case 파일럿 실행 범위를
+        단계적으로 확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 실행전략 Wave 1 (8주): 핵심 Use Case 파일럿 과제는 조기 경보 기준과
+        대응 액션을 함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '실행전략 Wave 1 (8주): 핵심 Use Case 파일럿 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: '실행전략 Wave 2 (6개월): 확산 및 제도화'
   governing_message: 파일럿 성공 후 전사 확산 단계에서는 표준 운영체계를 고정해야 한다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 파일럿 성공 후 전사 확산 단계에서는 표준 운영체계를 고정해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 표준 항목은 데이터 품질점검 주기, 모델 재학습 정책, 현장 반영 승인 절차, 리스크 대응 매뉴얼이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 동시에 월간 ExCom 리뷰에서 “효과-리스크-투자” 3축 대시보드를 고정 의제로 운영한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 코드 측면에서는 full-pipeline 자동실행과 QA 보고서 누적 관리를 통해 품질 편차를 통제한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 파일럿 성공 후 전사 확산 단계에서는 표준 운영체계를 고정해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 표준 항목은 데이터 품질점검 주기, 모델 재학습 정책, 현장 반영 승인 절차, 리스크 대응 매뉴얼이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 동시에 월간 ExCom 리뷰에서 “효과-리스크-투자” 3축 대시보드를 고정 의제로 운영한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 코드 측면에서는 full-pipeline 자동실행과 QA 보고서 누적 관리를 통해 품질 편차를 통제한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 실행전략 Wave 2 (6개월): 확산 및 제도화 실행 범위를 단계적으로
+        확장해야 합니다.'
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: '핵심 리스크는 연쇄적으로 발생하므로, 실행전략 Wave 2 (6개월): 확산 및 제도화 과제는 조기 경보 기준과 대응 액션을
+        함께 관리해야 합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: '실행전략 Wave 2 (6개월): 확산 및 제도화 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.'
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: 재무 Value Case (범위형)
   governing_message: 내부 데이터가 partial 상태이므로 본 보고서는 범위형 가치산정을 적용한다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 내부 데이터가 partial 상태이므로 본 보고서는 범위형 가치산정을 적용한다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 기준 시나리오에서 원가 3~5% 절감, 납기준수율 +4~6%p, 불량/클레임 20~30% 감축을 목표로 한다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 보수 시나리오는 효과의 60~70%, 공격 시나리오는 120~140%를 가정한다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: 투자승인은 절대규모보다 payback 기간과 실행리스크를 함께 판단해야 하며, 12~18개월 내 회수 가능성을 1차 기준으로 권고한다.
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 내부 데이터가 partial 상태이므로 본 보고서는 범위형 가치산정을 적용한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 기준 시나리오에서 원가 3~5% 절감, 납기준수율 +4~6%p, 불량/클레임 20~30% 감축을 목표로 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 보수 시나리오는 효과의 60~70%, 공격 시나리오는 120~140%를 가정한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 투자승인은 절대규모보다 payback 기간과 실행리스크를 함께 판단해야 하며, 12~18개월 내 회수 가능성을 1차 기준으로
+        권고한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 재무 Value Case (범위형) 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 재무 Value Case (범위형) 과제는 조기 경보 기준과 대응 액션을 함께 관리해야
+        합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 재무 Value Case (범위형) 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#client
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#client
+- layout: two_column
   title: 리스크 관리 프레임
-  governing_message: 리스크는 기술보다 조직/운영에서 크게 발생한다.
+  governing_message: 리스크는 기술보다 조직/운영에서 크게 발생한다. 핵심 지표와 실행책임을 함께 정…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 리스크는 기술보다 조직/운영에서 크게 발생한다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 핵심 리스크는 KPI 정의 충돌, 데이터 품질 저하, 현장 채택 저항, 투자우선순위 갈등, 규제 대응 지연이다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 리스크별 오너를 지정하고, 월간 리스크 리뷰에서 잔여리스크와 완화조치를 정량 점검한다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-  - text: 보고서에는 리스크 열거가 아니라 “발생조건-감지지표-즉시조치”까지 포함해야 실행력이 확보된다.
-    evidence:
-      source_anchor: sources.md#tech-trends
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 리스크는 기술보다 조직/운영에서 크게 발생한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 핵심 리스크는 KPI 정의 충돌, 데이터 품질 저하, 현장 채택 저항, 투자우선순위 갈등, 규제 대응 지연이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 리스크별 오너를 지정하고, 월간 리스크 리뷰에서 잔여리스크와 완화조치를 정량 점검한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 보고서에는 리스크 열거가 아니라 “발생조건-감지지표-즉시조치”까지 포함해야 실행력이 확보된다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 리스크 관리 프레임 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 리스크 관리 프레임 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 리스크 관리 프레임 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#tech-trends
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#tech-trends
+- layout: two_column
   title: 거버넌스 설계
-  governing_message: ExCom(월간)에서 투자/우선순위 승인, Transformation PMO(주간)에서 과제 진행관리, 현장
-    워킹그룹(상시)에서 데이터/프로세스 개선을 실행한다.
+  governing_message: ExCom(월간)에서 투자/우선순위 승인, Transformation PMO(주…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: ExCom(월간)에서 투자/우선순위 승인, Transformation PMO(주간)에서 과제 진행관리, 현장 워킹그룹(상시)에서
-      데이터/프로세스 개선…
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: CFO는 효과 검증, COO는 운영 성과, CIO는 데이터/시스템 안정성 책임을 가진다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 의사결정 지연을 막기 위해 승인권한 매트릭스를 사전 합의하고, 분쟁 사안은 2주 내 상위 의사결정으로 자동 승격하는 규칙을 둔다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: ExCom(월간)에서 투자/우선순위 승인, Transformation PMO(주간)에서 과제 진행관리, 현장 워킹그룹(상시)에서
+        데이터/프로세스 개선…
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: CFO는 효과 검증, COO는 운영 성과, CIO는 데이터/시스템 안정성 책임을 가진다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 의사결정 지연을 막기 위해 승인권한 매트릭스를 사전 합의하고, 분쟁 사안은 2주 내 상위 의사결정으로 자동 승격하는 규칙을 둔다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 핵심 지표와 실행 액션을 연결해 경영진 의사결정 속도를 높여야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 거버넌스 설계 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 거버넌스 설계 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 거버넌스 설계 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: KPI 체계 및 품질게이트
-  governing_message: KPI는 재무/운영/전환 3층으로 통합 설계한다.
+  governing_message: KPI는 재무/운영/전환 3층으로 통합 설계한다. 핵심 지표와 실행책임을 함께…
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: KPI는 재무/운영/전환 3층 구조로 통합하고, 모든 과제는 동일 산식으로 월 단위 점검해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: '재무 KPI는 영업이익률·원가율·현금전환을 묶어 투자효과를 분기별로 검증하는 체계로 운영한다.'
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: '운영 KPI는 수율·납기준수율·불량률·에너지 원단위를 연동해 공장별 편차를 즉시 시정한다.'
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: '전환 KPI는 데이터 표준화율·AI 적용 라인 수·현장 채택률로 정의해 실행 성숙도를 계량 관리한다.'
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: KPI는 재무/운영/전환 3층 구조로 통합하고, 모든 과제는 동일 산식으로 월 단위 점검해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 재무 KPI는 영업이익률·원가율·현금전환을 묶어 투자효과를 분기별로 검증하는 체계로 운영한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 운영 KPI는 수율·납기준수율·불량률·에너지 원단위를 연동해 공장별 편차를 즉시 시정한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 전환 KPI는 데이터 표준화율·AI 적용 라인 수·현장 채택률로 정의해 실행 성숙도를 계량 관리한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 KPI 체계 및 품질게이트 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, KPI 체계 및 품질게이트 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: KPI 체계 및 품질게이트 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: 보고체계 운영안 (C-Level)
   governing_message: 임원 보고는 월 1회 정례, 분기 1회 심화리뷰를 권고한다.
   layout_intent:
     emphasis: balanced
     content_density: normal
-  bullets:
-  - text: 임원 보고는 월 1회 정례, 분기 1회 심화리뷰를 권고한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 월간 보고서에는 KPI 편차와 즉시조치 중심의 10장 내외 요약을 제공하고, 분기 보고서에는 30페이지 풀 패키지를 제출한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 이때 본편과 부록을 분리해 회의 중 의사결정 피로를 줄여야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 본 코드 기반 자동화는 분기 보고서 제작 리드타임을 단축하는 데 강점이 있으므로, 정례 운영체계에 직접 편입하는 것이 효과적이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 임원 보고는 월 1회 정례, 분기 1회 심화리뷰를 권고한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 월간 보고서에는 KPI 편차와 즉시조치 중심의 10장 내외 요약을 제공하고, 분기 보고서에는 30페이지 풀 패키지를 제출한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 이때 본편과 부록을 분리해 회의 중 의사결정 피로를 줄여야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 본 코드 기반 자동화는 분기 보고서 제작 리드타임을 단축하는 데 강점이 있으므로, 정례 운영체계에 직접 편입하는 것이 효과적이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 보고체계 운영안 (C-Level) 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 보고체계 운영안 (C-Level) 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 보고체계 운영안 (C-Level) 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
   title: 12주 실행 백로그 (우선순위)
-  governing_message: 우선순위 1은 `deck_spec` 30슬라이드 완성과 evidence 연결률 확보다.
-  layout_intent:
-    emphasis: balanced
-    content_density: normal
-  bullets:
-  - text: 우선순위 1은 `deck_spec` 30슬라이드 완성과 evidence 연결률 확보다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 우선순위 2는 전략추천 상한 확장(20→35)과 steel 전용 모듈 추가다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 우선순위 3은 Value Case 자동산정 스크립트 도입이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 우선순위 4는 QA 리포트 누적 대시보드 구축이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
-  title: 조직 변화관리 계획
-  governing_message: 변화관리의 핵심은 현장 저항 최소화다.
-  layout_intent:
-    emphasis: balanced
-    content_density: normal
-  bullets:
-  - text: 변화관리의 핵심은 현장 저항 최소화다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 초기에는 KPI가 성과평가 수단으로 오해될 수 있으므로, 목적을 “개선지원”으로 명확히 커뮤니케이션해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 또한 본사 주도의 일방 설계가 아니라 공장 리더를 공동 오너로 지정해 설계 수용성을 높인다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 교육은 도구 사용법보다 “의사결정 프레임” 중심으로 진행하고, 초기 성공사례를 빠르게 가시화해 확산 동력을 만든다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
-  title: 예상 성과 및 경영진 메시지
-  governing_message: 본 제안이 계획대로 실행되면 단기적으로는 원가/품질/납기 지표 개선, 중기적으로는 데이터 기반 의사결정 전환이
-    가능하다.
-  layout_intent:
-    emphasis: balanced
-    content_density: normal
-  bullets:
-  - text: 본 제안이 계획대로 실행되면 단기적으로는 원가/품질/납기 지표 개선, 중기적으로는 데이터 기반 의사결정 전환이 가능하다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 경영진이 기억해야 할 메시지는 세 가지다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 첫째, 기술보다 운영규율이 성패를 좌우한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 둘째, 30페이지 보고서는 목적이 아니라 의사결정 품질을 높이는 수단이다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: content
-  title: C-Level 의사결정 요청사항
-  governing_message: 즉시 의사결정이 필요한 항목은 다섯 가지다.
-  layout_intent:
-    emphasis: balanced
-    content_density: normal
-  bullets:
-  - text: 즉시 의사결정이 필요한 다섯 항목을 한 번에 확정해 실행 착수 지연과 우선순위 충돌을 차단해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: CFO/COO/CIO 공동 스폰서 체계를 확정해 재무·운영·기술 의사결정을 단일 거버넌스로 통합해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 파일럿 3개 유스케이스 범위를 승인하고 각 과제의 효과 KPI와 중단 기준을 사전에 명문화해야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: 슬라이드 상한·산업모듈·Value Case 자동화 개선 투자를 승인해 보고 품질과 실행 속도를 동시에 높여야 한다.
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-- layout: thank_you
-  title: 결론 및 다음 단계
-  governing_message: 세아베스틸 관점에서 현재 코드베이스는 “즉시 활용 가능한 기반”이며, 보고 품질 자동화 역량은 이미 충분하다.
+  governing_message: 우선순위 1은 `deck_spec` 30슬라이드 완성과 evidence 연결률…
   layout_intent:
     emphasis: balanced
     content_density: normal
   bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 우선순위 1은 `deck_spec` 30슬라이드 완성과 evidence 연결률 확보다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 2는 전략추천 상한 확장(20→35)과 steel 전용 모듈 추가다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 3은 Value Case 자동산정 스크립트 도입이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 우선순위 4는 QA 리포트 누적 대시보드 구축이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 12주 실행 백로그 (우선순위) 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 12주 실행 백로그 (우선순위) 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 12주 실행 백로그 (우선순위) 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
+  title: 조직 변화관리 계획
+  governing_message: 변화관리의 핵심은 현장 저항 최소화다. 핵심 지표와 실행책임을 함께 정의해야 합…
+  layout_intent:
+    emphasis: balanced
+    content_density: normal
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 변화관리의 핵심은 현장 저항 최소화다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 초기에는 KPI가 성과평가 수단으로 오해될 수 있으므로, 목적을 “개선지원”으로 명확히 커뮤니케이션해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 또한 본사 주도의 일방 설계가 아니라 공장 리더를 공동 오너로 지정해 설계 수용성을 높인다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 교육은 도구 사용법보다 “의사결정 프레임” 중심으로 진행하고, 초기 성공사례를 빠르게 가시화해 확산 동력을 만든다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 조직 변화관리 계획 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 조직 변화관리 계획 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 조직 변화관리 계획 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
+  title: 예상 성과 및 경영진 메시지
+  governing_message: 본 제안이 계획대로 실행되면 단기적으로는 원가/품질/납기 지표 개선, 중기적으로…
+  layout_intent:
+    emphasis: balanced
+    content_density: normal
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 본 제안이 계획대로 실행되면 단기적으로는 원가/품질/납기 지표 개선, 중기적으로는 데이터 기반 의사결정 전환이 가능하다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경영진이 기억해야 할 메시지는 세 가지다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 첫째, 기술보다 운영규율이 성패를 좌우한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 둘째, 30페이지 보고서는 목적이 아니라 의사결정 품질을 높이는 수단이다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 예상 성과 및 경영진 메시지 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, 예상 성과 및 경영진 메시지 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 예상 성과 및 경영진 메시지 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: two_column
+  title: C-Level 의사결정 요청사항
+  governing_message: 즉시 의사결정이 필요한 항목은 다섯 가지다. 핵심 지표와 실행책임을 함께 정의해…
+  layout_intent:
+    emphasis: balanced
+    content_density: normal
+  bullets: []
+  slide_constraints:
+    max_bullets: 10
+    max_chars_per_bullet: 180
+  blocks:
+  - type: bullets
+    slot: left_column
+    items:
+    - text: 즉시 의사결정이 필요한 다섯 항목을 한 번에 확정해 실행 착수 지연과 우선순위 충돌을 차단해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: CFO/COO/CIO 공동 스폰서 체계를 확정해 재무·운영·기술 의사결정을 단일 거버넌스로 통합해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 파일럿 3개 유스케이스 범위를 승인하고 각 과제의 효과 KPI와 중단 기준을 사전에 명문화해야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: bullets
+    slot: right_column
+    items:
+    - text: 슬라이드 상한·산업모듈·Value Case 자동화 개선 투자를 승인해 보고 품질과 실행 속도를 동시에 높여야 한다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 C-Level 의사결정 요청사항 실행 범위를 단계적으로 확장해야 합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 핵심 리스크는 연쇄적으로 발생하므로, C-Level 의사결정 요청사항 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: C-Level 의사결정 요청사항 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  metadata:
+    source_refs:
+    - sources.md#market
+- layout: thank_you
+  title: 결론 및 다음 단계
+  governing_message: 세아베스틸 관점에서 현재 코드베이스는 “즉시 활용 가능한 기반”이며, 보고 품질…
+  layout_intent:
+    emphasis: balanced
+    content_density: normal
+  bullets: []
+  metadata:
+    source_refs:
+    - sources.md#market

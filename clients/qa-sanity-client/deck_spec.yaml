@@ -15,7 +15,6 @@ global_constraints:
   required_sections:
   - cover
   - exec_summary
-  - thank_you
 assumptions:
 - 공개 정보 기반의 가설 중심 초안이며 고객 데이터로 보정 필요
 sources_ref:
@@ -30,25 +29,47 @@ slides:
     section: Cover
     source_refs:
     - sources.md#client
+  bullets: []
 - layout: exec_summary
   title: Executive Summary
-  governing_message: 초기 진단 결과를 바탕으로 우선순위 과제를 정의하고 검증 가능한 가치 가설을 제시합니다.
-  bullets:
-  - text: '핵심 질문: 이번 과제에서 경영진이 반드시 결정해야 할 항목을 3개 이내로 정리합니다.'
-    icon: insight
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
-  - text: '핵심 가설: 성과 영향도가 큰 과제를 먼저 선정하고 단기·중기 KPI를 함께 정의합니다.'
-    icon: check
-    evidence:
-      source_anchor: sources.md#market
-      confidence: medium
-  - text: '실행 원칙: 실행 오너·일정·검증 기준을 한 장표에서 연결해 의사결정 속도를 높입니다.'
-    icon: arrow
-    evidence:
-      source_anchor: sources.md#client
-      confidence: medium
+  governing_message: 핵심 과제와 가치 가설을 우선순위로 정렬해 실행 기준을 통일합니다.
+  blocks:
+  - type: bullets
+    slot: main_bullets
+    items:
+    - text: 핵심 질문 3개를 같은 기준으로 정리합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 성과 영향도가 큰 과제를 먼저 선정합니다.
+      icon: check
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: KPI·오너·검증 기준을 한 프레임으로 연결합니다.
+      icon: arrow
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+  - type: action_list
+    slot: action_box
+    items:
+    - text: 100일 실행 과제를 확정합니다. 실행으로 연결합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
+    - text: 분기별 리뷰 게이트를 고정합니다. 실행으로 연결합니다.
+      icon: insight
+      emphasis: normal
+      evidence:
+        source_anchor: sources.md#market
+        confidence: medium
   layout_intent:
     emphasis: content
     content_density: dense
@@ -57,6 +78,10 @@ slides:
     source_refs:
     - sources.md#market
     - sources.md#client
+  slide_constraints:
+    max_bullets: 7
+    max_chars_per_bullet: 180
+  bullets: []
 - layout: thank_you
   title: 결론 및 다음 단계
   governing_message: 상세 리서치와 페이지 블루프린트를 반영해 본 보고서를 고도화합니다.
@@ -64,3 +89,4 @@ slides:
     section: Closing
     source_refs:
     - sources.md#client
+  bullets: []

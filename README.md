@@ -1,191 +1,185 @@
 # Value Architect Agent
 
-컨설팅 품질의 경영진용 PPT를 자동 생성하는 에이전트 파이프라인입니다.
+고객사별 경영진용 컨설팅 PPT를 생성/검증하는 자동화 파이프라인입니다.
 
-이 저장소는 단순 렌더러가 아니라, 아래를 한 번에 처리하는 실무형 워크플로우를 제공합니다.
+핵심 방향:
+- 최신·신뢰 근거 기반 리서치 강화
+- 슬라이드 블록 구조(`blocks`) 기반 설계
+- 16:9 기준 헤더/본문 일관 디자인
+- `validate → render → qa` 품질 게이트 자동화
 
-- 최신 근거 기반 리서치 수집
-- 페이지별 레이아웃 블루프린트 설계
-- Deck Spec 자동 보강(밀도/근거/레이아웃 의도)
-- PPT 렌더링 + QA + 폴리시(미세 정리)
+## 핵심 아키텍처
 
-## 1. 핵심 개념
+### 1) Deck Spec: 텍스트 배열이 아닌 블록 구조
+`deck_spec.yaml`은 아래 구조를 권장합니다.
 
-### Two-Stage Workflow
+- `layout`: `cover | exec_summary | two_column | chart_insight | competitor_2x2 | strategy_cards | timeline | kpi_cards`
+- `blocks[]`:
+  - `headline`, `key_message`
+  - `bullets`, `action_list`
+  - `chart`, `matrix_2x2`, `timeline_steps`, `kpi_cards`
 
-1) Thinking Stage
-- `brief.md` / `sources.md` / `research_report.md` / `layout_blueprint.*` / `deck_spec.yaml`
+렌더러는 `headline`/`key_message` 블록이 있으면 `title`/`governing_message`보다 우선 적용합니다.
 
-2) Making Stage
-- `deck_spec.yaml` → `validate` → `render` → `qa` → `polish`
+레거시 필드(`bullets`, `content_blocks`, `columns`)는 호환되지만, 파이프라인이 자동으로 `blocks` 중심으로 정규화합니다.
 
-핵심 원칙은 **`deck_spec.yaml`이 단일 진실 소스(Single Source of Truth)** 라는 점입니다.
+### 2) Layout 슬롯 기반 렌더링
+`templates/company/layouts.yaml`에서 슬롯 좌표를 정의합니다.
 
-## 2. 최신 반영 사항 (v2.4)
+- `title_box`, `governing_box`
+- `left_column`, `right_column`
+- `chart_box`, `insight_box`
+- `matrix_box`, `timeline_box`
+- `kpi_card_1..4`, `action_box`, `assumptions_box`
 
-이번 버전에서 프로젝트 전반에 다음이 반영되었습니다.
+렌더러는 슬롯 좌표를 읽어 도형/텍스트를 배치하므로, 별도 PPT 템플릿 파일 없이도 일관된 결과를 생성합니다.
 
-- `predeck` 단계 기본화
-  - 심화 리서치 + 페이지 블루프린트 생성 + 선택적 deck_spec 반영
-- 최신성/신뢰도 기반 근거 수집 강화
-  - 웹 근거 수집, 출처 스코어링, 섹션 분류, 사실 은행(Fact Bank)
-- 본문 밀도 강화
-  - 불릿/내러티브 자동 보강(`densify`) 및 하단 공백 완화
-- 템플릿 전략 개선
-  - `--template-mode {auto,additional,base,blank}`
-  - `auto`는 `additional-template.pptx` 우선
-  - 템플릿이 없을 때 `blank` 16:9 폴백
-- 동일 고객사 다주제 운영
-  - `new --topic ... --new-folder-if-exists`로 변형 폴더 생성
-- 폰트 강제 일관성 강화
-  - Noto Sans KR 일반체 기반
-  - 렌더/폴리시 단계에서 한글 East Asia 폰트 속성까지 동시 적용
-- 스키마/검증 상향
-  - 불릿 길이/개수 상향(밀도 높은 보고서 문장 허용)
+### 3) 폰트/타이포 정책
+기본 폰트는 `Noto Sans KR` 일반체를 사용합니다.
 
-## 3. 디렉터리 구조
+- Title: `24pt`
+- Governing Message: `16pt`
+- Body: `12pt` (레이아웃에 따라 `14pt` 허용)
+- Footnote: `9pt`
+
+## 실무 고정 레이아웃 세트 (8)
+
+자동 생성/보강에서 우선 사용하는 레이아웃:
+
+1. `cover`
+2. `exec_summary`
+3. `two_column`
+4. `chart_insight`
+5. `competitor_2x2`
+6. `strategy_cards`
+7. `timeline`
+8. `kpi_cards`
+
+레거시 레이아웃(`content`, `comparison`, `three_column`, `process_flow`, `chart_focus`, `image_focus`)은 자동 보강 단계에서 위 8개로 정규화될 수 있습니다.
+
+## 디렉터리 구조
 
 ```text
 value-architect-agent/
-├── README.md
-├── CLAUDE.md
 ├── scripts/
 │   ├── deck_cli.py
+│   ├── client_bootstrap.py
+│   ├── quality_gate.py
+│   ├── new_client.py
 │   ├── predeck_research.py
 │   ├── densify_spec.py
 │   ├── enrich_evidence.py
-│   ├── layout_sync.py
+│   ├── validate_spec.py
 │   ├── render_ppt.py
 │   ├── qa_ppt.py
 │   ├── polish_ppt.py
-│   ├── validate_spec.py
-│   ├── analyze_client.py
-│   ├── recommend_strategy.py
-│   └── new_client.py
+│   ├── constants.py
+│   └── block_utils.py
 ├── schema/
 │   ├── deck_spec.schema.json
 │   └── deck_spec.example.yaml
 ├── templates/company/
-│   ├── base-template.pptx
-│   ├── additional-template.pptx
 │   ├── tokens.yaml
 │   └── layouts.yaml
-├── clients/
-│   ├── _template/
-│   └── <client>/
-└── reports/
+├── .github/workflows/
+│   └── quality-gate.yml
+└── clients/
+    ├── _template/
+    └── <client>/
 ```
 
-## 4. 설치
+## 설치
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install python-pptx pyyaml jsonschema
+pip install python-pptx pyyaml jsonschema pypdf
 ```
 
-## 5. 빠른 시작
+## 빠른 시작
 
-### 5.1 새 고객 생성
+### 1) 신규 고객 생성
 
 ```bash
 python scripts/deck_cli.py new ecopro
 ```
 
-기존 동일 고객 폴더가 있고 다른 주제로 새로 테스트하려면:
+동일 고객의 다른 주제로 새 폴더 생성:
 
 ```bash
 python scripts/deck_cli.py new ecopro --topic "원가혁신" --new-folder-if-exists
 ```
 
-### 5.2 권장 전체 파이프라인
+### 2) 전체 파이프라인 실행
 
 ```bash
 python scripts/deck_cli.py full-pipeline ecopro \
   --topic "배터리소재 성장·수익성 동시 달성" \
   --sync-layout --enrich-evidence --overwrite-evidence --polish \
-  --template-mode additional
+  --template-mode layout
 ```
 
-이 명령은 기본적으로 다음을 실행합니다.
+`full-pipeline` 기본 흐름:
 
-1. `predeck` (심화 리서치/블루프린트)
-2. `densify` (본문 밀도 보강)
+1. `predeck` (심화 리서치 + 블루프린트)
+2. `densify` (blocks 정규화 + 필수 블록 보강)
 3. `sync-layout` (옵션)
 4. `enrich-evidence` (옵션)
 5. `validate`
 6. `render`
 7. `qa`
-8. `polish` (옵션)
+8. `qa 실패 시 자동 보정 루프` (`densify → validate → render → qa`, 기본 2회)
+9. `polish` (옵션)
 
-## 6. CLI 요약
+## 주요 명령
 
 ```bash
 python scripts/deck_cli.py --help
 ```
 
-주요 명령:
+- `new`: 신규 고객 템플릿 생성
+- `predeck`: 리서치/블루프린트 생성 (+ `--update-spec`)
+- `densify`: 레이아웃 정규화 + blocks 보강 + 밀도 개선
+- `enrich-evidence`: 불릿/블록 evidence 자동 보강
+- `validate`: 스키마 + 비즈니스 규칙 검증
+- `render`: PPTX 생성
+- `qa`: 폰트/밀도/경계/블록 필수요건 검사
+- `full-pipeline`: end-to-end 실행
 
-- `new`: 새 고객 폴더 생성
-- `predeck`: 심화 리서치 + 블루프린트 생성
-- `recommend`: `strategy_input.yaml` 기반 전략/레이아웃 추천
-- `analyze`: 고객사 준비도/갭 진단 리포트
-- `sync-layout`: 레이아웃 선호를 deck_spec에 반영
-- `densify`: 본문 밀도 + 슬라이드 제약(`slide_constraints`) 자동 보강
-- `enrich-evidence`: 불릿 evidence 자동 보강
-- `validate`: deck_spec 스키마/비즈니스 규칙 검증
-- `render`: PPT 렌더링
-- `qa`: PPT QA 검사
-- `polish`: 폰트/줄간격/텍스트 정리
-- `pipeline`: validate → render
-- `full-pipeline`: predeck 포함 end-to-end
+## CI / Quality Gate
 
-## 7. 산출물 파일
+로컬/CI 공통 품질 게이트:
 
-고객 폴더(`clients/<client>/`) 주요 산출물:
+```bash
+python scripts/quality_gate.py --template-mode layout
+```
 
-- `research_report.md` / `research_report.json`
-- `layout_blueprint.md` / `layout_blueprint.yaml`
-- `layout_preferences.research.yaml`
-- `strategy_report.md` / `strategy_report.json`
-- `analysis_report.md` / `analysis_report.json`
-- `deck_spec.yaml`
-- `outputs/*.pptx`
-- `outputs/*_qa_report.json`
-- `outputs/*_polished.polish.json`
+검사 항목:
+- `scripts/*.py` 문법 컴파일(`py_compile`)
+- `clients/_template` 제외 전체 고객 `validate`
+- `qa-sanity-client` 기준 `render(layout-driven)` + `qa` 스모크 테스트
 
-## 8. 품질/디자인 정책
+GitHub Actions는 `.github/workflows/quality-gate.yml`에서 동일 게이트를 실행합니다.
 
-### 폰트
+## 품질 정책
 
-- 기본: `Noto Sans KR` 일반체
-- tokens 기준 크기:
-  - title: 20pt
-  - governing: 15pt
-  - body: 11pt
-  - footnote: 9pt
+### 컨텐츠 정책
 
-### 불릿/밀도
+- 거버닝 메시지: 단문 1문장, 권장 길이 `28~45자`
+- 본문: 문제-영향-시사점이 닫히는 문장형 서술 유지
+- bullets 블록: `3~5`개, action_list 블록: `2~3`개 권장
+- 불릿 길이: 권장 `18~110자` (문장형 컨설팅 톤 허용)
+- 원인→영향→시사점 구조 불릿은 슬라이드당 1개 권장
 
-- 전역 기본값(권장):
-  - `default_max_bullets: 9`
-  - `default_max_chars_per_bullet: 180`
-- 슬라이드/레이아웃에 따라 오버라이드 가능
-- 컨설팅 톤 문장형 불릿 허용(과도한 축약 지양)
+### QA 정책
 
-### 템플릿
+- 허용 폰트: `Noto Sans KR` 계열
+- 레이아웃별 필수 블록 누락 검사
+- 블록 단위 밀도 규칙(아이템 수/문장 길이) 검사
+- 텍스트 오버플로우 추정 검사
+- 근거 앵커(`sources.md#...`) 포맷/존재 검사
 
-- `template-mode=auto`: `additional-template.pptx` 우선
-- 템플릿 누락 시 `blank` 16:9 폴백
-
-## 9. Deck Spec 작성 팁
-
-- 주장-근거를 함께 작성 (`evidence.source_anchor`)
-- `layout_intent`를 명시 (`emphasis`, `content_density`, `visual_position`)
-- `content_blocks`를 적극 활용 (`bullets/table/chart/image/text/callout/kpi`)
-- 본문 하단 공백이 남는 슬라이드는 narrative text block을 추가
-
-## 10. 문제 해결
+## Troubleshooting
 
 ### validate 실패
 
@@ -193,56 +187,41 @@ python scripts/deck_cli.py --help
 python scripts/deck_cli.py validate <client>
 ```
 
-- 스키마 오류 위치를 먼저 수정
-- 불릿 길이/개수, 컬럼 구조, evidence 형식을 우선 확인
+확인 포인트:
+- `layout` enum/오타
+- `blocks` 타입 및 필수 필드
+- `evidence.source_anchor` 형식
 
-### QA 경고
+### QA 경고가 많을 때
 
 ```bash
+python scripts/deck_cli.py densify <client>
+python scripts/deck_cli.py validate <client>
+python scripts/deck_cli.py render <client>
 python scripts/deck_cli.py qa <client>
 ```
 
-- 밀도 경고: `densify` 재실행
-- 레이아웃 경고: `sync-layout` + `predeck --update-spec` 적용
+### 렌더 모드 분리
 
-### 렌더 실패
+```bash
+python scripts/deck_cli.py render <client> --template-mode layout
+```
 
-- `templates/company/tokens.yaml`, `templates/company/layouts.yaml` 존재 확인
-- 템플릿 이슈 시 `--template-mode blank`로 우선 렌더 확인
+외부 템플릿을 임시로 적용하려면:
 
-## 11. 운영 권장 순서
+```bash
+python scripts/deck_cli.py render <client> --template /absolute/path/to/custom-template.pptx
+```
 
-신규 프로젝트:
+## 산출물
 
-1. `new`
-2. `predeck --update-spec`
-3. `recommend --apply-layout`
-4. `analyze`
-5. `full-pipeline --sync-layout --enrich-evidence --polish`
+`clients/<client>/outputs/` 하위:
+- `*.pptx`
+- `*_qa_report.json`
+- `*_polished.pptx` / `*.polish.json`
 
-반복 개선:
-
-1. `predeck` (주제/페이지/근거 강화)
-2. `densify`
-3. `full-pipeline --skip-predeck` (빠른 회귀)
-
-## 12. 변경 로그 (요약)
-
-### v2.4
-- predeck 중심 파이프라인 강화
-- 페이지 블루프린트/리서치 리포트 자동화 강화
-- 동일 고객 다주제 폴더 생성 지원
-- 본문 밀도/폰트 일관성 강화
-- 스키마/검증 규칙 상향
-
-### v2.3
-- `recommend` 기반 전략/레이아웃 추천
-
-### v2.2
-- `analyze`, `sync-layout`, `enrich-evidence` 추가
-
-### v2.1
-- `polish` 단계 추가
-
-### v2.0
-- Deck Spec v2 구조 및 QA 자동검사 도입
+`clients/<client>/` 하위:
+- `research_report.md|json`
+- `layout_blueprint.md|yaml`
+- `layout_preferences.research.yaml`
+- `deck_spec.yaml`

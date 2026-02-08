@@ -1,28 +1,90 @@
 #!/usr/bin/env python3
 """
-densify_spec.py - deck_spec 본문 밀도 자동 보강기
+densify_spec.py - Deck Spec 블록/밀도 자동 보강기
 
-목적:
-1) 표/차트 중심 슬라이드에서 본문 밀도 부족 구간 자동 보강
-2) 불릿 아이콘/문장 톤 통일
-3) 레이아웃 균형(좌측 시각요소 + 우측 시사점 패널) 자동 배치
+핵심 역할:
+1) 레거시 bullets/content_blocks/columns를 blocks 중심으로 정규화
+2) 실무 8개 레이아웃(cover/exec_summary/two_column/chart_insight/competitor_2x2/strategy_cards/timeline/kpi_cards)
+   기반으로 필수 블록을 보강
+3) 제목/거버닝/본문 문장 길이와 밀도를 컨설팅 톤으로 보정
+4) 이후 고객사에도 동일하게 반영되도록 공통 규칙으로 동작
 """
 
+from __future__ import annotations
+
 import argparse
+import re
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import yaml
 
+try:
+    from block_utils import normalize_layout_name, normalize_slide_blocks
+except ImportError:
+    def normalize_layout_name(layout: str) -> str:
+        key = str(layout or "").strip().lower()
+        return {"chart_focus": "chart_insight", "strategy_options": "strategy_cards"}.get(key, key)
+
+    def normalize_slide_blocks(slide: dict) -> List[dict]:
+        blocks = slide.get("blocks", [])
+        return blocks if isinstance(blocks, list) else []
+
+
 AUTO_BULLET_MAX_CHARS = 180
-AUTO_TITLE_KEY_MAX_CHARS = 34
-AUTO_DEFAULT_MAX_BULLETS = 9
-AUTO_CONTENT_MAX_BULLETS = 10
-AUTO_VISUAL_MIN_BULLETS = 4
-AUTO_VISUAL_MAX_BULLETS = 8
+AUTO_BULLET_SOFT_MAX_CHARS = 110
+AUTO_BULLET_MIN_CHARS = 18
+AUTO_GOVERNING_MIN_CHARS = 28
+AUTO_GOVERNING_MAX_CHARS = 45
+
 NO_BULLET_LAYOUTS = {"cover", "section_divider", "thank_you", "quote"}
-VISUAL_LAYOUTS = {"chart_focus", "image_focus"}
-DENSE_CONTENT_LAYOUTS = {"content", "exec_summary", "comparison", "two_column", "three_column", "process_flow", "timeline"}
+PRACTICAL_LAYOUTS = {
+    "cover",
+    "exec_summary",
+    "two_column",
+    "chart_insight",
+    "competitor_2x2",
+    "strategy_cards",
+    "timeline",
+    "kpi_cards",
+}
+
+ANCHOR_CATALOG: List[str] = []
+
+ANCHOR_ROLE_DEFAULT = {
+    "market": "sources.md#market",
+    "policy": "sources.md#policy",
+    "competitors": "sources.md#competitors",
+    "tech-trends": "sources.md#tech-trends",
+    "client": "sources.md#client",
+}
+
+ANCHOR_ROLE_KEYWORDS = {
+    "market": ["market", "industry", "demand", "수요", "시장", "산업", "outlook"],
+    "policy": ["policy", "regulation", "ira", "eu", "정책", "규제"],
+    "competitors": ["competitor", "peer", "benchmark", "경쟁"],
+    "tech-trends": ["tech", "technology", "ai", "cloud", "기술"],
+    "client": ["client", "company", "context", "내부", "기업", "실적"],
+}
+
+LAYOUT_REMAP_TO_PRACTICAL = {
+    "chart_focus": "chart_insight",
+    "image_focus": "chart_insight",
+    "comparison": "competitor_2x2",
+    "three_column": "strategy_cards",
+    "process_flow": "timeline",
+    "content": "two_column",
+}
+
+TARGET_MAX_BULLETS_BY_LAYOUT = {
+    "exec_summary": 7,
+    "two_column": 10,
+    "chart_insight": 8,
+    "competitor_2x2": 8,
+    "strategy_cards": 7,
+    "timeline": 8,
+    "kpi_cards": 8,
+}
 
 
 def load_yaml(path: Path) -> dict:
@@ -35,322 +97,627 @@ def save_yaml(path: Path, data: dict) -> None:
         yaml.dump(data, f, allow_unicode=True, sort_keys=False)
 
 
-def _as_bullet(text: str, icon: str = "insight", source_anchor: str = "sources.md#client") -> dict:
-    text = _trim_text(text, max_len=AUTO_BULLET_MAX_CHARS)
+def parse_sources_anchors(sources_path: Path) -> List[str]:
+    if not sources_path.exists():
+        return []
+    anchors: List[str] = []
+    for raw in sources_path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line.startswith("## "):
+            continue
+        title = line[3:].strip().lower()
+        if not title:
+            continue
+        slug = re.sub(r"[^\w\s-]", "", title)
+        slug = re.sub(r"[\s]+", "-", slug).strip("-")
+        anchor = f"sources.md#{slug}"
+        if anchor not in anchors:
+            anchors.append(anchor)
+    return anchors
+
+
+def _normalize_ws(text: str) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def _trim_text(text: str, max_len: int = AUTO_BULLET_MAX_CHARS) -> str:
+    value = _normalize_ws(text)
+    if len(value) <= max_len:
+        return value
+    return value[: max(1, max_len - 1)].rstrip() + "…"
+
+
+def _single_sentence(text: str) -> str:
+    value = _normalize_ws(text)
+    if not value:
+        return ""
+    # 첫 문장만 남김 (한글 문장부호 포함)
+    parts = re.split(r"(?<=[\.\!\?。！？])\s+", value)
+    value = parts[0] if parts else value
+    return _normalize_ws(value)
+
+
+def _normalize_anchor_list(values) -> List[str]:
+    anchors: List[str] = []
+    for val in values if isinstance(values, list) else []:
+        text = _normalize_ws(val)
+        if not text.startswith("sources.md#"):
+            continue
+        if text not in anchors:
+            anchors.append(text)
+    return anchors
+
+
+def _infer_anchor_role(layout: str, title: str = "") -> str:
+    low = f"{layout} {title}".lower()
+    if any(k in low for k in ["market", "시장", "industry", "수요", "전망"]):
+        return "market"
+    if any(k in low for k in ["policy", "규제", "ira", "eu"]):
+        return "policy"
+    if any(k in low for k in ["competitor", "peer", "경쟁", "benchmark"]):
+        return "competitors"
+    if any(k in low for k in ["technology", "ai", "cloud", "기술"]):
+        return "tech-trends"
+    return "client"
+
+
+def _pick_anchor_by_role(role: str, catalog: List[str]) -> str:
+    desired = ANCHOR_ROLE_DEFAULT.get(role, ANCHOR_ROLE_DEFAULT["client"])
+    if not catalog:
+        return desired
+
+    if desired in catalog:
+        return desired
+
+    keywords = ANCHOR_ROLE_KEYWORDS.get(role, [])
+    for anchor in catalog:
+        low = anchor.lower()
+        if any(key in low for key in keywords):
+            return anchor
+
+    # role 매칭 실패 시 catalog 첫 앵커로 폴백
+    return catalog[0]
+
+
+def _slide_anchor_catalog(slide: Optional[dict] = None) -> List[str]:
+    catalog = list(ANCHOR_CATALOG)
+    if not isinstance(slide, dict):
+        return catalog
+
+    metadata = slide.get("metadata", {}) if isinstance(slide.get("metadata"), dict) else {}
+    refs = _normalize_anchor_list(metadata.get("source_refs", []))
+    if not refs:
+        return catalog
+
+    if catalog:
+        refs = [r for r in refs if r in catalog]
+        ordered = refs + [a for a in catalog if a not in refs]
+        return ordered or catalog
+    return refs
+
+
+def _default_anchor(layout: str, title: str = "", slide: Optional[dict] = None) -> str:
+    role = _infer_anchor_role(layout, title)
+    catalog = _slide_anchor_catalog(slide)
+    return _pick_anchor_by_role(role, catalog)
+
+
+def _governing_seed(layout: str, title: str) -> str:
+    key = _normalize_ws(title) or "핵심 과제"
+    seeds = {
+        "cover": f"{key}의 성장성과 수익성을 동시에 달성할 실행 프레임을 제시합니다.",
+        "exec_summary": f"{key}는 우선순위·재무효과·실행조건을 한 프레임으로 통합해야 합니다.",
+        "two_column": f"{key}는 현황과 해법을 같은 기준선으로 비교해 우선순위를 확정해야 합니다.",
+        "chart_insight": f"{key}는 수요·원가·정책의 결합 신호로 해석해야 합니다.",
+        "competitor_2x2": f"{key}는 시장 매력도와 실행 역량을 함께 평가해 자원배분을 정렬해야 합니다.",
+        "strategy_cards": f"{key}의 전략 옵션은 효과·난이도·리스크를 함께 비교해 조합 설계해야 합니다.",
+        "timeline": f"{key}는 단계 목표와 의사결정 게이트를 분기 단위로 보정해야 성과를 냅니다.",
+        "kpi_cards": f"{key}는 KPI·가정·검증조건을 함께 관리해 투자 우선순위를 확정해야 합니다.",
+        "default": f"{key}는 근거 기반 분석과 실행 설계를 동시에 충족해야 합니다.",
+    }
+    return seeds.get(layout, seeds["default"])
+
+
+def _normalize_governing_message(slide: dict, layout: str) -> bool:
+    changed = False
+    current = _normalize_ws(slide.get("governing_message", ""))
+    if not current:
+        current = _governing_seed(layout, slide.get("title", ""))
+        changed = True
+
+    current = _single_sentence(current)
+    if len(current) < AUTO_GOVERNING_MIN_CHARS:
+        current = _normalize_ws(
+            f"{current} 핵심 지표와 실행책임을 함께 정의해야 합니다."
+        )
+        changed = True
+
+    if len(current) > AUTO_GOVERNING_MAX_CHARS:
+        current = _trim_text(current, AUTO_GOVERNING_MAX_CHARS)
+        changed = True
+
+    if slide.get("governing_message") != current:
+        slide["governing_message"] = current
+        changed = True
+
+    return changed
+
+
+def _as_item(text: str, anchor: str, icon: str = "insight") -> dict:
     return {
-        "text": text.strip(),
-        "emphasis": "normal",
+        "text": _trim_text(text, AUTO_BULLET_SOFT_MAX_CHARS),
         "icon": icon,
+        "emphasis": "normal",
         "evidence": {
-            "source_anchor": source_anchor,
+            "source_anchor": anchor,
             "confidence": "medium",
         },
     }
 
 
-def _trim_text(text: str, max_len: int = AUTO_BULLET_MAX_CHARS) -> str:
-    value = " ".join(str(text or "").split()).strip()
-    if len(value) <= max_len:
-        return value
-    return value[: max_len - 1].rstrip() + "…"
-
-
-def _extract_table_keywords(slide: dict) -> List[str]:
-    keywords: List[str] = []
-    for block in slide.get("content_blocks", []):
-        if block.get("type") != "table":
-            continue
-        table = block.get("table", {})
-        for h in table.get("headers", []):
-            h_text = str(h).strip()
-            if h_text:
-                keywords.append(h_text)
-        for row in table.get("rows", []):
-            if row:
-                keywords.append(str(row[0]).strip())
-    # 중복 제거
-    seen = set()
-    unique = []
-    for k in keywords:
-        if k and k not in seen:
-            unique.append(k)
-            seen.add(k)
-    return unique
-
-
-def _short_title_key(title: str) -> str:
-    if not title:
-        return "해당 과제"
-    key = title.split(":")[0].strip()
-    return _trim_text(key, max_len=AUTO_TITLE_KEY_MAX_CHARS)
-
-
-def _generate_consulting_bullets(slide: dict, count: int = 3) -> List[dict]:
-    title = str(slide.get("title", "")).strip()
-    governing = str(slide.get("governing_message", "")).strip()
-    source_anchor = "sources.md#client"
-    if "시장" in title or "Market" in title:
-        source_anchor = "sources.md#market"
-    elif "정책" in title or "Policy" in title:
-        source_anchor = "sources.md#policy"
-    elif "Value" in title or "CAPEX" in title:
-        source_anchor = "sources.md#risk-scenarios"
-
-    bullets: List[dict] = []
-    table_keywords = _extract_table_keywords(slide)
-    title_key = _short_title_key(title)
-
-    title_lower = title.lower()
-    if "scenario" in title_lower:
-        return [
-            _as_bullet("Base/Upside/Downside별 전환 트리거와 대응 액션을 사전에 확정하고, 트리거 발생 즉시 CAPA·판가·재고 정책이 자동 전환되도록 운영 원칙을 고정해야 실행 편차를 구조적으로 줄일 수 있습니다.", icon="insight", source_anchor=source_anchor),
-            _as_bullet("수요·메탈가격·정책 강도 변동은 단일 지표로 판단하지 말고 월간 Scenario Room에서 복합 신호로 동시 점검해, 조기 경보가 실제 투자·생산 의사결정으로 연결되는 체계를 만들어야 합니다.", icon="check", source_anchor=source_anchor),
-            _as_bullet("시나리오 전환 시 책임조직·재무영향·고객 커뮤니케이션까지 한 번에 재정렬되도록 의사결정 게이트를 명확히 설계해야 분기 성과 변동성을 통제할 수 있습니다.", icon="arrow", source_anchor=source_anchor),
-        ][:count]
-
-    if "subsidiary" in title_lower or "snapshot" in title_lower:
-        return [
-            _as_bullet("가족사별 KPI를 가동률·재고일수·현금전환지표로 통일해 비교 가능성을 확보하고, 동일 기준선에서 성과 편차를 해석해야 경영진의 자본 재배분 판단이 일관되게 유지됩니다.", icon="insight", source_anchor=source_anchor),
-            _as_bullet("수익성 편차는 사업별 원인(수율·판가·고정비·수급 계약)을 동일 프레임으로 분해해 관리하고, 반복적으로 발생하는 구조적 손실 요인을 분리해 개선해야 합니다.", icon="check", source_anchor=source_anchor),
-            _as_bullet("월간 경영회의에서 저성과 법인의 단기 지원안과 중장기 포트폴리오 재편안을 동시에 검토해, 단기 방어와 구조 개선이 충돌하지 않도록 의사결정 리듬을 고정해야 합니다.", icon="arrow", source_anchor=source_anchor),
-        ][:count]
-
-    if "capex" in title_lower or "funding" in title_lower:
-        return [
-            _as_bullet("투자 게이트는 확정물량·수익성·규제적합성 3개 기준을 동시에 충족할 때만 통과시키고, 기준 미달 과제는 재검증 루프를 거친 뒤에만 재상정하도록 원칙을 명문화해야 합니다.", icon="risk", source_anchor=source_anchor),
-            _as_bullet("Hi-Ni/LFP/HVM과 원료·리사이클 축을 분리 평가해 기술·시장·정책 리스크를 각각 계량화하면, 단기 수요 변동 국면에서도 자본 배분의 일관성을 유지할 수 있습니다.", icon="insight", source_anchor=source_anchor),
-            _as_bullet("분기 리뷰에서 KPI 미달 과제는 즉시 보류하고 고성과 과제로 자본을 재배분해, 투자 포트폴리오가 실행 성과를 중심으로 동적으로 최적화되도록 관리해야 합니다.", icon="check", source_anchor=source_anchor),
-        ][:count]
-
-    if table_keywords:
-        key_join = "·".join(table_keywords[:3])
-        bullets.append(
-            _as_bullet(
-                f"{key_join} 관점의 의사결정 기준을 동일 프레임으로 적용하고, 예외 케이스 처리 기준까지 사전에 정의해야 실행 편차를 지속적으로 줄일 수 있습니다.",
-                icon="insight",
-                source_anchor=source_anchor,
-            )
-        )
-    if governing:
-        bullets.append(
-            _as_bullet(
-                "거버닝 메시지를 실행 KPI로 전환해 월간 운영회의에서 선행지표와 결과지표를 함께 점검하고, 편차가 발생하는 즉시 과제 오너와 보정 일정을 재지정해야 합니다.",
-                icon="check",
-                source_anchor=source_anchor,
-            )
-        )
-    if title:
-        bullets.append(
-            _as_bullet(
-                f"{title_key} 과제는 우선순위·투자·리스크 통제를 하나의 의사결정 보드로 통합해, 단기 실적과 중장기 경쟁력 목표가 같은 기준으로 관리되도록 설계해야 합니다.",
-                icon="arrow",
-                source_anchor=source_anchor,
-            )
-        )
-
-    fallback = [
-        _as_bullet(
-            "시나리오별 트리거(수요·가격·정책) 발생 시 대응 액션과 책임조직, 실행 기한을 사전에 매핑해 실제 운영에서 의사결정 지연이 발생하지 않도록 해야 합니다.",
-            icon="risk",
-            source_anchor=source_anchor,
-        ),
-        _as_bullet(
-            "분기 단위 재무성과와 현업 운영지표를 연결해 전략의 실행력을 계량적으로 관리하고, KPI 간 상충 구간을 분기별로 조정하는 운영 체계를 유지해야 합니다.",
-            icon="insight",
-            source_anchor=source_anchor,
-        ),
-        _as_bullet(
-            "핵심 과제는 단계별 게이트를 통과할 때만 다음 투자로 진입하는 원칙을 유지해, 제한된 자본과 인력이 가장 높은 효과 구간에 집중되도록 해야 합니다.",
-            icon="check",
-            source_anchor=source_anchor,
-        ),
-    ]
-
-    for b in fallback:
-        if len(bullets) >= count:
-            break
-        bullets.append(b)
-
-    return bullets[:count]
-
-
-def _ensure_icons(items: List) -> None:
-    icon_order = ["check", "insight", "arrow", "risk"]
-    idx = 0
-    for item in items or []:
-        if isinstance(item, dict):
-            if not item.get("icon"):
-                item["icon"] = icon_order[idx % len(icon_order)]
-            idx += 1
-
-
-def _bullet_text(item) -> str:
+def _item_text(item) -> str:
     if isinstance(item, str):
-        return " ".join(item.split()).strip()
+        return _normalize_ws(item)
     if isinstance(item, dict):
-        return " ".join(str(item.get("text", "")).split()).strip()
+        return _normalize_ws(item.get("text", ""))
     return ""
 
 
-def _dedupe_bullets(items: List) -> List:
+def _dedupe_items(items: Iterable) -> List[dict]:
     seen = set()
-    result = []
-    for item in items or []:
-        text = _bullet_text(item)
+    deduped: List[dict] = []
+    for item in items:
+        text = _item_text(item)
         if not text:
             continue
         key = text.lower()
         if key in seen:
             continue
         seen.add(key)
-        result.append(item)
-    return result
+        if isinstance(item, dict):
+            obj = dict(item)
+            obj["text"] = _trim_text(text)
+            ev = obj.get("evidence")
+            if not isinstance(ev, dict):
+                obj["evidence"] = {
+                    "source_anchor": "sources.md#client",
+                    "confidence": "medium",
+                }
+            else:
+                if not obj["evidence"].get("source_anchor"):
+                    obj["evidence"]["source_anchor"] = "sources.md#client"
+                if not obj["evidence"].get("confidence"):
+                    obj["evidence"]["confidence"] = "medium"
+            if not obj.get("icon"):
+                obj["icon"] = "insight"
+            if not obj.get("emphasis"):
+                obj["emphasis"] = "normal"
+            deduped.append(obj)
+        else:
+            deduped.append(_as_item(text, "sources.md#client"))
+    return deduped
 
 
-def _sanitize_bullet_dict(item: dict, default_anchor: str = "sources.md#client") -> None:
-    """불릿 dict 기본키 보정 (evidence None 방지 포함)"""
-    if "text" in item:
-        item["text"] = _trim_text(item.get("text", ""), max_len=AUTO_BULLET_MAX_CHARS)
-    else:
-        item["text"] = ""
+def _collect_legacy_items(slide: dict) -> List[dict]:
+    items: List[dict] = []
 
-    if not item.get("icon"):
-        item["icon"] = "insight"
-
-    if not isinstance(item.get("evidence"), dict):
-        item["evidence"] = {
-            "source_anchor": default_anchor,
-            "confidence": "medium",
-        }
-        return
-
-    if not item["evidence"].get("source_anchor"):
-        item["evidence"]["source_anchor"] = default_anchor
-    if not item["evidence"].get("confidence"):
-        item["evidence"]["confidence"] = "medium"
-
-
-def _content_has_bullet_block(slide: dict) -> bool:
-    for block in slide.get("content_blocks", []):
-        if block.get("type") == "bullets" and block.get("bullets"):
-            return True
-    return False
-
-
-def _remove_all_bullets_for_layout(slide: dict) -> bool:
-    """no-bullet 레이아웃에서 bullets 관련 콘텐츠를 제거"""
-    changed = False
-    if isinstance(slide.get("bullets"), list) and slide.get("bullets"):
-        slide["bullets"] = []
-        changed = True
+    for b in slide.get("bullets", []) if isinstance(slide.get("bullets", []), list) else []:
+        text = _item_text(b)
+        if text:
+            items.append(_as_item(text, "sources.md#client"))
 
     for col in slide.get("columns", []) if isinstance(slide.get("columns", []), list) else []:
-        if isinstance(col.get("bullets"), list) and col.get("bullets"):
-            col["bullets"] = []
-            changed = True
-        if isinstance(col.get("content_blocks"), list):
-            filtered = [b for b in col.get("content_blocks", []) if not (isinstance(b, dict) and b.get("type") == "bullets")]
-            if len(filtered) != len(col.get("content_blocks", [])):
-                col["content_blocks"] = filtered
-                changed = True
+        if not isinstance(col, dict):
+            continue
+        heading = _normalize_ws(col.get("heading", ""))
+        if heading:
+            items.append(_as_item(f"{heading}: 핵심 과제와 KPI를 동일 프레임으로 관리해야 실행 일관성을 확보할 수 있습니다.", "sources.md#client"))
+        for b in col.get("bullets", []) if isinstance(col.get("bullets", []), list) else []:
+            text = _item_text(b)
+            if text:
+                items.append(_as_item(text, "sources.md#client"))
 
-    if isinstance(slide.get("content_blocks"), list):
-        filtered = [b for b in slide.get("content_blocks", []) if not (isinstance(b, dict) and b.get("type") == "bullets")]
-        if len(filtered) != len(slide.get("content_blocks", [])):
-            slide["content_blocks"] = filtered
-            changed = True
-    return changed
+    for block in slide.get("content_blocks", []) if isinstance(slide.get("content_blocks", []), list) else []:
+        if not isinstance(block, dict):
+            continue
+        b_type = str(block.get("type", "")).strip().lower()
+        if b_type == "bullets":
+            for b in block.get("bullets", []) if isinstance(block.get("bullets", []), list) else []:
+                text = _item_text(b)
+                if text:
+                    items.append(_as_item(text, "sources.md#client"))
+        elif b_type == "text":
+            text = _normalize_ws(block.get("text", ""))
+            if text:
+                items.append(_as_item(text, "sources.md#client"))
+        elif b_type == "callout":
+            c = block.get("callout", {}) if isinstance(block.get("callout", {}), dict) else {}
+            text = _normalize_ws(c.get("text", ""))
+            if text:
+                items.append(_as_item(text, "sources.md#client"))
 
-
-def _collect_slide_body_chars(slide: dict) -> int:
-    total = 0
-
-    for bullet in slide.get("bullets", []):
-        if isinstance(bullet, str):
-            total += len(bullet)
-        elif isinstance(bullet, dict):
-            total += len(str(bullet.get("text", "")))
-
-    for column in slide.get("columns", []):
-        total += len(str(column.get("heading", "")))
-        for bullet in column.get("bullets", []):
-            if isinstance(bullet, str):
-                total += len(bullet)
-            elif isinstance(bullet, dict):
-                total += len(str(bullet.get("text", "")))
-        for block in column.get("content_blocks", []):
-            total += _collect_block_chars(block)
-
-    for block in slide.get("content_blocks", []):
-        total += _collect_block_chars(block)
-
-    return total
+    return _dedupe_items(items)
 
 
-def _collect_block_chars(block: dict) -> int:
-    block_type = str(block.get("type", "")).strip().lower()
-    if block_type == "bullets":
-        value = 0
-        for bullet in block.get("bullets", []):
-            if isinstance(bullet, str):
-                value += len(bullet)
-            elif isinstance(bullet, dict):
-                value += len(str(bullet.get("text", "")))
-        return value
-    if block_type == "text":
-        return len(str(block.get("text", "")))
-    if block_type == "callout":
-        return len(str((block.get("callout") or {}).get("text", "")))
-    if block_type == "kpi":
-        kpi = block.get("kpi") or {}
-        return len(str(kpi.get("label", ""))) + len(str(kpi.get("comparison", "")))
-    if block_type == "table":
-        # 표 데이터 셀 텍스트는 시각 정보로 간주하고 narrative 밀도 산정에서 제외
-        return 0
-    return 0
+def _generate_dense_items(slide: dict, layout: str, count: int, start_idx: int = 0) -> List[dict]:
+    title = _normalize_ws(slide.get("title", "")) or "핵심 과제"
+    gm = _normalize_ws(slide.get("governing_message", ""))
+    anchor = _default_anchor(layout, title, slide)
+
+    templates = [
+        f"{title}는 단기 성과와 중장기 경쟁력 목표를 같은 KPI 체계로 관리해야 실행 편차를 줄일 수 있습니다.",
+        f"수요·원가·정책 신호를 월간으로 통합 점검해 {title} 우선순위를 빠르게 재조정해야 합니다.",
+        f"{title} 실행안은 과제 오너·검증 지표·투자 조건을 함께 명시해야 의사결정 속도를 높일 수 있습니다.",
+        f"{gm or '핵심 전략 방향'}을 실행으로 연결하려면 사업·재무·운영 데이터의 기준선을 통일해야 합니다.",
+        f"경쟁사 대비 차별화 포인트를 가치사슬 단위로 재해석해 {title} 실행 범위를 단계적으로 확장해야 합니다.",
+        f"핵심 리스크는 연쇄적으로 발생하므로, {title} 과제는 조기 경보 기준과 대응 액션을 함께 관리해야 합니다.",
+    ]
+
+    items: List[dict] = []
+    icon_cycle = ["insight", "check", "arrow", "risk"]
+    for idx in range(count):
+        text = templates[(start_idx + idx) % len(templates)]
+        if len(text) < AUTO_BULLET_MIN_CHARS:
+            text = text + " 실행 조건과 검증 지표를 명확히 제시해야 합니다."
+        items.append(_as_item(text, anchor, icon_cycle[idx % len(icon_cycle)]))
+    return items
 
 
-def _target_chars_by_layout(layout: str) -> int:
-    if layout in {"content", "exec_summary"}:
-        return 700
-    if layout in {"comparison", "two_column", "three_column"}:
-        return 680
-    if layout in {"chart_focus", "image_focus"}:
-        return 620
-    if layout in {"timeline", "process_flow"}:
-        return 560
-    if layout in {"cover", "section_divider", "thank_you", "quote"}:
-        return 0
-    return 620
+def _coerce_items(items: List[dict], slide: dict, layout: str, min_count: int, max_count: int) -> List[dict]:
+    deduped = _dedupe_items(items)
+
+    normalized: List[dict] = []
+    for it in deduped:
+        text = _item_text(it)
+        if not text:
+            continue
+        if len(text) < AUTO_BULLET_MIN_CHARS:
+            text = _normalize_ws(text + " 실행 기준을 함께 정의해야 합니다.")
+        normalized.append(_as_item(text, _default_anchor(layout, slide.get("title", ""), slide), it.get("icon", "insight") if isinstance(it, dict) else "insight"))
+
+    if len(normalized) < min_count:
+        normalized.extend(_generate_dense_items(slide, layout, min_count - len(normalized), start_idx=len(normalized)))
+
+    if len(normalized) > max_count:
+        normalized = normalized[:max_count]
+
+    return normalized
 
 
-def _safe_int(value, default: int = 0) -> int:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
+def _generate_action_items(slide: dict, layout: str, count: int, start_idx: int = 0) -> List[dict]:
+    title = _normalize_ws(slide.get("title", "")) or "핵심 과제"
+    anchor = _default_anchor(layout, title, slide)
+    templates = [
+        f"{title} 핵심 KPI 기준선을 확정하고 월간 리뷰를 즉시 시작합니다.",
+        "우선순위 과제별 오너·기한·검증지표를 명시해 실행 책임을 고정합니다.",
+        "분기별 투자 게이트를 운영해 성과 편차 발생 시 즉시 보정합니다.",
+        "리스크 조기경보 지표를 정의하고 대응 시나리오를 정례 점검합니다.",
+        "핵심 의사결정 안건을 경영회의 고정 트랙으로 편입해 실행 속도를 높입니다.",
+    ]
+    items: List[dict] = []
+    for idx in range(count):
+        text = templates[(start_idx + idx) % len(templates)]
+        items.append(_as_item(text, anchor, "check"))
+    return items
 
 
-def _normalize_global_constraints(spec: dict) -> bool:
-    gc = spec.get("global_constraints")
-    if not isinstance(gc, dict):
-        gc = {}
-        spec["global_constraints"] = gc
+def _coerce_action_items(items: List[dict], slide: dict, layout: str, min_count: int = 2, max_count: int = 3) -> List[dict]:
+    deduped = _dedupe_items(items)
+    anchor = _default_anchor(layout, slide.get("title", ""), slide)
+    normalized: List[dict] = []
 
-    changed = False
-    if _safe_int(gc.get("default_max_bullets"), 0) < AUTO_DEFAULT_MAX_BULLETS:
-        gc["default_max_bullets"] = AUTO_DEFAULT_MAX_BULLETS
-        changed = True
-    if _safe_int(gc.get("default_max_chars_per_bullet"), 0) < AUTO_BULLET_MAX_CHARS:
-        gc["default_max_chars_per_bullet"] = AUTO_BULLET_MAX_CHARS
-        changed = True
-    return changed
+    for it in deduped:
+        text = _item_text(it)
+        if not text:
+            continue
+        if len(text) < 14:
+            text = _normalize_ws(text + " 실행 계획으로 즉시 전환합니다.")
+        elif not re.search(r"(합니다|하십시오|구축|확정|정렬|점검|관리|시행|운영|추진)$", text):
+            text = _normalize_ws(text + " 실행으로 연결합니다.")
+        normalized.append(_as_item(text, anchor, it.get("icon", "check") if isinstance(it, dict) else "check"))
+
+    if len(normalized) < min_count:
+        normalized.extend(_generate_action_items(slide, layout, min_count - len(normalized), start_idx=len(normalized)))
+
+    if len(normalized) > max_count:
+        normalized = normalized[:max_count]
+
+    return normalized
+
+
+def _find_block(blocks: List[dict], b_type: str, slot: Optional[str] = None) -> Optional[dict]:
+    b_type = str(b_type or "").strip().lower()
+    slot_norm = str(slot or "").strip().lower()
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        if str(block.get("type", "")).strip().lower() != b_type:
+            continue
+        if slot and str(block.get("slot", "")).strip().lower() != slot_norm:
+            continue
+        return block
+    return None
+
+
+def _upsert_block(blocks: List[dict], block: dict) -> None:
+    b_type = str(block.get("type", "")).strip().lower()
+    slot = str(block.get("slot", "")).strip().lower()
+    for idx, cur in enumerate(blocks):
+        if not isinstance(cur, dict):
+            continue
+        if str(cur.get("type", "")).strip().lower() != b_type:
+            continue
+        if str(cur.get("slot", "")).strip().lower() != slot:
+            continue
+        blocks[idx] = block
+        return
+    blocks.append(block)
+
+
+def _prune_blocks_for_layout(layout: str, blocks: List[dict]) -> List[dict]:
+    allowed: Dict[str, set] = {
+        "exec_summary": {("bullets", "main_bullets"), ("action_list", "action_box")},
+        "two_column": {("bullets", "left_column"), ("bullets", "right_column"), ("action_list", "action_box")},
+        "chart_insight": {("chart", "chart_box"), ("bullets", "insight_box"), ("action_list", "action_box")},
+        "competitor_2x2": {("matrix_2x2", "matrix_box"), ("bullets", "insight_box"), ("action_list", "action_box")},
+        "strategy_cards": {("kpi_cards", "kpi_cards"), ("action_list", "action_box")},
+        "timeline": {("timeline_steps", "timeline_box"), ("action_list", "action_box")},
+        "kpi_cards": {("kpi_cards", "kpi_cards"), ("action_list", "assumptions_box")},
+    }
+    allowed_set = allowed.get(layout)
+    if not allowed_set:
+        return [b for b in blocks if isinstance(b, dict)]
+
+    pruned: List[dict] = []
+    seen = set()
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        key = (str(block.get("type", "")).strip().lower(), str(block.get("slot", "")).strip().lower())
+        if key not in allowed_set:
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        pruned.append(block)
+
+    # 허용 슬롯이 모두 채워지지 않았더라도 현재 확보한 블록만 유지
+    return pruned
+
+
+def _find_chart_candidate(slide: dict, blocks: List[dict]) -> Optional[dict]:
+    existing = _find_block(blocks, "chart")
+    if existing and isinstance(existing.get("chart"), dict):
+        return dict(existing.get("chart", {}))
+
+    for block in slide.get("content_blocks", []) if isinstance(slide.get("content_blocks", []), list) else []:
+        if isinstance(block, dict) and str(block.get("type", "")).strip().lower() == "chart":
+            chart = block.get("chart", {}) if isinstance(block.get("chart", {}), dict) else {}
+            if chart:
+                return dict(chart)
+
+    for visual in slide.get("visuals", []) if isinstance(slide.get("visuals", []), list) else []:
+        if not isinstance(visual, dict):
+            continue
+        v_type = str(visual.get("type", "")).strip().lower()
+        if "chart" in v_type or v_type in {"bar_chart", "line_chart", "pie_chart", "stacked_bar", "scatter"}:
+            return dict(visual)
+
+    return None
+
+
+def _ensure_exec_summary(slide: dict, blocks: List[dict]) -> None:
+    base = _collect_legacy_items(slide)
+    main = _find_block(blocks, "bullets", "main_bullets") or _find_block(blocks, "bullets")
+    items = []
+    if main and isinstance(main.get("items", []), list):
+        items.extend(main.get("items", []))
+    items.extend(base)
+    items = _coerce_items(items, slide, "exec_summary", min_count=3, max_count=5)
+    _upsert_block(blocks, {"type": "bullets", "slot": "main_bullets", "items": items})
+
+    action = _find_block(blocks, "action_list", "action_box")
+    action_items = action.get("items", []) if action and isinstance(action.get("items", []), list) else []
+    action_items = _coerce_action_items(action_items, slide, "exec_summary", min_count=2, max_count=3)
+    _upsert_block(blocks, {"type": "action_list", "slot": "action_box", "items": action_items})
+
+
+def _split_items_for_two_column(items: List[dict], slide: dict) -> Tuple[List[dict], List[dict]]:
+    if not items:
+        items = _generate_dense_items(slide, "two_column", 8)
+    if len(items) < 6:
+        items.extend(_generate_dense_items(slide, "two_column", 6 - len(items), start_idx=len(items)))
+
+    mid = max(3, len(items) // 2)
+    left = _coerce_items(items[:mid], slide, "two_column", min_count=3, max_count=5)
+    right = _coerce_items(items[mid:], slide, "two_column", min_count=3, max_count=5)
+    return left, right
+
+
+def _ensure_two_column(slide: dict, blocks: List[dict]) -> None:
+    base = _collect_legacy_items(slide)
+
+    left_block = _find_block(blocks, "bullets", "left_column")
+    right_block = _find_block(blocks, "bullets", "right_column")
+
+    if left_block and right_block:
+        left_items = _coerce_items(left_block.get("items", []), slide, "two_column", min_count=3, max_count=5)
+        right_items = _coerce_items(right_block.get("items", []), slide, "two_column", min_count=3, max_count=5)
+    else:
+        left_items, right_items = _split_items_for_two_column(base, slide)
+
+    _upsert_block(blocks, {"type": "bullets", "slot": "left_column", "items": left_items})
+    _upsert_block(blocks, {"type": "bullets", "slot": "right_column", "items": right_items})
+
+    action = _find_block(blocks, "action_list", "action_box")
+    action_items = action.get("items", []) if action and isinstance(action.get("items", []), list) else []
+    action_items = _coerce_action_items(action_items, slide, "two_column", min_count=2, max_count=3)
+    _upsert_block(blocks, {"type": "action_list", "slot": "action_box", "items": action_items})
+
+
+def _ensure_chart_insight(slide: dict, blocks: List[dict]) -> None:
+    chart = _find_chart_candidate(slide, blocks)
+    if not chart:
+        chart = {
+            "type": "bar_chart",
+            "title": f"{_normalize_ws(slide.get('title', '핵심 지표'))} 핵심 지표 추이",
+            "caption": "단위/기준시점/출처 확정 후 실데이터로 교체",
+            "evidence": {
+            "source_anchor": _default_anchor("chart_insight", slide.get("title", ""), slide),
+                "confidence": "medium",
+            },
+        }
+    _upsert_block(blocks, {"type": "chart", "slot": "chart_box", "chart": chart})
+
+    bullet_block = _find_block(blocks, "bullets", "insight_box") or _find_block(blocks, "bullets")
+    items = bullet_block.get("items", []) if bullet_block and isinstance(bullet_block.get("items", []), list) else []
+    items = _coerce_items(items + _collect_legacy_items(slide), slide, "chart_insight", min_count=3, max_count=5)
+    _upsert_block(blocks, {"type": "bullets", "slot": "insight_box", "items": items})
+
+    action = _find_block(blocks, "action_list", "action_box")
+    action_items = action.get("items", []) if action and isinstance(action.get("items", []), list) else []
+    action_items = _coerce_action_items(action_items, slide, "chart_insight", min_count=2, max_count=3)
+    _upsert_block(blocks, {"type": "action_list", "slot": "action_box", "items": action_items})
+
+
+def _ensure_competitor_2x2(slide: dict, blocks: List[dict]) -> None:
+    matrix = _find_block(blocks, "matrix_2x2", "matrix_box")
+    matrix_data = matrix.get("matrix_2x2", {}) if matrix and isinstance(matrix.get("matrix_2x2"), dict) else {}
+    if not matrix_data:
+        matrix_data = {
+            "x_axis": "시장 매력도",
+            "y_axis": "실행 역량",
+            "quadrants": ["Defend", "Harvest", "Build", "Invest"],
+            "points": [
+                {"label": "Client", "x": 62, "y": 58, "color": "#008FD3"},
+                {"label": "Peer A", "x": 74, "y": 72, "color": "#0A5E9C"},
+                {"label": "Peer B", "x": 48, "y": 64, "color": "#3C8DBC"},
+                {"label": "Peer C", "x": 38, "y": 44, "color": "#6EAAD2"},
+            ],
+        }
+    _upsert_block(blocks, {"type": "matrix_2x2", "slot": "matrix_box", "matrix_2x2": matrix_data})
+
+    insight = _find_block(blocks, "bullets", "insight_box") or _find_block(blocks, "bullets")
+    items = insight.get("items", []) if insight and isinstance(insight.get("items", []), list) else []
+    items = _coerce_items(items + _collect_legacy_items(slide), slide, "competitor_2x2", min_count=3, max_count=5)
+    _upsert_block(blocks, {"type": "bullets", "slot": "insight_box", "items": items})
+
+    action = _find_block(blocks, "action_list", "action_box")
+    action_items = action.get("items", []) if action and isinstance(action.get("items", []), list) else []
+    action_items = _coerce_action_items(action_items, slide, "competitor_2x2", min_count=2, max_count=3)
+    _upsert_block(blocks, {"type": "action_list", "slot": "action_box", "items": action_items})
+
+
+def _default_strategy_cards(slide: dict) -> List[dict]:
+    return [
+        {
+            "label": "Option A: 수익성 방어",
+            "value": "단기 마진 안정화",
+            "comparison": "원가·판가·믹스 동시 최적화",
+        },
+        {
+            "label": "Option B: 성장 확장",
+            "value": "중기 CAPA 고도화",
+            "comparison": "고객/제품 포트폴리오 전환",
+        },
+        {
+            "label": "Option C: 포트폴리오 재편",
+            "value": "투자 우선순위 재배열",
+            "comparison": "리스크-수익 균형 최적화",
+        },
+    ]
+
+
+def _ensure_strategy_cards(slide: dict, blocks: List[dict]) -> None:
+    cards_block = _find_block(blocks, "kpi_cards", "kpi_cards")
+    cards = cards_block.get("cards", []) if cards_block and isinstance(cards_block.get("cards", []), list) else []
+
+    if len(cards) < 3:
+        defaults = _default_strategy_cards(slide)
+        for card in defaults:
+            if len(cards) >= 3:
+                break
+            cards.append(card)
+
+    cards = cards[:3]
+    _upsert_block(blocks, {"type": "kpi_cards", "slot": "kpi_cards", "cards": cards})
+
+    action = _find_block(blocks, "action_list", "action_box")
+    action_items = action.get("items", []) if action and isinstance(action.get("items", []), list) else []
+    action_items = _coerce_action_items(action_items, slide, "strategy_cards", min_count=2, max_count=3)
+    _upsert_block(blocks, {"type": "action_list", "slot": "action_box", "items": action_items})
+
+
+def _default_timeline(slide: dict) -> List[dict]:
+    return [
+        {
+            "phase": "Phase 1",
+            "title": "0-100일",
+            "description": "핵심 과제 우선순위 확정 및 PMO·KPI 기준선 정렬",
+        },
+        {
+            "phase": "Phase 2",
+            "title": "3-6개월",
+            "description": "파일럿 실행과 운영 데이터 통합, 조기 성과 검증",
+        },
+        {
+            "phase": "Phase 3",
+            "title": "6-12개월",
+            "description": "핵심 프로세스 표준화와 조직/거버넌스 내재화",
+        },
+        {
+            "phase": "Phase 4",
+            "title": "12개월+",
+            "description": "전사 확산 및 투자/성과 체계 고도화",
+        },
+    ]
+
+
+def _ensure_timeline(slide: dict, blocks: List[dict]) -> None:
+    timeline_block = _find_block(blocks, "timeline_steps", "timeline_box") or _find_block(blocks, "timeline_steps")
+    timeline = timeline_block.get("timeline", []) if timeline_block and isinstance(timeline_block.get("timeline", []), list) else []
+    if len(timeline) < 3:
+        timeline = _default_timeline(slide)
+    _upsert_block(blocks, {"type": "timeline_steps", "slot": "timeline_box", "timeline": timeline[:5]})
+
+    action = _find_block(blocks, "action_list", "action_box")
+    action_items = action.get("items", []) if action and isinstance(action.get("items", []), list) else []
+    action_items = _coerce_action_items(action_items, slide, "timeline", min_count=2, max_count=3)
+    _upsert_block(blocks, {"type": "action_list", "slot": "action_box", "items": action_items})
+
+
+def _default_kpi_cards(slide: dict) -> List[dict]:
+    return [
+        {"label": "Revenue Uplift", "value": "+6~10%", "comparison": "3Y cumulative"},
+        {"label": "EBITDA Margin", "value": "+1.5~2.5%p", "comparison": "Year 3"},
+        {"label": "Inventory Turn", "value": "+12~18%", "comparison": "Year 2"},
+        {"label": "Payback", "value": "24~30M", "comparison": "scenario range"},
+    ]
+
+
+def _ensure_kpi_cards(slide: dict, blocks: List[dict]) -> None:
+    cards_block = _find_block(blocks, "kpi_cards", "kpi_cards") or _find_block(blocks, "kpi_cards")
+    cards = cards_block.get("cards", []) if cards_block and isinstance(cards_block.get("cards", []), list) else []
+
+    if len(cards) < 4:
+        defaults = _default_kpi_cards(slide)
+        for card in defaults:
+            if len(cards) >= 4:
+                break
+            cards.append(card)
+
+    _upsert_block(blocks, {"type": "kpi_cards", "slot": "kpi_cards", "cards": cards[:4]})
+
+    action = _find_block(blocks, "action_list", "assumptions_box") or _find_block(blocks, "action_list", "action_box")
+    action_items = action.get("items", []) if action and isinstance(action.get("items", []), list) else []
+    action_items = _coerce_action_items(action_items, slide, "kpi_cards", min_count=2, max_count=3)
+    _upsert_block(blocks, {"type": "action_list", "slot": "assumptions_box", "items": action_items})
 
 
 def _normalize_slide_constraints(slide: dict, layout: str) -> bool:
     changed = False
-    raw_sc = slide.get("slide_constraints")
-    sc = dict(raw_sc) if isinstance(raw_sc, dict) else {}
+    raw = slide.get("slide_constraints")
+    sc = dict(raw) if isinstance(raw, dict) else {}
 
     if layout in NO_BULLET_LAYOUTS:
         if "max_bullets" in sc:
@@ -359,31 +726,20 @@ def _normalize_slide_constraints(slide: dict, layout: str) -> bool:
         if "max_chars_per_bullet" in sc:
             sc.pop("max_chars_per_bullet", None)
             changed = True
-
         if sc:
-            if slide.get("slide_constraints") != sc:
-                slide["slide_constraints"] = sc
-                changed = True
+            slide["slide_constraints"] = sc
         elif "slide_constraints" in slide:
             slide.pop("slide_constraints", None)
             changed = True
         return changed
 
-    if layout in VISUAL_LAYOUTS:
-        target_max_bullets = AUTO_VISUAL_MAX_BULLETS
-    elif layout in DENSE_CONTENT_LAYOUTS:
-        target_max_bullets = AUTO_CONTENT_MAX_BULLETS
-    else:
-        target_max_bullets = AUTO_DEFAULT_MAX_BULLETS
-
-    desired_max_bullets = max(_safe_int(sc.get("max_bullets"), 0), target_max_bullets)
-    desired_max_chars = max(_safe_int(sc.get("max_chars_per_bullet"), 0), AUTO_BULLET_MAX_CHARS)
-
-    if sc.get("max_bullets") != desired_max_bullets:
-        sc["max_bullets"] = desired_max_bullets
+    target_max = TARGET_MAX_BULLETS_BY_LAYOUT.get(layout, 8)
+    if int(sc.get("max_bullets", 0) or 0) != target_max:
+        sc["max_bullets"] = target_max
         changed = True
-    if sc.get("max_chars_per_bullet") != desired_max_chars:
-        sc["max_chars_per_bullet"] = desired_max_chars
+
+    if int(sc.get("max_chars_per_bullet", 0) or 0) < AUTO_BULLET_MAX_CHARS:
+        sc["max_chars_per_bullet"] = AUTO_BULLET_MAX_CHARS
         changed = True
 
     if slide.get("slide_constraints") != sc:
@@ -393,410 +749,187 @@ def _normalize_slide_constraints(slide: dict, layout: str) -> bool:
     return changed
 
 
-def _narrative_source_anchor(slide: dict) -> str:
-    title = str(slide.get("title", "")).lower()
-    if any(token in title for token in ["market", "시장", "demand", "ev"]):
-        return "sources.md#market"
-    if any(token in title for token in ["policy", "ira", "eu", "규제"]):
-        return "sources.md#policy"
-    if any(token in title for token in ["value", "capex", "funding", "roadmap"]):
-        return "sources.md#risk-scenarios"
-    return "sources.md#client"
-
-
-def _narrative_slot_by_layout(layout: str) -> tuple[int, int]:
-    if layout in {"timeline", "process_flow"}:
-        return (388, 120)
-    if layout in {"chart_focus", "image_focus"}:
-        return (396, 118)
-    if layout in {"comparison", "two_column", "three_column"}:
-        return (382, 126)
-    return (380, 128)
-
-
-def _build_narrative_text(slide: dict, variant: int = 1) -> str:
-    title = _short_title_key(str(slide.get("title", "")).strip())
-    governing = str(slide.get("governing_message", "")).strip()
-
-    paragraph_1 = (
-        f"{title} 과제는 단기 실적 개선 논리와 중장기 포트폴리오 전환 논리를 분리하지 않고 동일한 실행 프레임으로 관리해야 하며, "
-        "각 의사결정은 매출·원가·자본효율·정책적합성 지표를 동시에 충족하는 조건에서만 확정되어야 합니다."
-    )
-    paragraph_2 = (
-        "경영진은 월간 리뷰에서 수요·메탈가격·규제변화의 선행 신호를 공통 템플릿으로 점검하고, 편차 발생 시 과제 오너·보정 일정·자본 배분안을 즉시 재정렬해야 하며, "
-        "이 운영 원칙을 통해 단일 분기 성과를 넘어 구조적 수익성 복원과 공급망 탄력성 제고를 동시에 달성해야 합니다."
-    )
-    base = f"{paragraph_1}\n{paragraph_2}"
-
-    if variant == 2 and governing:
-        return (
-            f"{governing}\n이를 실행으로 연결하려면 사업부·재무·구매·생산 KPI를 통합 대시보드로 운영하고, "
-            "의사결정 회의에서 목표 대비 편차·원인·보정 액션을 동시 승인하는 관리 리듬을 유지해야 합니다."
-        )
-    return base
-
-
-def _is_auto_narrative_text(text: str) -> bool:
-    value = str(text or "").strip()
-    if not value:
-        return False
-    markers = [
-        "이를 실행으로 연결하려면",
-        "단기 실적 개선 논리와 중장기 포트폴리오",
-        "단일 분기 성과를 넘어 구조적 수익성",
-        "단일 분기 실적 개선을 넘어 구조적 수익성",
-        "단일 분기 성과를 넘어 구조적 수익성 복원",
-    ]
-    return any(marker in value for marker in markers)
-
-
-def _normalize_narrative_blocks(slide: dict, layout: str) -> bool:
-    blocks = slide.get("content_blocks", [])
-    if not isinstance(blocks, list):
-        return False
-
-    narrative_indexes: List[int] = []
-    for idx, block in enumerate(blocks):
-        if not isinstance(block, dict):
-            continue
-        if block.get("type") != "text":
-            continue
-        if _is_auto_narrative_text(block.get("text", "")):
-            narrative_indexes.append(idx)
-
-    if not narrative_indexes:
-        return False
+def _normalize_global_constraints(spec: dict) -> bool:
+    gc = spec.get("global_constraints")
+    if not isinstance(gc, dict):
+        gc = {}
+        spec["global_constraints"] = gc
 
     changed = False
-    primary_idx = narrative_indexes[0]
-    primary = blocks[primary_idx]
-
-    # 첫 번째 narrative만 유지하고 나머지는 제거
-    for idx in reversed(narrative_indexes[1:]):
-        del blocks[idx]
+    if int(gc.get("default_max_bullets", 0) or 0) < 8:
+        gc["default_max_bullets"] = 8
         changed = True
-
-    top_pt, height_pt = _narrative_slot_by_layout(layout)
-    refreshed_text = _build_narrative_text(slide, variant=1)
-    if refreshed_text and str(primary.get("text", "")).strip() != refreshed_text:
-        primary["text"] = refreshed_text
+    if int(gc.get("default_max_chars_per_bullet", 0) or 0) < AUTO_BULLET_MAX_CHARS:
+        gc["default_max_chars_per_bullet"] = AUTO_BULLET_MAX_CHARS
         changed = True
-    if primary.get("position") != "main":
-        primary["position"] = "main"
+    if int(gc.get("max_slides", 0) or 0) < 30:
+        gc["max_slides"] = 35
         changed = True
-    if primary.get("left_pt") != 43:
-        primary["left_pt"] = 43
+    desired_sections = ["cover", "exec_summary"]
+    if gc.get("required_sections") != desired_sections:
+        gc["required_sections"] = desired_sections
         changed = True
-    if primary.get("width_pt") != 860:
-        primary["width_pt"] = 860
-        changed = True
-    if primary.get("top_pt") != top_pt:
-        primary["top_pt"] = top_pt
-        changed = True
-    if primary.get("height_pt") != height_pt:
-        primary["height_pt"] = height_pt
-        changed = True
-
     return changed
 
 
-def _append_narrative_block(slide: dict, layout: str, variant: int) -> bool:
-    narrative = _build_narrative_text(slide, variant=variant)
-    if not narrative:
-        return False
+def _sanitize_block_evidence(block: dict, layout: str, title: str, slide: Optional[dict] = None) -> None:
+    anchor = _default_anchor(layout, title, slide)
+    if "evidence" in block and not isinstance(block.get("evidence"), dict):
+        block.pop("evidence", None)
 
-    # 중복 narrative 방지 (반복 실행 안정성)
-    for block in slide.get("content_blocks", []):
-        if block.get("type") != "text":
+    if isinstance(block.get("evidence"), dict):
+        if not block["evidence"].get("source_anchor"):
+            block["evidence"]["source_anchor"] = anchor
+        if not block["evidence"].get("confidence"):
+            block["evidence"]["confidence"] = "medium"
+
+    for item in block.get("items", []) if isinstance(block.get("items", []), list) else []:
+        if not isinstance(item, dict):
             continue
-        existing = str(block.get("text", "")).strip()
-        if _is_auto_narrative_text(existing):
-            return False
-        if existing and existing[:28] == narrative[:28]:
-            return False
-
-    source_anchor = _narrative_source_anchor(slide)
-    top_pt, height_pt = _narrative_slot_by_layout(layout)
-    text_block = {
-        "type": "text",
-        "position": "main",
-        "left_pt": 43,
-        "width_pt": 860,
-        "top_pt": top_pt,
-        "height_pt": height_pt,
-        "text": narrative,
-        "evidence": {
-            "source_anchor": source_anchor,
-            "confidence": "medium",
-        },
-    }
-    slide.setdefault("content_blocks", []).append(text_block)
-    return True
+        ev = item.get("evidence")
+        if not isinstance(ev, dict):
+            item["evidence"] = {"source_anchor": anchor, "confidence": "medium"}
+        else:
+            if not ev.get("source_anchor"):
+                ev["source_anchor"] = anchor
+            if not ev.get("confidence"):
+                ev["confidence"] = "medium"
 
 
-def densify_spec(spec: dict) -> Dict[str, int]:
+def densify_spec(spec: dict, available_anchors: Optional[List[str]] = None) -> Dict[str, int]:
+    global ANCHOR_CATALOG
     slides = spec.get("slides", [])
+    anchor_catalog = _normalize_anchor_list(spec.get("sources_ref", []))
+    if isinstance(available_anchors, list):
+        for anchor in _normalize_anchor_list(available_anchors):
+            if anchor not in anchor_catalog:
+                anchor_catalog.append(anchor)
+    for slide in slides if isinstance(slides, list) else []:
+        metadata = slide.get("metadata", {}) if isinstance(slide.get("metadata"), dict) else {}
+        for anchor in _normalize_anchor_list(metadata.get("source_refs", [])):
+            if anchor not in anchor_catalog:
+                anchor_catalog.append(anchor)
+    ANCHOR_CATALOG = anchor_catalog
+
     stats = {
         "slides_total": len(slides),
         "slides_touched": 0,
         "constraints_normalized": 0,
-        "bullet_blocks_added": 0,
-        "icons_added": 0,
-        "layout_balanced": 0,
-        "narrative_blocks_added": 0,
+        "layout_remapped": 0,
+        "blocks_materialized": 0,
+        "required_blocks_filled": 0,
     }
 
     if _normalize_global_constraints(spec):
         stats["constraints_normalized"] += 1
 
     for slide in slides:
-        layout = str(slide.get("layout", "")).strip().lower()
         changed = False
+        original_layout = str(slide.get("layout", "")).strip().lower()
+        layout = normalize_layout_name(original_layout)
+        remapped = LAYOUT_REMAP_TO_PRACTICAL.get(layout, layout)
+        if remapped != layout:
+            layout = remapped
+            slide["layout"] = remapped
+            stats["layout_remapped"] += 1
+            changed = True
+        elif slide.get("layout") != layout:
+            slide["layout"] = layout
+            changed = True
+
+        if _normalize_governing_message(slide, layout):
+            changed = True
 
         if _normalize_slide_constraints(slide, layout):
             stats["constraints_normalized"] += 1
             changed = True
 
         if layout in NO_BULLET_LAYOUTS:
-            if _remove_all_bullets_for_layout(slide):
+            if slide.get("blocks"):
+                slide["blocks"] = []
                 changed = True
+            if isinstance(slide.get("bullets"), list) and slide.get("bullets"):
+                slide["bullets"] = []
+                changed = True
+            if isinstance(slide.get("content_blocks"), list) and slide.get("content_blocks"):
+                slide["content_blocks"] = []
+                changed = True
+            if "columns" in slide:
+                slide.pop("columns", None)
+                changed = True
+            if changed:
+                stats["slides_touched"] += 1
+            continue
 
-        # top-level bullets 아이콘 보강
-        if isinstance(slide.get("bullets"), list):
-            slide["bullets"] = _dedupe_bullets(slide.get("bullets", []))
-        for b in slide.get("bullets", []):
-            if isinstance(b, dict):
-                _sanitize_bullet_dict(b)
+        blocks = normalize_slide_blocks(slide)
+        if not isinstance(blocks, list):
+            blocks = []
 
-        before_icon_missing = sum(
-            1 for b in slide.get("bullets", []) if isinstance(b, dict) and not b.get("icon")
-        )
-        _ensure_icons(slide.get("bullets", []))
-
-        # columns bullets 아이콘 보강
-        for col in slide.get("columns", []):
-            if isinstance(col.get("bullets"), list):
-                col["bullets"] = _dedupe_bullets(col.get("bullets", []))
-            for b in col.get("bullets", []):
-                if isinstance(b, dict):
-                    _sanitize_bullet_dict(b)
-            _ensure_icons(col.get("bullets", []))
-            for block in col.get("content_blocks", []):
-                if block.get("type") == "bullets":
-                    if isinstance(block.get("bullets"), list):
-                        block["bullets"] = _dedupe_bullets(block.get("bullets", []))
-                    for b in block.get("bullets", []):
-                        if isinstance(b, dict):
-                            _sanitize_bullet_dict(b)
-                    _ensure_icons(block.get("bullets", []))
-
-        # content blocks bullets 아이콘 보강
-        for block in slide.get("content_blocks", []):
-            if block.get("type") == "bullets":
-                if isinstance(block.get("bullets"), list):
-                    block["bullets"] = _dedupe_bullets(block.get("bullets", []))
-                for b in block.get("bullets", []):
-                    if isinstance(b, dict):
-                        _sanitize_bullet_dict(b)
-                _ensure_icons(block.get("bullets", []))
-
-        after_icon_missing = sum(
-            1 for b in slide.get("bullets", []) if isinstance(b, dict) and not b.get("icon")
-        )
-        if before_icon_missing > after_icon_missing:
-            stats["icons_added"] += (before_icon_missing - after_icon_missing)
+        # 블록이 비어 있으면 최소 bullets 블록 생성
+        if not blocks:
+            base = _collect_legacy_items(slide)
+            base = _coerce_items(base, slide, layout, min_count=4, max_count=6)
+            blocks = [{"type": "bullets", "slot": "main_bullets", "items": base}]
+            stats["blocks_materialized"] += 1
             changed = True
 
-        # 핵심: content 슬라이드가 table/callout만 있을 때 우측 시사점 패널 자동 보강
-        if layout in {"content", "exec_summary"}:
-            has_table = any(block.get("type") == "table" for block in slide.get("content_blocks", []))
-            has_bullet_block = _content_has_bullet_block(slide)
-            top_bullets = slide.get("bullets", [])
+        if layout == "exec_summary":
+            _ensure_exec_summary(slide, blocks)
+            stats["required_blocks_filled"] += 1
+        elif layout == "two_column":
+            _ensure_two_column(slide, blocks)
+            stats["required_blocks_filled"] += 1
+        elif layout == "chart_insight":
+            _ensure_chart_insight(slide, blocks)
+            stats["required_blocks_filled"] += 1
+        elif layout == "competitor_2x2":
+            _ensure_competitor_2x2(slide, blocks)
+            stats["required_blocks_filled"] += 1
+        elif layout == "strategy_cards":
+            _ensure_strategy_cards(slide, blocks)
+            stats["required_blocks_filled"] += 1
+        elif layout == "timeline":
+            _ensure_timeline(slide, blocks)
+            stats["required_blocks_filled"] += 1
+        elif layout == "kpi_cards":
+            _ensure_kpi_cards(slide, blocks)
+            stats["required_blocks_filled"] += 1
 
-            if has_table and not has_bullet_block and not top_bullets:
-                bullets = _generate_consulting_bullets(slide, count=3)
-                if bullets:
-                    # table 좌측, callout/bullets 우측 배치로 시각-텍스트 균형 강화
-                    for block in slide.get("content_blocks", []):
-                        if block.get("type") == "table":
-                            block["position"] = "left"
-                            block["left_pt"] = 43
-                            block["width_pt"] = 560
-                            block["top_pt"] = 132
-                        elif block.get("type") == "callout":
-                            block["position"] = "right"
-                            block["left_pt"] = 620
-                            block["width_pt"] = 270
-                            block["top_pt"] = 132
-
-                    slide.setdefault("content_blocks", []).append(
-                        {
-                            "type": "bullets",
-                            "position": "right",
-                            "left_pt": 620,
-                            "width_pt": 270,
-                            "top_pt": 220,
-                            "bullets": bullets,
-                        }
-                    )
-                    stats["bullet_blocks_added"] += 1
-                    stats["layout_balanced"] += 1
-                    changed = True
-
-        # chart/image 중심 슬라이드: 핵심 시사점 callout이 없으면 추가
-        if layout in VISUAL_LAYOUTS:
-            has_callout = any(block.get("type") == "callout" for block in slide.get("content_blocks", []))
-            if not has_callout:
-                slide.setdefault("content_blocks", []).append(
-                    {
-                        "type": "callout",
-                        "callout": {
-                            "type": "key_insight",
-                            "icon": "insight",
-                            "text": "핵심 지표 변화는 단일 수치가 아닌 수요·원가·정책의 결합 시그널로 해석해야 합니다.",
-                        },
-                    }
-                )
-                changed = True
-
-            # visual block이 없으면 placeholder block 자동 추가
-            if layout == "chart_focus":
-                for block in slide.get("content_blocks", []):
-                    if isinstance(block, dict) and block.get("type") == "chart" and isinstance(block.get("chart"), dict):
-                        if not str(block["chart"].get("type", "")).strip():
-                            block["chart"]["type"] = "bar_chart"
-                            changed = True
-                has_chart = any(
-                    isinstance(block, dict) and block.get("type") == "chart"
-                    for block in slide.get("content_blocks", [])
-                ) or any(
-                    isinstance(v, dict) and str(v.get("type", "")).lower() in {"chart", "bar_chart", "line_chart", "pie_chart", "stacked_bar", "scatter"}
-                    for v in slide.get("visuals", [])
-                )
-                if not has_chart:
-                    slide.setdefault("content_blocks", []).insert(
-                        0,
-                        {
-                            "type": "chart",
-                            "position": "main",
-                            "chart": {
-                                "type": "bar_chart",
-                                "title": "핵심 지표 변화 (임시 플레이스홀더)",
-                                "caption": "데이터 확정 시 실제 수치로 교체",
-                            },
-                        },
-                    )
-                    changed = True
-            else:
-                for block in slide.get("content_blocks", []):
-                    if isinstance(block, dict) and block.get("type") == "image" and isinstance(block.get("image"), dict):
-                        if not str(block["image"].get("type", "")).strip():
-                            block["image"]["type"] = "image"
-                            changed = True
-                has_image = any(
-                    isinstance(block, dict) and block.get("type") == "image"
-                    for block in slide.get("content_blocks", [])
-                ) or any(
-                    isinstance(v, dict) and str(v.get("type", "")).lower() in {"image", "photo", "illustration"}
-                    for v in slide.get("visuals", [])
-                )
-                if not has_image:
-                    slide.setdefault("content_blocks", []).insert(
-                        0,
-                        {
-                            "type": "image",
-                            "position": "main",
-                            "image": {
-                                "type": "image",
-                                "title": "핵심 비주얼 (임시 플레이스홀더)",
-                                "caption": "시각 자료 확정 시 교체",
-                            },
-                        },
-                    )
-                    changed = True
-
-            # visual layout 기본 불릿 4개 목표, 최대 8개 허용
-            bullets = slide.get("bullets", [])
-            if isinstance(bullets, list) and len(bullets) < AUTO_VISUAL_MIN_BULLETS:
-                pad = _generate_consulting_bullets(slide, count=AUTO_VISUAL_MIN_BULLETS - len(bullets))
-                slide["bullets"] = list(bullets) + pad
-                changed = True
-            elif isinstance(bullets, list) and len(bullets) > AUTO_VISUAL_MAX_BULLETS:
-                slide["bullets"] = list(bullets[:AUTO_VISUAL_MAX_BULLETS])
-                changed = True
-
-            # visual 레이아웃의 bullets block도 최대 8개로 맞춤
-            for block in slide.get("content_blocks", []):
-                if isinstance(block, dict) and block.get("type") == "bullets" and isinstance(block.get("bullets"), list):
-                    if len(block["bullets"]) > AUTO_VISUAL_MAX_BULLETS:
-                        block["bullets"] = block["bullets"][:AUTO_VISUAL_MAX_BULLETS]
-                        changed = True
-            columns = slide.get("columns", []) if isinstance(slide.get("columns", []), list) else []
-            for col in columns:
-                if isinstance(col.get("bullets"), list) and len(col.get("bullets", [])) > AUTO_VISUAL_MAX_BULLETS:
-                    col["bullets"] = col.get("bullets", [])[:AUTO_VISUAL_MAX_BULLETS]
-                    changed = True
-                col_blocks = col.get("content_blocks", []) if isinstance(col.get("content_blocks", []), list) else []
-                for block in col_blocks:
-                    if isinstance(block, dict) and block.get("type") == "bullets" and isinstance(block.get("bullets"), list) and len(block.get("bullets", [])) > AUTO_VISUAL_MAX_BULLETS:
-                        block["bullets"] = block.get("bullets", [])[:AUTO_VISUAL_MAX_BULLETS]
-                        changed = True
-
-        # 기존 자동 narrative 블록을 단일 슬롯으로 정규화 (반복 실행 시 경계 초과 방지)
-        if _normalize_narrative_blocks(slide, layout):
+        pruned_blocks = _prune_blocks_for_layout(layout, blocks)
+        if pruned_blocks != blocks:
+            blocks = pruned_blocks
             changed = True
 
-        # 본문 텍스트량 목표치까지 narrative block 확장
-        target_chars = _target_chars_by_layout(layout)
-        if target_chars > 0:
-            current_chars = _collect_slide_body_chars(slide)
-            if current_chars < target_chars:
-                # 본문 하단 narrative는 1개 슬롯 우선 적용 (가시성과 완결성 중심)
-                if _append_narrative_block(slide, layout, variant=1):
-                    stats["narrative_blocks_added"] += 1
-                    changed = True
-                current_chars = _collect_slide_body_chars(slide)
-                if current_chars < target_chars and layout not in {"chart_focus", "image_focus"}:
-                    # 여전히 부족하면 bullet 문장을 최대 2회 보강
-                    for _ in range(2):
-                        if current_chars >= target_chars:
-                            break
-                        extension = _generate_consulting_bullets(slide, count=1)
-                        if not extension:
-                            break
+        for block in blocks:
+            if isinstance(block, dict):
+                _sanitize_block_evidence(block, layout, slide.get("title", ""), slide)
 
-                        if isinstance(slide.get("bullets"), list) and slide.get("bullets"):
-                            slide["bullets"] = _dedupe_bullets(list(slide.get("bullets", [])) + extension)
-                        else:
-                            bullet_block = next(
-                                (b for b in slide.get("content_blocks", []) if isinstance(b, dict) and b.get("type") == "bullets"),
-                                None
-                            )
-                            if bullet_block is not None:
-                                bullet_block["bullets"] = _dedupe_bullets(list(bullet_block.get("bullets", [])) + extension)
-                            else:
-                                slide.setdefault("content_blocks", []).append(
-                                    {
-                                        "type": "bullets",
-                                        "position": "main",
-                                        "left_pt": 43,
-                                        "width_pt": 860,
-                                        "top_pt": 200,
-                                        "bullets": extension,
-                                    }
-                                )
+        # canonical blocks 모드로 전환: 중복 검증/중복 렌더 방지
+        if slide.get("blocks") != blocks:
+            slide["blocks"] = blocks
+            changed = True
 
-                        current_chars = _collect_slide_body_chars(slide)
-                        changed = True
+        if isinstance(slide.get("bullets"), list) and slide.get("bullets"):
+            slide["bullets"] = []
+            changed = True
+
+        if isinstance(slide.get("content_blocks"), list) and slide.get("content_blocks"):
+            slide["content_blocks"] = []
+            changed = True
+
+        if "columns" in slide:
+            slide.pop("columns", None)
+            changed = True
 
         if changed:
             stats["slides_touched"] += 1
 
+    spec["slides"] = slides
     return stats
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="deck_spec 본문 밀도 자동 보강")
+    parser = argparse.ArgumentParser(description="deck_spec 블록/밀도 자동 보강")
     parser.add_argument("client_name", help="클라이언트 이름")
     parser.add_argument("--spec", help="deck_spec.yaml 경로 (기본: clients/<client>/deck_spec.yaml)")
     parser.add_argument("--output", "-o", help="출력 경로 (기본: 원본 덮어쓰기)")
@@ -812,12 +945,12 @@ def main() -> int:
         return 1
 
     spec = load_yaml(spec_path)
-    stats = densify_spec(spec)
+    source_anchors = parse_sources_anchors(spec_path.parent / "sources.md")
+    stats = densify_spec(spec, available_anchors=source_anchors)
 
     print(
         "✓ densify 완료: slides={slides_total}, touched={slides_touched}, constraints_normalized={constraints_normalized}, "
-        "bullet_blocks_added={bullet_blocks_added}, icons_added={icons_added}, layout_balanced={layout_balanced}, "
-        "narrative_blocks_added={narrative_blocks_added}".format(**stats)
+        "layout_remapped={layout_remapped}, blocks_materialized={blocks_materialized}, required_blocks_filled={required_blocks_filled}".format(**stats)
     )
 
     if args.dry_run:

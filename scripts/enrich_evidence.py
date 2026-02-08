@@ -20,6 +20,11 @@ try:
 except ImportError:
     parse_sources_anchors = None
 
+try:
+    from block_utils import normalize_slide_blocks
+except ImportError:
+    normalize_slide_blocks = None
+
 
 def load_yaml(path: Path) -> dict:
     if not path.exists():
@@ -278,6 +283,87 @@ def enrich_spec(spec: dict, anchors: Set[str], confidence: str, overwrite: bool)
                 block["bullets"] = new_bullets
                 stats["bullets_total"] += total
                 stats["bullets_updated"] += touched
+
+        # blocks (canonical) bullets/action_list/chart/image/kpi_cards evidence
+        normalized_blocks = normalize_slide_blocks(slide) if normalize_slide_blocks else slide.get("blocks", [])
+        if isinstance(normalized_blocks, list):
+            rewritten_blocks: List[dict] = []
+            for block in normalized_blocks:
+                if not isinstance(block, dict):
+                    continue
+                b = dict(block)
+
+                # block-level evidence
+                ev = b.get("evidence")
+                if isinstance(ev, dict):
+                    new_anchor = _coerce_anchor(ev.get("source_anchor", ""), anchors, default_anchor)
+                    if new_anchor and (overwrite or ev.get("source_anchor") not in anchors):
+                        ev["source_anchor"] = new_anchor
+                    if overwrite or not ev.get("confidence"):
+                        ev["confidence"] = confidence
+                    b["evidence"] = ev
+                elif "evidence" in b:
+                    b.pop("evidence", None)
+
+                b_type = str(b.get("type", "")).strip().lower()
+                if b_type in {"bullets", "action_list"} and isinstance(b.get("items", []), list):
+                    new_items, touched, total = enrich_bullet_list(b.get("items", []), default_anchor, confidence, overwrite)
+                    b["items"] = new_items
+                    stats["bullets_total"] += total
+                    stats["bullets_updated"] += touched
+
+                if b_type == "kpi_cards" and isinstance(b.get("cards", []), list):
+                    cards = []
+                    for card in b.get("cards", []):
+                        if not isinstance(card, dict):
+                            cards.append(card)
+                            continue
+                        c = dict(card)
+                        cev = c.get("evidence")
+                        if isinstance(cev, dict):
+                            new_anchor = _coerce_anchor(cev.get("source_anchor", ""), anchors, default_anchor)
+                            if new_anchor and (overwrite or cev.get("source_anchor") not in anchors):
+                                cev["source_anchor"] = new_anchor
+                            if overwrite or not cev.get("confidence"):
+                                cev["confidence"] = confidence
+                            c["evidence"] = cev
+                        elif overwrite:
+                            c["evidence"] = {"source_anchor": default_anchor, "confidence": confidence} if default_anchor else c.get("evidence")
+                        cards.append(c)
+                    b["cards"] = cards
+
+                if isinstance(b.get("chart"), dict):
+                    chart = dict(b.get("chart", {}))
+                    chart_ev = chart.get("evidence")
+                    if isinstance(chart_ev, dict):
+                        new_anchor = _coerce_anchor(chart_ev.get("source_anchor", ""), anchors, default_anchor)
+                        if new_anchor and (overwrite or chart_ev.get("source_anchor") not in anchors):
+                            chart_ev["source_anchor"] = new_anchor
+                        if overwrite or not chart_ev.get("confidence"):
+                            chart_ev["confidence"] = confidence
+                        chart["evidence"] = chart_ev
+                    elif overwrite and default_anchor:
+                        chart["evidence"] = {"source_anchor": default_anchor, "confidence": confidence}
+                    b["chart"] = chart
+
+                if isinstance(b.get("image"), dict):
+                    image = dict(b.get("image", {}))
+                    image_ev = image.get("evidence")
+                    if isinstance(image_ev, dict):
+                        new_anchor = _coerce_anchor(image_ev.get("source_anchor", ""), anchors, default_anchor)
+                        if new_anchor and (overwrite or image_ev.get("source_anchor") not in anchors):
+                            image_ev["source_anchor"] = new_anchor
+                        if overwrite or not image_ev.get("confidence"):
+                            image_ev["confidence"] = confidence
+                        image["evidence"] = image_ev
+                    elif overwrite and default_anchor:
+                        image["evidence"] = {"source_anchor": default_anchor, "confidence": confidence}
+                    b["image"] = image
+
+                rewritten_blocks.append(b)
+
+            if rewritten_blocks:
+                slide["blocks"] = rewritten_blocks
 
         visuals = slide.get("visuals", []) if isinstance(slide.get("visuals", []), list) else []
         for visual in visuals:

@@ -34,6 +34,15 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
 from pptx.oxml.xmlchemy import OxmlElement
 
+try:
+    from block_utils import normalize_slide_blocks, normalize_layout_name
+except ImportError:
+    normalize_slide_blocks = None
+
+    def normalize_layout_name(layout: str) -> str:
+        key = str(layout or "").strip().lower()
+        return {"chart_focus": "chart_insight", "strategy_options": "strategy_cards"}.get(key, key)
+
 
 def load_yaml(path: Path) -> dict:
     """YAML 파일 로드"""
@@ -59,6 +68,7 @@ class DeckRenderer:
         self.tokens = tokens
         self.layouts = layouts
         self.layout_map = layouts.get("layout_map", {})
+        self.layout_aliases = layouts.get("layout_aliases", {}) if isinstance(layouts.get("layout_aliases", {}), dict) else {}
         self.prs: Optional[Presentation] = None
         self.asset_base_dir: Optional[Path] = None
         render_options = tokens.get("render_options", {}) if isinstance(tokens.get("render_options", {}), dict) else {}
@@ -225,12 +235,85 @@ class DeckRenderer:
         colors = self.tokens.get("colors", {})
         return colors.get(color_key, "1A1A1A")
 
+    def _resolve_layout_name(self, layout_name: str) -> str:
+        key = normalize_layout_name(layout_name)
+        alias = self.layout_aliases.get(key) if isinstance(self.layout_aliases, dict) else None
+        return str(alias or key)
+
+    def _get_layout_cfg(self, layout_name: str) -> dict:
+        resolved = self._resolve_layout_name(layout_name)
+        cfg = self.layout_map.get(resolved, {})
+        if not isinstance(cfg, dict):
+            cfg = {}
+        # alias_of 처리
+        alias_of = cfg.get("alias_of")
+        if alias_of:
+            base = self.layout_map.get(str(alias_of), {})
+            if isinstance(base, dict):
+                merged = dict(base)
+                merged.update(cfg)
+                return merged
+        return cfg
+
+    def _slot_rect(self, layout_name: str, slot_name: str, default_rect: tuple) -> tuple:
+        cfg = self._get_layout_cfg(layout_name)
+        slots = cfg.get("slots", {}) if isinstance(cfg.get("slots", {}), dict) else {}
+        slot = slots.get(slot_name, {}) if isinstance(slots.get(slot_name, {}), dict) else {}
+        x, y, w, h = default_rect
+        return (
+            int(slot.get("x", x)),
+            int(slot.get("y", y)),
+            int(slot.get("w", w)),
+            int(slot.get("h", h)),
+        )
+
+    def _layout_font_size(self, layout_name: str, key: str, fallback: int) -> int:
+        cfg = self._get_layout_cfg(layout_name)
+        typography = cfg.get("typography", {}) if isinstance(cfg.get("typography", {}), dict) else {}
+        return int(typography.get(key, fallback))
+
+    def _slide_blocks(self, slide_data: dict) -> List[dict]:
+        if normalize_slide_blocks:
+            return normalize_slide_blocks(slide_data)
+        blocks = slide_data.get("blocks", [])
+        return blocks if isinstance(blocks, list) else []
+
+    @staticmethod
+    def _block_items(block: dict) -> List[dict]:
+        items = block.get("items", [])
+        if isinstance(items, list):
+            return items
+        bullets = block.get("bullets", [])
+        if isinstance(bullets, list):
+            return bullets
+        return []
+
+    def _pick_block(self, blocks: List[dict], block_types: set, preferred_slots: Optional[List[str]] = None) -> Optional[dict]:
+        preferred_slots = preferred_slots or []
+        for slot in preferred_slots:
+            for block in blocks:
+                if not isinstance(block, dict):
+                    continue
+                b_type = str(block.get("type", "")).strip().lower()
+                b_slot = str(block.get("slot", "")).strip().lower()
+                if b_type in block_types and b_slot == str(slot).strip().lower():
+                    return block
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            b_type = str(block.get("type", "")).strip().lower()
+            if b_type in block_types:
+                return block
+        return None
+
     def _apply_text_style(
         self,
         text_frame,
         font_key: str,
         color_key: str = "text_dark",
-        alignment: PP_ALIGN = PP_ALIGN.LEFT
+        alignment: PP_ALIGN = PP_ALIGN.LEFT,
+        size_pt_override: Optional[int] = None,
+        bold_override: Optional[bool] = None
     ):
         """텍스트 프레임에 스타일 적용"""
         font_cfg = self._get_font_config(font_key)
@@ -244,26 +327,74 @@ class DeckRenderer:
 
             for run in p.runs:
                 self._set_run_font_name(run, font_cfg.get("name", "Noto Sans KR"))
-                run.font.size = Pt(font_cfg.get("size_pt", 12))
-                run.font.bold = self._resolve_bold(font_cfg.get("bold", False))
+                run.font.size = Pt(size_pt_override if size_pt_override is not None else font_cfg.get("size_pt", 12))
+                desired_bold = font_cfg.get("bold", False) if bold_override is None else bool(bold_override)
+                run.font.bold = self._resolve_bold(desired_bold)
                 run.font.color.rgb = hex_to_rgb(color)
 
-    def _set_title(self, slide, title_text: str):
-        """슬라이드 제목 설정"""
-        if slide.shapes.title:
-            slide.shapes.title.text = title_text
-            if not self.preserve_template_title_style:
-                self._apply_text_style(
-                    slide.shapes.title.text_frame,
-                    "title",
-                    "text_dark"
-                )
-        else:
-            # 폴백: 텍스트박스 추가
-            tx = slide.shapes.add_textbox(Pt(43), Pt(20), Pt(860), Pt(50))
-            tf = tx.text_frame
-            tf.text = title_text
-            self._apply_text_style(tf, "title", "text_dark")
+    def _style_paragraph(
+        self,
+        paragraph,
+        font_key: str,
+        color_key: str = "text_dark",
+        alignment: PP_ALIGN = PP_ALIGN.LEFT,
+        size_pt_override: Optional[int] = None,
+        bold_override: Optional[bool] = None,
+    ):
+        """단일 paragraph 스타일 적용 (text_frame 전체 스타일 오염 방지)"""
+        font_cfg = self._get_font_config(font_key)
+        color = self._get_color(color_key)
+        paragraph.alignment = alignment
+        if not paragraph.runs:
+            run = paragraph.add_run()
+            run.text = paragraph.text if paragraph.text else ""
+        for run in paragraph.runs:
+            self._set_run_font_name(run, font_cfg.get("name", "Noto Sans KR"))
+            run.font.size = Pt(size_pt_override if size_pt_override is not None else font_cfg.get("size_pt", 12))
+            desired_bold = font_cfg.get("bold", False) if bold_override is None else bool(bold_override)
+            run.font.bold = self._resolve_bold(desired_bold)
+            run.font.color.rgb = hex_to_rgb(color)
+
+    def _set_title(
+        self,
+        slide,
+        title_text: str,
+        layout_name: str = "content",
+        left_pt: int = 20,
+        top_pt: int = 14,
+        width_pt: int = 760,
+        height_pt: int = 42,
+        alignment: PP_ALIGN = PP_ALIGN.LEFT,
+    ):
+        """슬라이드 제목 설정 (좌표 슬롯 기반)"""
+        if not title_text:
+            return
+
+        # 템플릿 제목 placeholder 중복 표시 방지
+        for shp in slide.shapes:
+            if not getattr(shp, "has_text_frame", False):
+                continue
+            if getattr(shp, "is_placeholder", False):
+                ph_type = shp.placeholder_format.type
+                if ph_type in [1, 3]:  # TITLE / CENTER_TITLE
+                    try:
+                        shp.text_frame.clear()
+                    except Exception:
+                        pass
+
+        tx = slide.shapes.add_textbox(Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(height_pt))
+        tf = tx.text_frame
+        tf.clear()
+        tf.word_wrap = True
+        tf.text = title_text
+        self._apply_text_style(
+            tf,
+            "title",
+            "text_dark",
+            alignment=alignment,
+            size_pt_override=self._layout_font_size(layout_name, "title_pt", 24),
+            bold_override=False,
+        )
 
     def _set_body_placeholder_bullets(self, slide, bullets: List[Union[str, dict]]) -> bool:
         """가능하면 BODY/OBJECT placeholder에 불릿을 채워 템플릿 스타일을 최대한 활용"""
@@ -340,13 +471,79 @@ class DeckRenderer:
 
         return True
 
-    def _add_governing_message(self, slide, msg: str, top_pt: int = 75):
-        """거버닝 메시지 추가"""
-        tx = slide.shapes.add_textbox(Pt(43), Pt(top_pt), Pt(860), Pt(58))
+    def _add_governing_message(
+        self,
+        slide,
+        msg: str,
+        layout_name: str = "content",
+        left_pt: int = 20,
+        top_pt: int = 66,
+        width_pt: int = 920,
+        height_pt: int = 46,
+        alignment: PP_ALIGN = PP_ALIGN.LEFT,
+    ):
+        """거버닝 메시지 추가 (좌표 슬롯 기반)"""
+        if not msg:
+            return
+        tx = slide.shapes.add_textbox(Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(height_pt))
         tf = tx.text_frame
+        tf.clear()
         tf.text = msg
         tf.word_wrap = True
-        self._apply_text_style(tf, "governing", "text_muted")
+        self._apply_text_style(
+            tf,
+            "governing",
+            "text_muted",
+            alignment=alignment,
+            size_pt_override=self._layout_font_size(layout_name, "governing_pt", 16),
+            bold_override=False,
+        )
+
+    def _render_header(self, slide, slide_data: dict, layout_name: str):
+        """레이아웃 슬롯 기준 제목/거버닝 렌더링"""
+        title_box = self._slot_rect(layout_name, "title_box", (20, 14, 760, 42))
+        governing_box = self._slot_rect(layout_name, "governing_box", (20, 66, 920, 46))
+        title_text, governing_text = self._resolve_header_texts(slide_data)
+
+        self._set_title(
+            slide,
+            title_text,
+            layout_name=layout_name,
+            left_pt=title_box[0],
+            top_pt=title_box[1],
+            width_pt=title_box[2],
+            height_pt=title_box[3],
+            alignment=PP_ALIGN.LEFT if layout_name not in {"thank_you", "section_divider", "quote"} else PP_ALIGN.CENTER,
+        )
+        self._add_governing_message(
+            slide,
+            governing_text,
+            layout_name=layout_name,
+            left_pt=governing_box[0],
+            top_pt=governing_box[1],
+            width_pt=governing_box[2],
+            height_pt=governing_box[3],
+            alignment=PP_ALIGN.LEFT if layout_name not in {"thank_you", "section_divider", "quote"} else PP_ALIGN.CENTER,
+        )
+
+    def _resolve_header_texts(self, slide_data: dict) -> tuple:
+        """
+        blocks 기반 headline/key_message를 우선 사용하고,
+        없으면 title/governing_message를 사용한다.
+        """
+        title_text = str(slide_data.get("title", "")).strip()
+        governing_text = str(slide_data.get("governing_message", "")).strip()
+        blocks = self._slide_blocks(slide_data)
+
+        headline_block = self._pick_block(blocks, {"headline"}, ["title_box", "headline"])
+        if headline_block and str(headline_block.get("text", "")).strip():
+            title_text = str(headline_block.get("text", "")).strip()
+
+        key_message_block = self._pick_block(blocks, {"key_message"}, ["governing_box", "key_message"])
+        if key_message_block and str(key_message_block.get("text", "")).strip():
+            governing_text = str(key_message_block.get("text", "")).strip()
+
+        return title_text, governing_text
 
     def _add_slide_chrome(self, slide, layout_name: str):
         """슬라이드 상단 크롬(구분선/레이아웃 칩) 추가"""
@@ -359,7 +556,7 @@ class DeckRenderer:
         if self.add_chrome_divider:
             divider = slide.shapes.add_shape(
                 MSO_SHAPE.RECTANGLE,
-                Pt(43), Pt(108), Pt(860), Pt(1.4)
+                Pt(20), Pt(58), Pt(920), Pt(1.4)
             )
             divider.fill.solid()
             divider.fill.fore_color.rgb = hex_to_rgb(self._get_color("divider_gray"))
@@ -368,7 +565,7 @@ class DeckRenderer:
         if self.add_layout_chip and layout_name not in {"section_divider", "thank_you"}:
             chip = slide.shapes.add_shape(
                 MSO_SHAPE.ROUNDED_RECTANGLE,
-                Pt(790), Pt(72), Pt(113), Pt(24)
+                Pt(812), Pt(14), Pt(128), Pt(24)
             )
             chip.fill.solid()
             chip.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
@@ -485,7 +682,7 @@ class DeckRenderer:
 
     def _pick_layout(self, layout_name: str):
         """레이아웃 선택"""
-        layout_cfg = self.layout_map.get(layout_name, {"slide_layout_index": 1})
+        layout_cfg = self._get_layout_cfg(layout_name)
         layout_index = int(layout_cfg.get("slide_layout_index", 1))
 
         if layout_index < 0 or layout_index >= len(self.prs.slide_layouts):
@@ -643,7 +840,7 @@ class DeckRenderer:
                 fitted_height = self._fit_block_height(current_top, block_height, min_height=70)
                 if fitted_height is None:
                     continue
-                self._render_kpi(slide, kpi_def, left_pt, current_top, width_pt)
+                self._render_kpi(slide, kpi_def, left_pt, current_top, width_pt, fitted_height)
                 lane_tops[lane] = current_top + fitted_height + 18
 
             elif block_type == "callout":
@@ -889,7 +1086,7 @@ class DeckRenderer:
         tf.text = quote_text
         self._apply_text_style(tf, "governing" if style == "large" else "body", "text_dark", PP_ALIGN.CENTER)
 
-    def _render_kpi(self, slide, kpi_def: dict, left_pt: int, top_pt: int, width_pt: int):
+    def _render_kpi(self, slide, kpi_def: dict, left_pt: int, top_pt: int, width_pt: int, height_pt: int = 110):
         """KPI/지표 렌더링"""
         label = kpi_def.get("label", "KPI")
         value = kpi_def.get("value", "0")
@@ -900,14 +1097,16 @@ class DeckRenderer:
         # KPI 박스
         shape = slide.shapes.add_shape(
             MSO_SHAPE.ROUNDED_RECTANGLE,
-            Pt(left_pt), Pt(top_pt), Pt(min(width_pt, 200)), Pt(70)
+            Pt(left_pt), Pt(top_pt), Pt(width_pt), Pt(max(78, height_pt))
         )
         shape.fill.solid()
-        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("primary_blue"))
-        shape.line.fill.background()
+        shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+        shape.line.color.rgb = hex_to_rgb(self._get_color("primary_blue"))
 
         # KPI 텍스트
         tf = shape.text_frame
+        tf.clear()
+        tf.word_wrap = True
 
         # 값 + 단위
         value_text = f"{value}{unit}"
@@ -916,17 +1115,18 @@ class DeckRenderer:
         elif trend == "down":
             value_text = f"↓ {value_text}"
 
-        tf.text = f"{label}\n{value_text}"
-        if comparison:
-            tf.text += f"\n{comparison}"
+        p_label = tf.paragraphs[0]
+        p_label.text = str(label)
+        self._style_paragraph(p_label, "footnote", "text_muted", PP_ALIGN.LEFT, size_pt_override=11, bold_override=False)
 
-        for para in tf.paragraphs:
-            para.alignment = PP_ALIGN.CENTER
-            for run in para.runs:
-                run.font.color.rgb = hex_to_rgb(self._get_color("background"))
-                self._set_run_font_name(run, self._get_font_config("body").get("name", "Noto Sans KR"))
-                run.font.size = Pt(12)
-                run.font.bold = self._resolve_bold(True)
+        p_value = tf.add_paragraph()
+        p_value.text = str(value_text)
+        self._style_paragraph(p_value, "governing", "dark_blue", PP_ALIGN.LEFT, size_pt_override=18, bold_override=False)
+
+        if comparison:
+            p_cmp = tf.add_paragraph()
+            p_cmp.text = str(comparison)
+            self._style_paragraph(p_cmp, "body", "text_dark", PP_ALIGN.LEFT, size_pt_override=12, bold_override=False)
 
     def _render_callout(self, slide, callout_def: dict, left_pt: int, top_pt: int, width_pt: int):
         """콜아웃 렌더링"""
@@ -987,6 +1187,10 @@ class DeckRenderer:
             if isinstance(block, dict) and block.get("type") == "chart" and isinstance(block.get("chart"), dict):
                 return block.get("chart")
 
+        for block in self._slide_blocks(slide_data):
+            if isinstance(block, dict) and str(block.get("type", "")).strip().lower() == "chart" and isinstance(block.get("chart"), dict):
+                return block.get("chart")
+
         return None
 
     def _extract_image_visual(self, slide_data: dict) -> Optional[dict]:
@@ -1004,6 +1208,10 @@ class DeckRenderer:
             if isinstance(block, dict) and block.get("type") == "image" and isinstance(block.get("image"), dict):
                 return block.get("image")
 
+        for block in self._slide_blocks(slide_data):
+            if isinstance(block, dict) and str(block.get("type", "")).strip().lower() == "image" and isinstance(block.get("image"), dict):
+                return block.get("image")
+
         return None
 
     # =========================================================================
@@ -1012,17 +1220,18 @@ class DeckRenderer:
 
     def _render_cover(self, slide, slide_data: dict):
         """커버 슬라이드 렌더링"""
-        self._set_title(slide, slide_data.get("title", ""))
+        layout_name = normalize_layout_name(slide_data.get("layout", "cover"))
+        self._render_header(slide, slide_data, layout_name)
 
         # 부제목 또는 거버닝 메시지를 서브타이틀로
-        subtitle = slide_data.get("subtitle") or slide_data.get("governing_message", "")
+        subtitle = slide_data.get("subtitle", "")
         if subtitle:
-            # 서브타이틀 위치 (커버 중앙 하단)
-            tx = slide.shapes.add_textbox(Pt(43), Pt(280), Pt(860), Pt(60))
+            sub_box = self._slot_rect(layout_name, "subtitle_box", (20, 332, 920, 96))
+            tx = slide.shapes.add_textbox(Pt(sub_box[0]), Pt(sub_box[1]), Pt(sub_box[2]), Pt(sub_box[3]))
             tf = tx.text_frame
             tf.text = subtitle
             tf.word_wrap = True
-            self._apply_text_style(tf, "governing", "text_muted", PP_ALIGN.CENTER)
+            self._apply_text_style(tf, "governing", "text_muted", PP_ALIGN.LEFT, size_pt_override=16, bold_override=False)
 
         self._add_notes(slide, slide_data.get("notes", ""))
 
@@ -1050,20 +1259,38 @@ class DeckRenderer:
 
     def _render_exec_summary(self, slide, slide_data: dict):
         """Executive Summary 슬라이드 렌더링"""
-        self._set_title(slide, slide_data.get("title", ""))
-        self._add_governing_message(slide, slide_data.get("governing_message", ""))
+        layout_name = normalize_layout_name(slide_data.get("layout", "exec_summary"))
+        self._render_header(slide, slide_data, layout_name)
 
-        # content_blocks + bullets 병행 지원 (밀도 높은 summary 작성)
-        if slide_data.get("content_blocks"):
-            blocks = list(slide_data.get("content_blocks", []))
-            bullets = slide_data.get("bullets", [])
-            if bullets and not any(isinstance(b, dict) and b.get("type") == "bullets" for b in blocks):
-                blocks.insert(0, {"type": "bullets", "bullets": bullets})
-            self._render_content_blocks(slide, blocks)
-        else:
-            bullets = slide_data.get("bullets", [])
-            if not (self.use_body_placeholder_for_bullets and self._set_body_placeholder_bullets(slide, bullets)):
-                self._add_bullets(slide, bullets)
+        blocks = self._slide_blocks(slide_data)
+        bullets_block = self._pick_block(blocks, {"bullets"}, ["main_bullets", "insight_box"])
+        action_block = self._pick_block(blocks, {"action_list"}, ["action_box", "insight_box"])
+
+        bullets = self._block_items(bullets_block) if bullets_block else slide_data.get("bullets", [])
+        action_items = self._block_items(action_block) if action_block else []
+
+        bullets_box = self._slot_rect(layout_name, "main_bullets", (34, 126, 892, 300))
+        if bullets:
+            self._add_bullets(
+                slide,
+                bullets,
+                left_pt=bullets_box[0],
+                top_pt=bullets_box[1],
+                width_pt=bullets_box[2],
+                height_pt=bullets_box[3],
+            )
+
+        if action_items:
+            action_box = self._slot_rect(layout_name, "action_box", (34, 430, 892, 84))
+            self._add_bullets(
+                slide,
+                action_items,
+                left_pt=action_box[0],
+                top_pt=action_box[1],
+                width_pt=action_box[2],
+                height_pt=action_box[3],
+                color_key="text_muted",
+            )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1115,11 +1342,56 @@ class DeckRenderer:
 
     def _render_content(self, slide, slide_data: dict):
         """일반 컨텐츠 슬라이드 렌더링"""
-        self._set_title(slide, slide_data.get("title", ""))
-        self._add_governing_message(slide, slide_data.get("governing_message", ""))
+        layout_name = normalize_layout_name(slide_data.get("layout", "content"))
+        self._render_header(slide, slide_data, layout_name)
+        blocks = self._slide_blocks(slide_data)
+
+        if blocks:
+            bullets_block = self._pick_block(blocks, {"bullets"}, ["main_bullets", "left_column", "right_column"])
+            action_block = self._pick_block(blocks, {"action_list"}, ["action_box", "narrative_box"])
+            text_block = self._pick_block(blocks, {"text"}, ["narrative_box"])
+
+            if bullets_block:
+                slot_name = str(bullets_block.get("slot", "main_bullets")).strip().lower() or "main_bullets"
+                slot = self._slot_rect(layout_name, slot_name, (34, 126, 892, 304))
+                self._add_bullets(
+                    slide,
+                    self._block_items(bullets_block),
+                    left_pt=slot[0],
+                    top_pt=slot[1],
+                    width_pt=slot[2],
+                    height_pt=slot[3],
+                )
+
+            if text_block:
+                narrative_slot = self._slot_rect(layout_name, "narrative_box", (34, 436, 892, 78))
+                self._render_text_block(
+                    slide,
+                    str(text_block.get("text", "")),
+                    left_pt=narrative_slot[0],
+                    top_pt=narrative_slot[1],
+                    width_pt=narrative_slot[2],
+                    height_pt=narrative_slot[3],
+                )
+
+            if action_block:
+                action_slot = self._slot_rect(layout_name, "action_box", (34, 436, 892, 78))
+                self._add_bullets(
+                    slide,
+                    self._block_items(action_block),
+                    left_pt=action_slot[0],
+                    top_pt=action_slot[1],
+                    width_pt=action_slot[2],
+                    height_pt=action_slot[3],
+                    color_key="text_muted",
+                )
+
+            self._add_footnotes(slide, slide_data.get("footnotes", []))
+            self._add_notes(slide, slide_data.get("notes", ""))
+            return
 
         columns = slide_data.get("columns", []) if isinstance(slide_data.get("columns", []), list) else []
-        rendered_columns = self._render_inline_columns(slide, columns, start_top_pt=160, body_height=220)
+        rendered_columns = self._render_inline_columns(slide, columns, start_top_pt=126, body_height=250)
 
         # content_blocks + bullets 병행 지원 (표/콜아웃 + 핵심 불릿 동시 표현)
         if slide_data.get("content_blocks"):
@@ -1133,30 +1405,81 @@ class DeckRenderer:
                 for block in blocks:
                     block_copy = dict(block)
                     if not isinstance(block_copy.get("top_pt"), (int, float)):
-                        block_copy["top_pt"] = 392
+                        block_copy["top_pt"] = 436
                     normalized_blocks.append(block_copy)
-                self._render_content_blocks(slide, normalized_blocks, start_top_pt=392)
+                self._render_content_blocks(slide, normalized_blocks, start_top_pt=436)
             else:
-                self._render_content_blocks(slide, blocks)
+                self._render_content_blocks(slide, blocks, start_top_pt=126)
         else:
             bullets = slide_data.get("bullets", [])
             if rendered_columns:
                 if bullets:
                     self._render_content_blocks(
                         slide,
-                        [{"type": "bullets", "top_pt": 392, "bullets": bullets}],
-                        start_top_pt=392,
+                        [{"type": "bullets", "top_pt": 436, "bullets": bullets}],
+                        start_top_pt=436,
                     )
             elif not (self.use_body_placeholder_for_bullets and self._set_body_placeholder_bullets(slide, bullets)):
-                self._add_bullets(slide, bullets)
+                slot = self._slot_rect(layout_name, "main_bullets", (34, 126, 892, 304))
+                self._add_bullets(slide, bullets, left_pt=slot[0], top_pt=slot[1], width_pt=slot[2], height_pt=slot[3])
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_two_column(self, slide, slide_data: dict):
         """2컬럼 레이아웃 렌더링"""
-        self._set_title(slide, slide_data.get("title", ""))
-        self._add_governing_message(slide, slide_data.get("governing_message", ""))
+        layout_name = normalize_layout_name(slide_data.get("layout", "two_column"))
+        self._render_header(slide, slide_data, layout_name)
+
+        left_slot = self._slot_rect(layout_name, "left_column", (34, 126, 430, 388))
+        right_slot = self._slot_rect(layout_name, "right_column", (496, 126, 430, 388))
+        action_slot = self._slot_rect(layout_name, "action_box", (34, 452, 892, 62))
+
+        blocks = self._slide_blocks(slide_data)
+        left_block = self._pick_block(blocks, {"bullets", "action_list", "text"}, ["left_column"])
+        right_block = self._pick_block(blocks, {"bullets", "action_list", "text"}, ["right_column"])
+        action_block = self._pick_block(blocks, {"action_list", "bullets"}, ["action_box"])
+
+        if left_block or right_block:
+            for col_block, slot in ((left_block, left_slot), (right_block, right_slot)):
+                if not col_block:
+                    continue
+                b_type = str(col_block.get("type", "")).strip().lower()
+                if b_type in {"bullets", "action_list"}:
+                    items = self._block_items(col_block)
+                    if items:
+                        self._add_bullets(
+                            slide,
+                            items,
+                            left_pt=slot[0],
+                            top_pt=slot[1],
+                            width_pt=slot[2],
+                            height_pt=slot[3],
+                        )
+                elif b_type == "text":
+                    self._render_text_block(
+                        slide,
+                        str(col_block.get("text", "")),
+                        left_pt=slot[0],
+                        top_pt=slot[1],
+                        width_pt=slot[2],
+                        height_pt=slot[3],
+                    )
+
+            if action_block:
+                self._add_bullets(
+                    slide,
+                    self._block_items(action_block),
+                    left_pt=action_slot[0],
+                    top_pt=action_slot[1],
+                    width_pt=action_slot[2],
+                    height_pt=action_slot[3],
+                    color_key="text_muted",
+                )
+
+            self._add_footnotes(slide, slide_data.get("footnotes", []))
+            self._add_notes(slide, slide_data.get("notes", ""))
+            return
 
         columns = slide_data.get("columns", [])
 
@@ -1166,7 +1489,7 @@ class DeckRenderer:
             right_col = columns[1]
 
             # 왼쪽 컬럼 헤딩
-            tx_left_head = slide.shapes.add_textbox(Pt(43), Pt(125), Pt(400), Pt(30))
+            tx_left_head = slide.shapes.add_textbox(Pt(left_slot[0]), Pt(left_slot[1] - 22), Pt(left_slot[2]), Pt(24))
             tf = tx_left_head.text_frame
             tf.text = left_col.get("heading", "")
             self._apply_text_style(tf, "governing", "primary_blue")
@@ -1183,11 +1506,11 @@ class DeckRenderer:
                 self._add_bullets(
                     slide,
                     left_col.get("bullets", []),
-                    left_pt=43, top_pt=160, width_pt=400, height_pt=300
+                    left_pt=left_slot[0], top_pt=left_slot[1], width_pt=left_slot[2], height_pt=left_slot[3]
                 )
 
             # 오른쪽 컬럼 헤딩
-            tx_right_head = slide.shapes.add_textbox(Pt(480), Pt(125), Pt(400), Pt(30))
+            tx_right_head = slide.shapes.add_textbox(Pt(right_slot[0]), Pt(right_slot[1] - 22), Pt(right_slot[2]), Pt(24))
             tf = tx_right_head.text_frame
             tf.text = right_col.get("heading", "")
             self._apply_text_style(tf, "governing", "primary_blue")
@@ -1205,7 +1528,7 @@ class DeckRenderer:
                 self._add_bullets(
                     slide,
                     right_col.get("bullets", []),
-                    left_pt=480, top_pt=160, width_pt=400, height_pt=300
+                    left_pt=right_slot[0], top_pt=right_slot[1], width_pt=right_slot[2], height_pt=right_slot[3]
                 )
         else:
             # columns가 없으면 bullets에서 [Left]/[Right] 파싱
@@ -1224,18 +1547,23 @@ class DeckRenderer:
 
             self._add_bullets(
                 slide, left_bullets,
-                left_pt=43, top_pt=130, width_pt=400, height_pt=330
+                left_pt=left_slot[0], top_pt=left_slot[1], width_pt=left_slot[2], height_pt=left_slot[3]
             )
             self._add_bullets(
                 slide, right_bullets,
-                left_pt=480, top_pt=130, width_pt=400, height_pt=330
+                left_pt=right_slot[0], top_pt=right_slot[1], width_pt=right_slot[2], height_pt=right_slot[3]
             )
 
         # 슬라이드 레벨 보조 블록(하단 서술 등)
         if slide_data.get("content_blocks"):
             extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
             if extra_blocks:
-                self._render_content_blocks(slide, extra_blocks, start_top_pt=392)
+                for blk in extra_blocks:
+                    blk.setdefault("left_pt", action_slot[0])
+                    blk.setdefault("top_pt", action_slot[1])
+                    blk.setdefault("width_pt", action_slot[2])
+                    blk.setdefault("height_pt", action_slot[3])
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=action_slot[1])
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1293,7 +1621,7 @@ class DeckRenderer:
                     elif block_type == "kpi":
                         self._render_kpi(
                             slide, block.get("kpi", {}),
-                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width
+                            left_pt=col_positions[i], top_pt=current_top, width_pt=col_width, height_pt=84
                         )
                         current_top += 90
 
@@ -1427,64 +1755,289 @@ class DeckRenderer:
         self._add_notes(slide, slide_data.get("notes", ""))
 
     def _render_chart_focus(self, slide, slide_data: dict):
-        """차트 중심 슬라이드 렌더링"""
-        self._set_title(slide, slide_data.get("title", ""))
-        self._add_governing_message(slide, slide_data.get("governing_message", ""))
+        """차트 중심/인사이트 슬라이드 렌더링"""
+        layout_name = normalize_layout_name(slide_data.get("layout", "chart_insight"))
+        self._render_header(slide, slide_data, layout_name)
 
-        intent = slide_data.get("layout_intent", {})
-        visual_position = str(intent.get("visual_position", "left")).lower()
-        emphasis = str(intent.get("emphasis", "content")).lower()
+        chart_slot = self._slot_rect(layout_name, "chart_box", (34, 126, 586, 304))
+        insight_slot = self._slot_rect(layout_name, "insight_box", (636, 126, 290, 304))
+        action_slot = self._slot_rect(layout_name, "action_box", (34, 436, 892, 78))
 
-        visual = self._extract_chart_visual(slide_data)
+        blocks = self._slide_blocks(slide_data)
+        chart_block = self._pick_block(blocks, {"chart"}, ["chart_box"])
+        bullets_block = self._pick_block(blocks, {"bullets"}, ["insight_box", "main_bullets"])
+        action_block = self._pick_block(blocks, {"action_list"}, ["action_box"])
 
-        # visual_position / emphasis를 반영한 배치
-        if visual_position == "right":
-            chart_left, chart_top, chart_width = 320, 130, 600
-            bullet_left, bullet_top, bullet_width, bullet_height = 43, 130, 250, 330
-        elif visual_position == "center" or emphasis == "visual":
-            chart_left, chart_top, chart_width = 43, 130, 860
-            bullet_left, bullet_top, bullet_width, bullet_height = 43, 360, 860, 120
-        else:
-            chart_left, chart_top, chart_width = 43, 130, 600
-            bullet_left, bullet_top, bullet_width, bullet_height = 670, 130, 250, 330
-
+        visual = chart_block.get("chart", {}) if chart_block else self._extract_chart_visual(slide_data)
         if visual:
-            self._render_chart_placeholder(slide, visual, chart_left, chart_top, chart_width)
+            self._render_chart_placeholder(slide, visual, chart_slot[0], chart_slot[1], chart_slot[2])
 
-        bullets = slide_data.get("bullets", [])
-        aux_blocks = [
-            block for block in slide_data.get("content_blocks", [])
-            if isinstance(block, dict) and block.get("type") != "chart"
+        bullets = self._block_items(bullets_block) if bullets_block else slide_data.get("bullets", [])
+        if bullets:
+            panel = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE,
+                Pt(insight_slot[0]), Pt(insight_slot[1]), Pt(insight_slot[2]), Pt(insight_slot[3])
+            )
+            panel.fill.solid()
+            panel.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+            panel.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+            self._add_bullets(
+                slide,
+                bullets,
+                left_pt=insight_slot[0] + 8,
+                top_pt=insight_slot[1] + 8,
+                width_pt=max(140, insight_slot[2] - 16),
+                height_pt=max(80, insight_slot[3] - 16),
+            )
+
+        action_items = self._block_items(action_block) if action_block else []
+        if action_items:
+            self._add_bullets(
+                slide,
+                action_items,
+                left_pt=action_slot[0],
+                top_pt=action_slot[1],
+                width_pt=action_slot[2],
+                height_pt=action_slot[3],
+                color_key="text_muted",
+            )
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
+        self._add_notes(slide, slide_data.get("notes", ""))
+
+    def _render_chart_insight(self, slide, slide_data: dict):
+        """chart_insight 명시 렌더러 (내부 구현은 chart_focus 호환 경로 재사용)"""
+        self._render_chart_focus(slide, slide_data)
+
+    def _render_competitor_2x2(self, slide, slide_data: dict):
+        """경쟁 지형 2x2 매트릭스 렌더링"""
+        layout_name = normalize_layout_name(slide_data.get("layout", "competitor_2x2"))
+        self._render_header(slide, slide_data, layout_name)
+
+        matrix_slot = self._slot_rect(layout_name, "matrix_box", (34, 126, 560, 318))
+        insight_slot = self._slot_rect(layout_name, "insight_box", (612, 126, 314, 318))
+        action_slot = self._slot_rect(layout_name, "action_box", (34, 452, 892, 62))
+
+        blocks = self._slide_blocks(slide_data)
+        matrix_block = self._pick_block(blocks, {"matrix_2x2"}, ["matrix_box"])
+        bullets_block = self._pick_block(blocks, {"bullets", "action_list"}, ["insight_box", "main_bullets"])
+        action_block = self._pick_block(blocks, {"action_list"}, ["action_box"])
+
+        matrix = matrix_block.get("matrix_2x2", {}) if matrix_block else {}
+        quadrants = matrix.get("quadrants", ["Defend", "Harvest", "Build", "Invest"])
+        points = matrix.get("points", [])
+        x_axis = matrix.get("x_axis", "시장 매력도")
+        y_axis = matrix.get("y_axis", "실행 역량")
+
+        # Matrix frame
+        frame = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Pt(matrix_slot[0]), Pt(matrix_slot[1]), Pt(matrix_slot[2]), Pt(matrix_slot[3])
+        )
+        frame.fill.solid()
+        frame.fill.fore_color.rgb = hex_to_rgb("FFFFFF")
+        frame.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+
+        # axis lines
+        v_mid = matrix_slot[0] + int(matrix_slot[2] / 2)
+        h_mid = matrix_slot[1] + int(matrix_slot[3] / 2)
+        line_v = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Pt(v_mid), Pt(matrix_slot[1]), Pt(1.2), Pt(matrix_slot[3]))
+        line_v.fill.solid()
+        line_v.fill.fore_color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+        line_v.line.fill.background()
+        line_h = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Pt(matrix_slot[0]), Pt(h_mid), Pt(matrix_slot[2]), Pt(1.2))
+        line_h.fill.solid()
+        line_h.fill.fore_color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+        line_h.line.fill.background()
+
+        # quadrant labels
+        quad_boxes = [
+            (matrix_slot[0] + 8, matrix_slot[1] + 8, quadrants[0] if len(quadrants) > 0 else ""),
+            (v_mid + 8, matrix_slot[1] + 8, quadrants[1] if len(quadrants) > 1 else ""),
+            (matrix_slot[0] + 8, h_mid + 8, quadrants[2] if len(quadrants) > 2 else ""),
+            (v_mid + 8, h_mid + 8, quadrants[3] if len(quadrants) > 3 else ""),
+        ]
+        for qx, qy, qtxt in quad_boxes:
+            if not qtxt:
+                continue
+            tx = slide.shapes.add_textbox(Pt(qx), Pt(qy), Pt(120), Pt(20))
+            tf = tx.text_frame
+            tf.text = qtxt
+            self._apply_text_style(tf, "footnote", "dark_blue", PP_ALIGN.LEFT, size_pt_override=11, bold_override=False)
+
+        # points
+        for point in points if isinstance(points, list) else []:
+            if not isinstance(point, dict):
+                continue
+            px = float(point.get("x", 0))
+            py = float(point.get("y", 0))
+            label = str(point.get("label", "")).strip()
+            color = point.get("color", "#008FD3")
+            dot_x = matrix_slot[0] + int((px / 100.0) * matrix_slot[2])
+            dot_y = matrix_slot[1] + int(((100.0 - py) / 100.0) * matrix_slot[3])
+            dot = slide.shapes.add_shape(MSO_SHAPE.OVAL, Pt(dot_x - 5), Pt(dot_y - 5), Pt(10), Pt(10))
+            dot.fill.solid()
+            dot.fill.fore_color.rgb = hex_to_rgb(color.lstrip("#"))
+            dot.line.fill.background()
+            if label:
+                tx = slide.shapes.add_textbox(Pt(dot_x + 6), Pt(dot_y - 9), Pt(140), Pt(20))
+                tf = tx.text_frame
+                tf.text = label
+                self._apply_text_style(tf, "footnote", "text_dark", PP_ALIGN.LEFT, size_pt_override=10, bold_override=False)
+
+        # axis labels
+        x_tx = slide.shapes.add_textbox(Pt(matrix_slot[0] + int(matrix_slot[2] / 2) - 70), Pt(matrix_slot[1] + matrix_slot[3] + 6), Pt(160), Pt(20))
+        x_tf = x_tx.text_frame
+        x_tf.text = x_axis
+        self._apply_text_style(x_tf, "footnote", "text_muted", PP_ALIGN.CENTER, size_pt_override=10, bold_override=False)
+
+        y_tx = slide.shapes.add_textbox(Pt(matrix_slot[0] - 6), Pt(matrix_slot[1] - 20), Pt(160), Pt(20))
+        y_tf = y_tx.text_frame
+        y_tf.text = y_axis
+        self._apply_text_style(y_tf, "footnote", "text_muted", PP_ALIGN.LEFT, size_pt_override=10, bold_override=False)
+
+        bullets = self._block_items(bullets_block) if bullets_block else slide_data.get("bullets", [])
+        if bullets:
+            panel = slide.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE,
+                Pt(insight_slot[0]), Pt(insight_slot[1]), Pt(insight_slot[2]), Pt(insight_slot[3])
+            )
+            panel.fill.solid()
+            panel.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+            panel.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+            self._add_bullets(
+                slide,
+                bullets,
+                left_pt=insight_slot[0] + 8,
+                top_pt=insight_slot[1] + 8,
+                width_pt=max(140, insight_slot[2] - 16),
+                height_pt=max(80, insight_slot[3] - 16),
+            )
+
+        action_items = self._block_items(action_block) if action_block else []
+        if action_items:
+            self._add_bullets(
+                slide,
+                action_items,
+                left_pt=action_slot[0],
+                top_pt=action_slot[1],
+                width_pt=action_slot[2],
+                height_pt=action_slot[3],
+                color_key="text_muted",
+            )
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
+        self._add_notes(slide, slide_data.get("notes", ""))
+
+    def _render_strategy_cards(self, slide, slide_data: dict):
+        """전략 옵션 3카드 렌더링"""
+        layout_name = normalize_layout_name(slide_data.get("layout", "strategy_cards"))
+        self._render_header(slide, slide_data, layout_name)
+
+        blocks = self._slide_blocks(slide_data)
+        cards_block = self._pick_block(blocks, {"kpi_cards"}, ["card_1", "kpi_cards"])
+        action_block = self._pick_block(blocks, {"action_list"}, ["action_box"])
+        cards = cards_block.get("cards", []) if cards_block else []
+
+        if not cards and isinstance(slide_data.get("columns", []), list) and slide_data.get("columns"):
+            for col in slide_data.get("columns", [])[:3]:
+                if not isinstance(col, dict):
+                    continue
+                cards.append({
+                    "label": col.get("heading", ""),
+                    "value": " / ".join([
+                        (b if isinstance(b, str) else b.get("text", "")) for b in col.get("bullets", [])[:2]
+                    ]),
+                    "comparison": (col.get("bullets", [None, None, None])[2] if len(col.get("bullets", [])) > 2 else ""),
+                })
+
+        card_slots = [
+            self._slot_rect(layout_name, "card_1", (34, 126, 286, 314)),
+            self._slot_rect(layout_name, "card_2", (338, 126, 286, 314)),
+            self._slot_rect(layout_name, "card_3", (642, 126, 284, 314)),
         ]
 
-        side_blocks = []
-        if bullets:
-            side_blocks.append({"type": "bullets", "bullets": bullets})
-        side_blocks.extend(aux_blocks)
+        for idx, slot in enumerate(card_slots):
+            card = cards[idx] if idx < len(cards) else {}
+            shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Pt(slot[0]), Pt(slot[1]), Pt(slot[2]), Pt(slot[3]))
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
+            shape.line.color.rgb = hex_to_rgb(self._get_color("primary_blue"))
 
-        if side_blocks:
-            # 시각 요소 옆 설명 패널
-            if bullet_width <= 280:
-                panel = slide.shapes.add_shape(
-                    MSO_SHAPE.ROUNDED_RECTANGLE,
-                    Pt(bullet_left), Pt(bullet_top), Pt(bullet_width), Pt(bullet_height)
-                )
-                panel.fill.solid()
-                panel.fill.fore_color.rgb = hex_to_rgb(self._get_color("light_blue"))
-                panel.line.color.rgb = hex_to_rgb(self._get_color("divider_gray"))
+            tf = shape.text_frame
+            tf.clear()
+            tf.word_wrap = True
+            label = str(card.get("label", f"Option {idx + 1}")).strip()
+            value = str(card.get("value", "")).strip()
+            comparison = str(card.get("comparison", "")).strip()
 
-            stacked_blocks = []
-            for block in side_blocks:
-                block_copy = dict(block)
-                block_copy["position"] = "main"
-                block_copy["left_pt"] = bullet_left + 8
-                block_copy["width_pt"] = max(140, bullet_width - 16)
-                stacked_blocks.append(block_copy)
+            p_label = tf.paragraphs[0]
+            p_label.text = label
+            self._style_paragraph(p_label, "governing", "dark_blue", PP_ALIGN.LEFT, size_pt_override=14, bold_override=False)
+            if value:
+                p_value = tf.add_paragraph()
+                p_value.text = value
+                self._style_paragraph(p_value, "body", "text_dark", PP_ALIGN.LEFT, size_pt_override=12, bold_override=False)
+            if comparison:
+                p_comp = tf.add_paragraph()
+                p_comp.text = comparison
+                self._style_paragraph(p_comp, "footnote", "text_muted", PP_ALIGN.LEFT, size_pt_override=11, bold_override=False)
 
-            self._render_content_blocks(
+        action_items = self._block_items(action_block) if action_block else []
+        if action_items:
+            action_slot = self._slot_rect(layout_name, "action_box", (34, 452, 892, 62))
+            self._add_bullets(
                 slide,
-                stacked_blocks,
-                start_top_pt=bullet_top + 8
+                action_items,
+                left_pt=action_slot[0],
+                top_pt=action_slot[1],
+                width_pt=action_slot[2],
+                height_pt=action_slot[3],
+                color_key="text_muted",
+            )
+
+        self._add_footnotes(slide, slide_data.get("footnotes", []))
+        self._add_notes(slide, slide_data.get("notes", ""))
+
+    def _render_kpi_cards(self, slide, slide_data: dict):
+        """KPI/Value Case 카드 렌더링"""
+        layout_name = normalize_layout_name(slide_data.get("layout", "kpi_cards"))
+        self._render_header(slide, slide_data, layout_name)
+
+        blocks = self._slide_blocks(slide_data)
+        cards_block = self._pick_block(blocks, {"kpi_cards"}, ["kpi_cards", "kpi_card_1"])
+        action_block = self._pick_block(blocks, {"action_list"}, ["assumptions_box", "action_box"])
+        cards = cards_block.get("cards", []) if cards_block else []
+
+        # legacy KPI block fallback
+        if not cards:
+            for block in slide_data.get("content_blocks", []) if isinstance(slide_data.get("content_blocks", []), list) else []:
+                if isinstance(block, dict) and block.get("type") == "kpi" and isinstance(block.get("kpi"), dict):
+                    cards.append(block.get("kpi"))
+
+        slots = [
+            self._slot_rect(layout_name, "kpi_card_1", (34, 132, 430, 148)),
+            self._slot_rect(layout_name, "kpi_card_2", (496, 132, 430, 148)),
+            self._slot_rect(layout_name, "kpi_card_3", (34, 294, 430, 148)),
+            self._slot_rect(layout_name, "kpi_card_4", (496, 294, 430, 148)),
+        ]
+
+        for idx, slot in enumerate(slots):
+            card = cards[idx] if idx < len(cards) else None
+            if card:
+                self._render_kpi(slide, card, slot[0], slot[1], slot[2], slot[3])
+
+        action_items = self._block_items(action_block) if action_block else []
+        if action_items:
+            action_slot = self._slot_rect(layout_name, "assumptions_box", (34, 452, 892, 62))
+            self._add_bullets(
+                slide,
+                action_items,
+                left_pt=action_slot[0],
+                top_pt=action_slot[1],
+                width_pt=action_slot[2],
+                height_pt=action_slot[3],
+                color_key="text_muted",
             )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
@@ -1585,28 +2138,50 @@ class DeckRenderer:
 
     def _render_timeline(self, slide, slide_data: dict):
         """타임라인 슬라이드 렌더링"""
-        self._set_title(slide, slide_data.get("title", ""))
-        self._add_governing_message(slide, slide_data.get("governing_message", ""))
+        layout_name = normalize_layout_name(slide_data.get("layout", "timeline"))
+        self._render_header(slide, slide_data, layout_name)
+        timeline_slot = self._slot_rect(layout_name, "timeline_box", (34, 150, 892, 260))
+        action_slot = self._slot_rect(layout_name, "action_box", (34, 424, 892, 90))
 
         # 타임라인 화살표 기본 도형
         arrow = slide.shapes.add_shape(
             MSO_SHAPE.RIGHT_ARROW,
-            Pt(43), Pt(250), Pt(860), Pt(40)
+            Pt(timeline_slot[0]), Pt(timeline_slot[1] + 90), Pt(timeline_slot[2]), Pt(40)
         )
         arrow.fill.solid()
         arrow.fill.fore_color.rgb = hex_to_rgb(self._get_color("primary_blue"))
         arrow.line.fill.background()
 
         # 불릿을 타임라인 단계로 표시
-        bullets = slide_data.get("bullets", [])
+        blocks = self._slide_blocks(slide_data)
+        timeline_block = self._pick_block(blocks, {"timeline_steps"}, ["timeline_box"])
+        bullets_block = self._pick_block(blocks, {"bullets"}, ["timeline_box", "main_bullets"])
+        action_block = self._pick_block(blocks, {"action_list"}, ["action_box"])
+
+        bullets = []
+        if timeline_block and isinstance(timeline_block.get("timeline"), list):
+            for step in timeline_block.get("timeline", []):
+                if not isinstance(step, dict):
+                    continue
+                phase = str(step.get("phase", "")).strip()
+                title = str(step.get("title", "")).strip()
+                desc = str(step.get("description", "")).strip()
+                text = " ".join([x for x in [phase, title, desc] if x]).strip()
+                if text:
+                    bullets.append({"text": text})
+        elif bullets_block:
+            bullets = self._block_items(bullets_block)
+        else:
+            bullets = slide_data.get("bullets", [])
+
         if bullets:
-            step_width = 860 // len(bullets)
+            step_width = max(120, timeline_slot[2] // len(bullets))
             for i, bullet in enumerate(bullets):
                 text = bullet if isinstance(bullet, str) else bullet.get("text", "")
 
                 # 단계 박스
                 tx = slide.shapes.add_textbox(
-                    Pt(43 + i * step_width), Pt(300),
+                    Pt(timeline_slot[0] + i * step_width), Pt(timeline_slot[1] + 140),
                     Pt(step_width - 10), Pt(80)
                 )
                 tf = tx.text_frame
@@ -1614,10 +2189,17 @@ class DeckRenderer:
                 tf.word_wrap = True
                 self._apply_text_style(tf, "body", "text_dark", PP_ALIGN.CENTER)
 
-        if slide_data.get("content_blocks"):
-            extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
-            if extra_blocks:
-                self._render_content_blocks(slide, extra_blocks, start_top_pt=392)
+        action_items = self._block_items(action_block) if action_block else []
+        if action_items:
+            self._add_bullets(
+                slide,
+                action_items,
+                left_pt=action_slot[0],
+                top_pt=action_slot[1],
+                width_pt=action_slot[2],
+                height_pt=action_slot[3],
+                color_key="text_muted",
+            )
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1736,12 +2318,19 @@ class DeckRenderer:
             # 템플릿 미사용 시에도 16:9 와이드 규격으로 통일
             self.prs.slide_width = Inches(13.333)
             self.prs.slide_height = Inches(7.5)
-            print(f"Warning: 템플릿 없음, 빈 프레젠테이션 사용: {template_path}")
+            if template_path.name == "__blank__.pptx":
+                print("ℹ layout-driven blank deck mode: 16:9 empty presentation initialized")
+            else:
+                print(f"Warning: 템플릿 없음, 빈 프레젠테이션 사용: {template_path}")
 
         # 레이아웃별 렌더러 매핑
         layout_renderers = {
             "cover": self._render_cover,
             "exec_summary": self._render_exec_summary,
+            "kpi_cards": self._render_kpi_cards,
+            "chart_insight": self._render_chart_insight,
+            "competitor_2x2": self._render_competitor_2x2,
+            "strategy_cards": self._render_strategy_cards,
             "section_divider": self._render_section_divider,
             "content": self._render_content,
             "two_column": self._render_two_column,
@@ -1758,7 +2347,7 @@ class DeckRenderer:
 
         # 슬라이드 렌더링
         for slide_data in spec.get("slides", []):
-            layout_name = slide_data.get("layout", "content")
+            layout_name = normalize_layout_name(slide_data.get("layout", "content"))
 
             # 슬라이드 레이아웃 선택
             slide_layout = self._pick_layout(layout_name)
@@ -1793,7 +2382,7 @@ def render(
 def main():
     if len(sys.argv) != 5:
         print("Usage: python scripts/render_ppt.py <deck_spec.yaml> <template.pptx> <output.pptx> <templates_dir>")
-        print("Example: python scripts/render_ppt.py clients/acme-demo/deck_spec.yaml templates/company/base-template.pptx clients/acme-demo/outputs/acme-demo.pptx templates/company")
+        print("Example: python scripts/render_ppt.py clients/acme-demo/deck_spec.yaml templates/company/__blank__.pptx clients/acme-demo/outputs/acme-demo.pptx templates/company")
         sys.exit(1)
 
     spec_path = Path(sys.argv[1]).resolve()

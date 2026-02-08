@@ -9,22 +9,22 @@ fonts:
   title:
     name: "Noto Sans KR"
     bold: false
-    size_pt: 20
+    size_pt: 24
   governing:
     name: "Noto Sans KR"
     bold: false
-    size_pt: 15
+    size_pt: 16
   body:
     name: "Noto Sans KR"
     bold: false
-    size_pt: 11
+    size_pt: 12
   footnote:
     name: "Noto Sans KR"
     bold: false
     size_pt: 9
 
 colors:
-  # additional-template 스타일 추출 기반 색상 정렬
+  # Layout-driven 기본 팔레트
   primary_blue: "0070C0"
   dark_blue: "002060"
   light_blue: "DCEAF7"
@@ -47,7 +47,7 @@ density_rules:
   max_lines_per_bullet: 4
 
 render_options:
-  # 템플릿에서 디자인을 잡고, spec에서는 콘텐츠 중심으로 주입하기 위한 옵션
+  # layout-driven 렌더링에서 콘텐츠 중심 주입을 위한 옵션
   preserve_template_title_style: false
   use_body_placeholder_for_bullets: true
   preserve_template_body_style: false
