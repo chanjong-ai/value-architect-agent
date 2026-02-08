@@ -1,0 +1,63 @@
+meta:
+  version: '1.0'
+  description: ECOPRO 30p layout plan
+global:
+  default_layout_intent:
+    emphasis: balanced
+    content_density: dense
+layout_sequence:
+- cover
+- exec_summary
+- section_divider
+- chart_focus
+- chart_focus
+- content
+- comparison
+- content
+- section_divider
+- three_column
+- chart_focus
+- content
+- three_column
+- image_focus
+- content
+- comparison
+- process_flow
+- content
+- section_divider
+- three_column
+- comparison
+- chart_focus
+- chart_focus
+- content
+- process_flow
+- section_divider
+- timeline
+- process_flow
+- content
+- thank_you
+slide_overrides: {}
+title_keyword_overrides:
+- keywords:
+  - Executive Summary
+  - 핵심 제언
+  layout: exec_summary
+- keywords:
+  - 로드맵
+  - Roadmap
+  layout: timeline
+- keywords:
+  - Value Case
+  - 가치
+  layout: chart_focus
+- keywords:
+  - 비교
+  - Benchmark
+  layout: comparison
+layout_intents:
+  chart_focus:
+    visual_position: right
+    emphasis: balanced
+  image_focus:
+    visual_position: right
+    emphasis: visual

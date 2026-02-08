@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+from pptx.oxml.ns import qn
+from pptx.oxml.xmlchemy import OxmlElement
 
 try:
     from pptx import Presentation
@@ -45,6 +47,23 @@ def normalize_run_text(text: str) -> str:
     text = text.replace("\t", " ")
     text = re.sub(r" {2,}", " ", text)
     return text
+
+
+def set_run_font_name(run, font_name: str) -> None:
+    """latin/eastAsia/cs 폰트를 동시에 지정해 한글 폰트 적용을 고정"""
+    name = str(font_name or "Noto Sans KR")
+    run.font.name = name
+    r = getattr(run, "_r", None)
+    if r is None:
+        return
+    r_pr = r.get_or_add_rPr()
+    r_fonts = r_pr.find(qn("a:rFonts"))
+    if r_fonts is None:
+        r_fonts = OxmlElement("a:rFonts")
+        r_pr.append(r_fonts)
+    r_fonts.set(qn("a:latin"), name)
+    r_fonts.set(qn("a:ea"), name)
+    r_fonts.set(qn("a:cs"), name)
 
 
 def polish_ppt(
@@ -103,7 +122,7 @@ def polish_ppt(
 
                     # 폰트 통일
                     if (not preserve_template_fonts) and before_font != target_font:
-                        run.font.name = target_font
+                        set_run_font_name(run, target_font)
                         stats["font_updates"] += 1
 
                     # 사용자 요청: 전체 일반체 강제

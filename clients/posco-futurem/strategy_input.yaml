@@ -1,0 +1,61 @@
+meta:
+  version: '1.0'
+  description: 포스코퓨처엠 ERP 업그레이드 IT 전략 컨설팅
+
+client_profile:
+  industry: Energy Materials + Basic Materials
+  business_model: B2B
+  region: Korea + North America + China + Europe
+  audience: CIO (투자심의)
+  presentation_context: 투자심의
+
+engagement:
+  objective: ERP 업그레이드의 비즈니스 당위성 수립 및 투자심의 승인
+  decision_type: 투자 승인
+  expected_slide_count: 30
+  presentation_minutes: 30
+  language: ko
+
+priorities:
+  focus_areas:
+    - operational_excellence
+    - risk_control
+    - data_foundation
+    - cost_reduction
+  must_answer_questions:
+    - ERP 업그레이드가 비즈니스에 어떤 구체적 가치를 제공하는가?
+    - 현 시스템 유지 시 어떤 비즈니스 리스크가 있는가?
+    - Clean Core / Fit to Standard가 왜 필요한가?
+  success_metrics:
+    - name: 경영관리 데이터 신뢰성
+      target: 결산 오류 제로화
+      horizon: '2028'
+    - name: IT 운영 효율
+      target: 유지보수 비용 30% 절감
+      horizon: '2029'
+    - name: 글로벌 통합
+      target: 해외법인 통합 운영 100%
+      horizon: '2030'
+
+data_readiness:
+  internal_data_level: partial
+  available_datasets:
+    - 인터뷰 결과 요약
+    - 공개 산업 리포트
+    - SAP 로드맵 자료
+  constraints:
+    - 상세 인터뷰 원본 미공개
+    - 현재 시스템 상세 아키텍처 미제공
+
+deck_preferences:
+  storytelling_mode: decision_first
+  must_have_layouts:
+    - exec_summary
+    - comparison
+    - three_column
+    - timeline
+    - process_flow
+    - content
+  avoid_layouts: []
+  visual_emphasis: balanced
+  content_density: normal

@@ -11,15 +11,17 @@ constants.py - 전역 상수 및 정책 정의
 # =============================================================================
 
 # 불릿 길이 제한 (문자 수)
-BULLET_MAX_CHARS = 100  # 기본 최대 길이
-BULLET_RECOMMENDED_CHARS = 80  # 권장 길이
-BULLET_CHARS_PER_LINE = 42  # 줄 수 추정용 기준 문자수 (휴리스틱)
-BULLET_MAX_LINES = 2  # 불릿 최대 줄 수
+# 컨설팅 톤의 서술형 문장을 허용하기 위해 상향
+BULLET_MAX_CHARS = 180  # 기본 최대 길이
+BULLET_RECOMMENDED_CHARS = 130  # 권장 길이
+BULLET_CHARS_PER_LINE = 38  # 줄 수 추정용 기준 문자수 (휴리스틱)
+BULLET_MAX_LINES = 4  # 불릿 최대 줄 수
 
 # 불릿 개수 제한
 BULLET_MIN_COUNT = 3  # 컨텐츠 슬라이드 최소 개수
-BULLET_MAX_COUNT = 6  # 기본 최대 개수 (global_constraints로 오버라이드 가능)
-VISUAL_BULLET_MAX_COUNT = 4  # chart_focus/image_focus 기본 최대 개수
+BULLET_MAX_COUNT = 9  # 기본 최대 개수 (global_constraints로 오버라이드 가능)
+VISUAL_BULLET_MAX_COUNT = 8  # chart_focus/image_focus 기본 최대 개수
+COLUMN_BULLET_MAX_COUNT = 8  # 컬럼당 최대 불릿 수 (밀도형 덱 허용)
 
 # =============================================================================
 # 폰트 정책
@@ -57,9 +59,10 @@ ALLOWED_FONTS = [
 # =============================================================================
 
 # 슬라이드당 총 문자 수 제한
-DENSITY_MAX_CHARS = 800  # 과밀 기준
+# 본문 밀도를 높이되 과밀 판정을 완화
+DENSITY_MAX_CHARS = 1200  # 과밀 기준
 DENSITY_MIN_CHARS = 50   # 부족 기준
-DENSITY_MIN_PARAGRAPHS = 2  # 최소 단락 수
+DENSITY_MIN_PARAGRAPHS = 3  # 최소 단락 수
 
 # =============================================================================
 # 레이아웃별 기본 설정
@@ -155,8 +158,18 @@ def get_bullet_bounds(
         return 0, 0
 
     if normalized_layout in VISUAL_LAYOUTS:
-        # visual 중심 레이아웃은 0~4 권장
+        # visual 중심 레이아웃은 0~8 허용 (권장 4~5)
         min_bullets = 0
         max_bullets = min(max_bullets, VISUAL_BULLET_MAX_COUNT)
 
     return min_bullets, max_bullets
+
+
+def get_column_bullet_limit(max_bullets: int) -> int:
+    """
+    컬럼 레이아웃에서 컬럼별 최대 불릿 수 계산.
+    슬라이드 전역 상한을 넘지 않으면서 밀도형 덱 작성을 허용한다.
+    """
+    if max_bullets <= 0:
+        return 0
+    return max(3, min(COLUMN_BULLET_MAX_COUNT, max_bullets))

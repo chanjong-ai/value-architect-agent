@@ -1,12 +1,63 @@
 client_meta:
-  client_name: ""
-  industry: ""
-  date: ""
-  audience: ""
-  objective: ""
+  client_name: "template-client"
+  industry: "TBD"
+  date: "2026-01-01"
+  audience: "Executive"
+  objective: "핵심 과제 정의 필요"
   language: "ko"
 
-assumptions: []
-sources_ref: []
+global_constraints:
+  max_slides: 35
+  default_max_bullets: 9
+  default_max_chars_per_bullet: 180
+  forbidden_words: ["아마", "대충"]
+  required_sections: ["cover", "exec_summary", "thank_you"]
 
-slides: []
+assumptions:
+  - "공개 정보 기반의 가설 중심 초안이며 고객 데이터로 보정 필요"
+
+sources_ref:
+  - "sources.md#market"
+  - "sources.md#client"
+
+slides:
+  - layout: "cover"
+    title: "고객사 전략 제언"
+    subtitle: "프로젝트 킥오프 버전"
+    governing_message: "핵심 의사결정 질문을 명확히 정의하고, 근거 기반 실행 프레임을 설계합니다."
+    metadata:
+      section: "Cover"
+      source_refs: ["sources.md#client"]
+
+  - layout: "exec_summary"
+    title: "Executive Summary"
+    governing_message: "초기 진단 결과를 바탕으로 우선순위 과제를 정의하고 검증 가능한 가치 가설을 제시합니다."
+    bullets:
+      - text: "핵심 질문: 이번 과제에서 경영진이 반드시 결정해야 할 항목을 3개 이내로 정리합니다."
+        icon: "insight"
+        evidence:
+          source_anchor: "sources.md#client"
+          confidence: "medium"
+      - text: "핵심 가설: 성과 영향도가 큰 과제를 먼저 선정하고 단기·중기 KPI를 함께 정의합니다."
+        icon: "check"
+        evidence:
+          source_anchor: "sources.md#market"
+          confidence: "medium"
+      - text: "실행 원칙: 실행 오너·일정·검증 기준을 한 장표에서 연결해 의사결정 속도를 높입니다."
+        icon: "arrow"
+        evidence:
+          source_anchor: "sources.md#client"
+          confidence: "medium"
+    layout_intent:
+      emphasis: "content"
+      content_density: "dense"
+    metadata:
+      section: "Executive"
+      source_refs: ["sources.md#market", "sources.md#client"]
+
+  - layout: "thank_you"
+    title: "결론 및 다음 단계"
+    governing_message: "상세 리서치와 페이지 블루프린트를 반영해 본 보고서를 고도화합니다."
+    metadata:
+      section: "Closing"
+      source_refs: ["sources.md#client"]

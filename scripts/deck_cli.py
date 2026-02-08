@@ -22,6 +22,7 @@ deck_cli.py - 통합 CLI for Value Architect Agent
 
 import argparse
 import json
+import re
 import shutil
 import sys
 from datetime import datetime
@@ -51,6 +52,12 @@ def load_json(path: Path) -> dict:
         return json.load(f)
 
 
+def read_text(path: Path) -> str:
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
 def save_yaml(path: Path, data: dict) -> None:
     """YAML 파일 저장"""
     with path.open("w", encoding="utf-8") as f:
@@ -75,6 +82,62 @@ def get_all_clients() -> list:
         d.name for d in CLIENTS_DIR.iterdir()
         if d.is_dir() and d.name != "_template" and not d.name.startswith(".")
     ]
+
+
+def slugify(text: str) -> str:
+    value = re.sub(r"[^\w\s-]", "", (text or "").strip().lower())
+    value = re.sub(r"[\s]+", "-", value).strip("-_")
+    return value or "topic"
+
+
+def resolve_new_client_name(client_name: str, topic: str = "", new_folder_if_exists: bool = False) -> str:
+    """
+    동일 고객사/다른 주제 대응:
+    - 기본: 기존 동작 유지 (중복 시 에러)
+    - 옵션 사용 시: <client>--<topic-slug>--<timestamp> 형태로 신규 폴더 생성
+    """
+    dest = get_client_dir(client_name)
+    if not dest.exists():
+        return client_name
+
+    if not new_folder_if_exists and not topic:
+        return client_name
+
+    suffix_parts = []
+    if topic:
+        suffix_parts.append(slugify(topic)[:32])
+    suffix_parts.append(datetime.now().strftime("%Y%m%d_%H%M%S"))
+    return f"{client_name}--{'-'.join(suffix_parts)}"
+
+
+def resolve_template_path(template_arg: Optional[str], template_mode: str = "auto") -> Path:
+    """
+    템플릿 선택 정책:
+    - custom(--template) 우선
+    - auto: additional-template 우선, 없으면 base-template, 둘 다 없으면 blank fallback
+    - additional/base/blank 명시 모드 지원
+    """
+    if template_arg:
+        return Path(template_arg).resolve()
+
+    additional = TEMPLATES_DIR / "additional-template.pptx"
+    base = TEMPLATES_DIR / "base-template.pptx"
+    mode = (template_mode or "auto").strip().lower()
+
+    if mode == "additional":
+        return additional if additional.exists() else base
+    if mode == "base":
+        return base
+    if mode == "blank":
+        # 존재하지 않는 경로를 넘기면 render_ppt에서 blank deck fallback 사용
+        return TEMPLATES_DIR / "__blank__.pptx"
+
+    # auto
+    if additional.exists():
+        return additional
+    if base.exists():
+        return base
+    return TEMPLATES_DIR / "__blank__.pptx"
 
 
 def _bullet_text(item) -> str:
@@ -128,21 +191,27 @@ def _collect_slide_bullets(slide: dict) -> List[str]:
 def cmd_new(args) -> int:
     """새 클라이언트 팩 생성"""
     client_name = args.client_name.strip()
+    topic = getattr(args, "topic", "") or ""
 
     if not client_name:
         print("Error: 클라이언트 이름이 비어있습니다.")
         return 1
 
     # 이름 검증 (알파벳, 숫자, 하이픈, 언더스코어만 허용)
-    import re
     if not re.match(r'^[a-zA-Z0-9_-]+$', client_name):
         print(f"Error: 클라이언트 이름은 영문, 숫자, 하이픈, 언더스코어만 가능합니다: {client_name}")
         return 1
 
-    dest = get_client_dir(client_name)
+    resolved_name = resolve_new_client_name(
+        client_name=client_name,
+        topic=topic,
+        new_folder_if_exists=bool(getattr(args, "new_folder_if_exists", False)),
+    )
+    dest = get_client_dir(resolved_name)
 
     if dest.exists():
         print(f"Error: 이미 존재하는 클라이언트입니다: {dest}")
+        print("Hint: 같은 고객사의 다른 주제로 생성하려면 --topic <주제> --new-folder-if-exists 옵션을 사용하세요.")
         return 1
 
     if not TEMPLATE_DIR.exists():
@@ -157,20 +226,93 @@ def cmd_new(args) -> int:
     if spec_path.exists():
         spec = load_yaml(spec_path)
         spec["client_meta"] = spec.get("client_meta", {})
-        spec["client_meta"]["client_name"] = client_name
+        spec["client_meta"]["client_name"] = resolved_name
+        if not str(spec["client_meta"].get("industry", "")).strip():
+            spec["client_meta"]["industry"] = "TBD"
         spec["client_meta"]["date"] = datetime.now().strftime("%Y-%m-%d")
+        if not str(spec["client_meta"].get("audience", "")).strip():
+            spec["client_meta"]["audience"] = "Executive"
+        if not str(spec["client_meta"].get("language", "")).strip():
+            spec["client_meta"]["language"] = "ko"
+        if topic:
+            spec["client_meta"]["objective"] = topic
+        elif not str(spec["client_meta"].get("objective", "")).strip():
+            spec["client_meta"]["objective"] = "핵심 과제 정의 필요"
+
+        spec["global_constraints"] = spec.get("global_constraints", {})
+        spec["global_constraints"].setdefault("max_slides", 35)
+        spec["global_constraints"].setdefault("default_max_bullets", 9)
+        spec["global_constraints"].setdefault("default_max_chars_per_bullet", 180)
+        spec["global_constraints"].setdefault("forbidden_words", ["아마", "대충"])
+        spec["global_constraints"].setdefault("required_sections", ["cover", "exec_summary", "thank_you"])
+
+        if not isinstance(spec.get("slides"), list) or not spec.get("slides"):
+            spec["slides"] = [
+                {
+                    "layout": "cover",
+                    "title": "고객사 전략 제언",
+                    "subtitle": "프로젝트 킥오프 버전",
+                    "governing_message": "핵심 의사결정 질문을 명확히 정의하고, 근거 기반 실행 프레임을 설계합니다.",
+                    "metadata": {"section": "Cover", "source_refs": ["sources.md#client"]},
+                },
+                {
+                    "layout": "exec_summary",
+                    "title": "Executive Summary",
+                    "governing_message": "초기 진단 결과를 바탕으로 우선순위 과제를 정의하고 검증 가능한 가치 가설을 제시합니다.",
+                    "bullets": [
+                        {
+                            "text": "핵심 질문: 이번 과제에서 경영진이 반드시 결정해야 할 항목을 3개 이내로 정리합니다.",
+                            "icon": "insight",
+                            "evidence": {"source_anchor": "sources.md#client", "confidence": "medium"},
+                        },
+                        {
+                            "text": "핵심 가설: 성과 영향도가 큰 과제를 먼저 선정하고 단기·중기 KPI를 함께 정의합니다.",
+                            "icon": "check",
+                            "evidence": {"source_anchor": "sources.md#market", "confidence": "medium"},
+                        },
+                        {
+                            "text": "실행 원칙: 실행 오너·일정·검증 기준을 한 장표에서 연결해 의사결정 속도를 높입니다.",
+                            "icon": "arrow",
+                            "evidence": {"source_anchor": "sources.md#client", "confidence": "medium"},
+                        },
+                    ],
+                    "layout_intent": {"emphasis": "content", "content_density": "dense"},
+                    "metadata": {"section": "Executive", "source_refs": ["sources.md#market", "sources.md#client"]},
+                },
+                {
+                    "layout": "thank_you",
+                    "title": "결론 및 다음 단계",
+                    "governing_message": "상세 리서치와 페이지 블루프린트를 반영해 본 보고서를 고도화합니다.",
+                    "metadata": {"section": "Closing", "source_refs": ["sources.md#client"]},
+                },
+            ]
         save_yaml(spec_path, spec)
 
+    # brief에 topic 힌트 추가
+    if topic:
+        brief_path = dest / "brief.md"
+        if brief_path.exists():
+            brief_text = read_text(brief_path)
+            if "- Why now?" in brief_text and topic not in brief_text:
+                brief_text = brief_text.replace(
+                    "- Why now? (trigger / pain points / strategic agenda)",
+                    f"- Why now? (trigger / pain points / strategic agenda)\\n- Topic focus: {topic}",
+                    1,
+                )
+                brief_path.write_text(brief_text, encoding="utf-8")
+
     print(f"✓ 클라이언트 팩 생성 완료: {dest}")
+    if resolved_name != client_name:
+        print(f"  - 원본 고객명 `{client_name}`에서 주제/중복 회피 규칙으로 신규 폴더명 `{resolved_name}` 생성")
     print(f"\n다음 단계:")
     print(f"  1. brief.md 작성: {dest / 'brief.md'}")
     print(f"  2. constraints.md 확인: {dest / 'constraints.md'}")
     print(f"  3. strategy_input.yaml에 고객 요건/집중영역 입력")
-    print(f"  4. 리서치 후 sources.md 업데이트")
-    print(f"  5. deck_outline.md → deck_spec.yaml 작성")
-    print(f"  6. python scripts/deck_cli.py recommend {client_name} --apply-layout")
-    print(f"  7. python scripts/deck_cli.py analyze {client_name}")
-    print(f"  8. python scripts/deck_cli.py full-pipeline {client_name} --sync-layout --enrich-evidence --polish")
+    print(f"  4. sources.md에 초기 신뢰 출처 목록 업데이트")
+    print(f"  5. python scripts/deck_cli.py predeck {resolved_name} --pages 30 --update-spec")
+    print(f"  6. python scripts/deck_cli.py recommend {resolved_name} --apply-layout")
+    print(f"  7. python scripts/deck_cli.py analyze {resolved_name}")
+    print(f"  8. python scripts/deck_cli.py full-pipeline {resolved_name} --sync-layout --enrich-evidence --polish")
 
     return 0
 
@@ -287,7 +429,7 @@ def validate_business_rules(spec: dict) -> list:
     global_constraints = spec.get("global_constraints", {})
     no_bullet_layouts = {"cover", "section_divider", "thank_you", "quote"}
     visual_bullet_layouts = {"chart_focus", "image_focus"}
-    chars_per_line = 42
+    chars_per_line = 38
 
     slides = spec.get("slides", [])
 
@@ -298,17 +440,17 @@ def validate_business_rules(spec: dict) -> list:
 
         max_bullets = slide_constraints.get(
             "max_bullets",
-            global_constraints.get("default_max_bullets", 6)
+            global_constraints.get("default_max_bullets", 9)
         )
         max_chars = slide_constraints.get(
             "max_chars_per_bullet",
-            global_constraints.get("default_max_chars_per_bullet", 100)
+            global_constraints.get("default_max_chars_per_bullet", 180)
         )
 
         if layout in no_bullet_layouts:
             min_bullets, max_bullets = 0, 0
         elif layout in visual_bullet_layouts:
-            min_bullets, max_bullets = 0, min(max_bullets, 4)
+            min_bullets, max_bullets = 0, min(max_bullets, 8)
         else:
             min_bullets = 3
 
@@ -326,8 +468,8 @@ def validate_business_rules(spec: dict) -> list:
             if len(text) > max_chars:
                 warnings.append(f"슬라이드 {i}, 불릿 {j}: {max_chars}자 초과 ({len(text)}자)")
             estimated_lines = max(1, (len(text) - 1) // chars_per_line + 1)
-            if estimated_lines > 2:
-                warnings.append(f"슬라이드 {i}, 불릿 {j}: 2줄 초과 가능성 (추정 {estimated_lines}줄)")
+            if estimated_lines > 4:
+                warnings.append(f"슬라이드 {i}, 불릿 {j}: 4줄 초과 가능성 (추정 {estimated_lines}줄)")
 
         # governing_message 길이 검증
         gm = slide.get("governing_message", "")
@@ -361,7 +503,10 @@ def cmd_render(args) -> int:
         output_path = outputs_dir / f"{client_name}_{timestamp}.pptx"
 
     # 템플릿 경로
-    template_path = Path(args.template) if args.template else (TEMPLATES_DIR / "base-template.pptx")
+    template_path = resolve_template_path(
+        template_arg=getattr(args, "template", None),
+        template_mode=getattr(args, "template_mode", "auto"),
+    )
     tokens_path = TEMPLATES_DIR / "tokens.yaml"
     layouts_path = TEMPLATES_DIR / "layouts.yaml"
 
@@ -377,6 +522,11 @@ def cmd_render(args) -> int:
     if not layouts_path.exists():
         print(f"Error: layouts.yaml이 없습니다: {layouts_path}")
         return 1
+
+    if template_path.exists():
+        print(f"ℹ template: {template_path.name}")
+    else:
+        print(f"ℹ template: blank fallback mode ({template_path})")
 
     # 렌더링 실행
     try:
@@ -606,6 +756,8 @@ def cmd_full_pipeline(args) -> int:
     print(f"=== Full Pipeline 시작: {client_name} ===\n")
 
     pre_steps = []
+    if not getattr(args, "skip_predeck", False):
+        pre_steps.append("predeck")
     if not getattr(args, "skip_densify_content", False):
         pre_steps.append("densify_content")
     if getattr(args, "sync_layout", False):
@@ -617,7 +769,27 @@ def cmd_full_pipeline(args) -> int:
     current_step = 1
 
     for step_name in pre_steps:
-        if step_name == "densify_content":
+        if step_name == "predeck":
+            print(f"[{current_step}/{total_steps}] 심화 리서치 + 페이지 블루프린트 생성 중...")
+            predeck_args = argparse.Namespace(
+                client_name=client_name,
+                output=None,
+                json=None,
+                blueprint_md=None,
+                blueprint_yaml=None,
+                layout_pref=None,
+                topic=getattr(args, "topic", None),
+                pages=getattr(args, "pages", 30),
+                max_web_sources=getattr(args, "max_web_sources", 48),
+                no_web=getattr(args, "no_web_research", False),
+                update_spec=True,
+                force_layout=getattr(args, "force_blueprint_layout", False),
+            )
+            if cmd_predeck(predeck_args) != 0:
+                print("\n✗ 심화 리서치 단계 실패. 파이프라인 중단.")
+                return 1
+
+        elif step_name == "densify_content":
             print(f"[{current_step}/{total_steps}] 본문 밀도 보강 중...")
             densify_args = argparse.Namespace(
                 client_name=client_name,
@@ -636,6 +808,7 @@ def cmd_full_pipeline(args) -> int:
                 pref=None,
                 output=None,
                 dry_run=False,
+                use_research_pref=True,
             )
             if cmd_sync_layout(sync_args) != 0:
                 print("\n✗ 레이아웃 반영 실패. 파이프라인 중단.")
@@ -669,7 +842,6 @@ def cmd_full_pipeline(args) -> int:
     # Step: Render
     print(f"\n[{current_step}/{total_steps}] PPTX 렌더링 중...")
     args.output = None
-    args.template = None
     if cmd_render(args) != 0:
         print("\n✗ 렌더링 실패. 파이프라인 중단.")
         return 1
@@ -717,19 +889,33 @@ def cmd_predeck(args) -> int:
         print(f"Error: 클라이언트를 찾을 수 없습니다: {client_name}")
         return 1
 
-    try:
-        from predeck_research import main as predeck_main
-    except ImportError:
-        print("Error: predeck_research 모듈을 불러올 수 없습니다.")
-        return 1
-
     # predeck_research.main()은 argparse를 사용하므로 subprocess 호출
     import subprocess
     cmd = [sys.executable, str(SCRIPT_DIR / "predeck_research.py"), client_name]
+
+    if getattr(args, "topic", None):
+        cmd.extend(["--topic", str(args.topic)])
+    if getattr(args, "pages", None):
+        cmd.extend(["--pages", str(args.pages)])
+    if getattr(args, "max_web_sources", None):
+        cmd.extend(["--max-web-sources", str(args.max_web_sources)])
+    if getattr(args, "no_web", False):
+        cmd.append("--no-web")
+    if getattr(args, "update_spec", False):
+        cmd.append("--update-spec")
+    if getattr(args, "force_layout", False):
+        cmd.append("--force-layout")
+
     if getattr(args, "output", None):
         cmd.extend(["--output", str(Path(args.output).resolve())])
     if getattr(args, "json", None):
         cmd.extend(["--json", str(Path(args.json).resolve())])
+    if getattr(args, "blueprint_md", None):
+        cmd.extend(["--blueprint-md", str(Path(args.blueprint_md).resolve())])
+    if getattr(args, "blueprint_yaml", None):
+        cmd.extend(["--blueprint-yaml", str(Path(args.blueprint_yaml).resolve())])
+    if getattr(args, "layout_pref", None):
+        cmd.extend(["--layout-pref", str(Path(args.layout_pref).resolve())])
 
     result = subprocess.run(cmd, capture_output=False, text=True)
     return result.returncode
@@ -918,7 +1104,20 @@ def cmd_sync_layout(args) -> int:
 
     client_dir = get_client_dir(client_name)
     spec_path = client_dir / "deck_spec.yaml"
-    pref_path = Path(args.pref).resolve() if args.pref else (client_dir / "layout_preferences.yaml")
+    explicit_pref = Path(args.pref).resolve() if args.pref else None
+    research_pref = client_dir / "layout_preferences.research.yaml"
+    default_pref = client_dir / "layout_preferences.yaml"
+
+    if explicit_pref:
+        pref_path = explicit_pref
+    elif getattr(args, "use_research_pref", False) and research_pref.exists():
+        pref_path = research_pref
+    elif default_pref.exists():
+        pref_path = default_pref
+    elif research_pref.exists():
+        pref_path = research_pref
+    else:
+        pref_path = default_pref
 
     if not spec_path.exists():
         print(f"Error: deck_spec.yaml이 없습니다: {spec_path}")
@@ -1075,7 +1274,10 @@ def cmd_status(args) -> int:
         ("brief.md", "클라이언트 브리프"),
         ("constraints.md", "제약사항"),
         ("sources.md", "출처 목록"),
-        ("research_report.md", "덱 전 리서치 구조화 리포트"),
+        ("research_report.md", "덱 전 심화 리서치 리포트"),
+        ("layout_blueprint.md", "페이지별 상세 레이아웃 블루프린트"),
+        ("layout_blueprint.yaml", "페이지별 레이아웃 블루프린트(YAML)"),
+        ("layout_preferences.research.yaml", "리서치 기반 레이아웃 선호"),
         ("deck_outline.md", "덱 아웃라인"),
         ("deck_spec.yaml", "덱 스펙"),
         ("layout_preferences.yaml", "레이아웃 선호 설정"),
@@ -1171,7 +1373,8 @@ def main():
         epilog="""
 예시:
   %(prog)s new my-client           # 새 클라이언트 생성
-  %(prog)s predeck my-client       # 덱 전 리서치 구조화 리포트
+  %(prog)s new my-client --topic \"cost-reset\" --new-folder-if-exists
+  %(prog)s predeck my-client --pages 30 --update-spec
   %(prog)s analyze my-client       # 고객사 분석 전략/준비도 리포트
   %(prog)s recommend my-client     # 요건 입력 기반 전략 추천
   %(prog)s sync-layout my-client   # 레이아웃 선호를 deck_spec에 반영
@@ -1180,9 +1383,9 @@ def main():
   %(prog)s analyze --all           # 전체 고객사 분석 요약
   %(prog)s status my-client        # 상태 확인
   %(prog)s validate my-client      # 스키마 검증
-  %(prog)s render my-client        # PPTX 렌더링
+  %(prog)s render my-client --template-mode additional
   %(prog)s polish my-client        # PPTX 미세 편집
-  %(prog)s pipeline my-client      # 전체 파이프라인
+  %(prog)s full-pipeline my-client --topic \"AI 데이터 전략\" --sync-layout --enrich-evidence --polish
   %(prog)s list                    # 클라이언트 목록
         """
     )
@@ -1192,6 +1395,8 @@ def main():
     # new
     p_new = subparsers.add_parser("new", help="새 클라이언트 팩 생성")
     p_new.add_argument("client_name", help="클라이언트 이름 (영문, 숫자, 하이픈, 언더스코어)")
+    p_new.add_argument("--topic", help="동일 고객사 내 이번 과제 주제 (옵션)")
+    p_new.add_argument("--new-folder-if-exists", action="store_true", help="기존 동일 이름 폴더가 있으면 신규 변형 폴더 생성")
     p_new.set_defaults(func=cmd_new)
 
     # validate
@@ -1201,17 +1406,32 @@ def main():
     p_validate.set_defaults(func=cmd_validate)
 
     # predeck
-    p_predeck = subparsers.add_parser("predeck", help="덱 작성 전 리서치 구조화 리포트 생성")
+    p_predeck = subparsers.add_parser("predeck", help="덱 작성 전 심화 리서치 + 페이지 블루프린트 생성")
     p_predeck.add_argument("client_name", help="클라이언트 이름")
+    p_predeck.add_argument("--topic", help="리서치 주제 (동일 고객사 내 주제 분리)")
+    p_predeck.add_argument("--pages", type=int, default=30, help="목표 페이지 수 (기본 30)")
+    p_predeck.add_argument("--max-web-sources", type=int, default=48, help="최대 웹 근거 수집 건수")
+    p_predeck.add_argument("--no-web", action="store_true", help="웹 리서치 비활성화 (로컬 소스만)")
+    p_predeck.add_argument("--update-spec", action="store_true", help="생성 블루프린트를 deck_spec에 반영")
+    p_predeck.add_argument("--force-layout", action="store_true", help="--update-spec 시 기존 layout도 강제 치환")
     p_predeck.add_argument("--output", "-o", help="리포트(Markdown) 출력 경로")
     p_predeck.add_argument("--json", help="리포트(JSON) 출력 경로")
+    p_predeck.add_argument("--blueprint-md", help="페이지 블루프린트(Markdown) 출력 경로")
+    p_predeck.add_argument("--blueprint-yaml", help="페이지 블루프린트(YAML) 출력 경로")
+    p_predeck.add_argument("--layout-pref", help="생성 layout preference 출력 경로")
     p_predeck.set_defaults(func=cmd_predeck)
 
     # render
     p_render = subparsers.add_parser("render", help="PPTX 렌더링")
     p_render.add_argument("client_name", help="클라이언트 이름")
     p_render.add_argument("--output", "-o", help="출력 파일 경로 (기본: outputs/<client>_<timestamp>.pptx)")
-    p_render.add_argument("--template", "-t", help="템플릿 경로 (기본: templates/company/base-template.pptx)")
+    p_render.add_argument("--template", "-t", help="템플릿 경로 (지정 시 최우선)")
+    p_render.add_argument(
+        "--template-mode",
+        choices=["auto", "additional", "base", "blank"],
+        default="auto",
+        help="템플릿 선택 모드 (auto: additional 우선, 없으면 base, 없으면 blank)",
+    )
     p_render.set_defaults(func=cmd_render)
 
     # qa
@@ -1251,6 +1471,7 @@ def main():
     p_sync = subparsers.add_parser("sync-layout", help="layout_preferences를 deck_spec에 반영")
     p_sync.add_argument("client_name", help="클라이언트 이름")
     p_sync.add_argument("--pref", help="layout_preferences.yaml 경로 (기본: clients/<client>/layout_preferences.yaml)")
+    p_sync.add_argument("--use-research-pref", action="store_true", help="layout_preferences.research.yaml 우선 사용")
     p_sync.add_argument("--output", "-o", help="적용 결과 출력 경로 (기본: deck_spec.yaml 덮어쓰기)")
     p_sync.add_argument("--dry-run", action="store_true", help="변경사항만 확인하고 저장하지 않음")
     p_sync.set_defaults(func=cmd_sync_layout)
@@ -1282,11 +1503,24 @@ def main():
     # full-pipeline
     p_full = subparsers.add_parser("full-pipeline", help="전체 파이프라인 + QA (+optional polish)")
     p_full.add_argument("client_name", help="클라이언트 이름")
+    p_full.add_argument("--skip-predeck", action="store_true", help="심화 리서치/블루프린트 단계 건너뛰기")
+    p_full.add_argument("--topic", help="리서치 주제 (동일 고객사의 다른 주제 테스트용)")
+    p_full.add_argument("--pages", type=int, default=30, help="predeck 목표 페이지 수")
+    p_full.add_argument("--max-web-sources", type=int, default=48, help="predeck 최대 웹 근거 수집 건수")
+    p_full.add_argument("--no-web-research", action="store_true", help="predeck 웹 리서치 비활성화")
+    p_full.add_argument("--force-blueprint-layout", action="store_true", help="predeck 반영 시 기존 layout 강제 치환")
     p_full.add_argument("--sync-layout", action="store_true", help="검증 전 layout_preferences를 deck_spec에 반영")
     p_full.add_argument("--enrich-evidence", action="store_true", help="검증 전 evidence/source_anchor 자동 보강")
     p_full.add_argument("--evidence-confidence", default="medium", help="--enrich-evidence 시 기본 confidence")
     p_full.add_argument("--overwrite-evidence", action="store_true", help="--enrich-evidence 시 기존 evidence도 덮어쓰기")
     p_full.add_argument("--skip-densify-content", action="store_true", help="본문 밀도 자동 보강 단계 건너뛰기")
+    p_full.add_argument("--template", "-t", help="렌더링 템플릿 경로 (지정 시 최우선)")
+    p_full.add_argument(
+        "--template-mode",
+        choices=["auto", "additional", "base", "blank"],
+        default="auto",
+        help="렌더링 템플릿 모드",
+    )
     p_full.add_argument("--ignore-qa-errors", action="store_true", help="QA 오류 무시하고 계속 진행")
     p_full.add_argument("--polish", action="store_true", help="QA 후 미세 편집까지 수행")
     p_full.set_defaults(func=cmd_full_pipeline)

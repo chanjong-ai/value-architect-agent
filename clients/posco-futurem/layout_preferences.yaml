@@ -1,0 +1,65 @@
+meta:
+  version: '1.0'
+  description: POSCO Future M 30p 레이아웃 가이드
+global:
+  default_layout_intent:
+    emphasis: balanced
+    content_density: normal
+layout_sequence:
+- cover
+- exec_summary
+- section_divider
+- content
+- chart_focus
+- comparison
+- content
+- chart_focus
+- content
+- section_divider
+- content
+- three_column
+- content
+- chart_focus
+- comparison
+- content
+- process_flow
+- content
+- section_divider
+- three_column
+- comparison
+- chart_focus
+- chart_focus
+- content
+- image_focus
+- section_divider
+- timeline
+- process_flow
+- content
+- thank_you
+slide_overrides: {}
+title_keyword_overrides:
+- keywords:
+  - Executive Summary
+  - 핵심 제언
+  layout: exec_summary
+- keywords:
+  - 로드맵
+  - Roadmap
+  layout: timeline
+- keywords:
+  - 가치
+  - Value
+  - ROI
+  layout: chart_focus
+- keywords:
+  - 비교
+  - Benchmark
+  - Gap
+  layout: comparison
+layout_intents:
+  chart_focus:
+    visual_position: right
+    emphasis: balanced
+  image_focus:
+    visual_position: right
+    emphasis: visual

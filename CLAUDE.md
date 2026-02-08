@@ -1,299 +1,137 @@
 # Project Rules (value-architect-agent)
 
 ## Mission
-컨설팅 등급의 PowerPoint 덱을 클라이언트별로 맞춤 생성하는 에이전트입니다.
+고객사별로 경영진 설득형 컨설팅 PPT를 안정적으로 생성한다.
 
-주요 역할:
-- 클라이언트 브리프와 제약사항 이해
-- 구조화된 리서치 및 인사이트 도출
-- 경영진용 스토리라인 구축 (MECE, 피라미드 원칙)
-- 검증된 Deck Spec 생성
-- 회사 템플릿과 디자인 토큰으로 PPTX 렌더링
-- 자동 QA 검사 및 품질 보증
-- 클라이언트별 아티팩트와 학습 내용 보존
+핵심 목표:
+- 최신/신뢰 근거 기반 리서치
+- 논리적 스토리 구조와 페이지별 설계
+- 밀도 높은 본문과 일관된 디자인
+- 자동 검증(스키마/QA) 통과
 
----
+## Operating Principles
 
-## 대화형 워크플로우
+### 1) Single Source of Truth
+- 최종 렌더의 기준은 항상 `clients/<client>/deck_spec.yaml`.
+- 수정은 원칙적으로 spec에서 수행한다.
 
-### 프로젝트 시작 시
-사용자가 새 프로젝트를 시작하면:
-1. 클라이언트 이름 확인
-2. `/intake` 스킬로 클라이언트 팩 생성
-3. brief.md 작성을 위한 정보 수집
+### 2) Predeck-First
+- 실무 기본 흐름은 `predeck`(리서치+블루프린트) 후 제작.
+- 템플릿 편집보다 리서치/구조 품질을 우선한다.
 
-### 덱 생성 워크플로우 (v2.3)
+### 3) Quality Gates
+- `validate` 실패 상태에서 렌더링 강행 금지.
+- `qa` 오류는 0건을 기본 기준으로 한다.
+
+### 4) Font & Tone Consistency
+- 기본 폰트는 Noto Sans KR 일반체.
+- 문장은 지나친 축약 대신 컨설팅 보고서 톤의 문장형 서술을 유지.
+
+## Standard Workflow (v2.4)
+
+```text
+new
+→ predeck (research_report + layout_blueprint + optional update-spec)
+→ recommend (optional)
+→ analyze (optional)
+→ densify
+→ sync-layout (optional)
+→ enrich-evidence (optional)
+→ validate
+→ render
+→ qa
+→ polish (optional)
 ```
-[1] Intake → [2] Research → [3] Storyline → [4] Slidespec → [5] Recommend → [6] Analyze → [7] Sync-Layout → [8] Enrich-Evidence → [9] Render → [10] QA → [11] Polish → [12] Lessons
-```
 
-각 단계별 스킬:
-- `/intake <client>`: 새 프로젝트 시작
-- `/research <client>`: 리서치 수행
-- `/industry <client>`: 산업 분석
-- `/competitors <client>`: 경쟁사 분석
-- `/storyline <client>`: 스토리라인 구축
-- `/slidespec <client>`: Deck Spec 생성
-- `/recommend <client>`: 요건 기반 전략/레이아웃 추천 (v2.3)
-- `/analyze <client>`: 고객사 분석 전략/갭 리포트 생성 (v2.2)
-- `/sync-layout <client>`: 고객 선호 레이아웃을 deck_spec에 반영 (v2.2)
-- `/enrich-evidence <client>`: 불릿 evidence/source_anchor 자동 보강 (v2.2)
-- `/render <client>`: PPTX 렌더링
-- `/qa <client>`: 품질 검증 (v2.0)
-- `/polish <client>`: 미세 편집 (v2.0)
-- `/lessons <client>`: 학습 기록
+권장 단일 명령:
 
-### CLI 명령어
 ```bash
-# 새 클라이언트 생성
-python scripts/deck_cli.py new <client-name>
-
-# 상태 확인
-python scripts/deck_cli.py status <client-name>
-
-# 클라이언트 목록
-python scripts/deck_cli.py list
-
-# 검증
-python scripts/deck_cli.py validate <client-name>
-
-# 렌더링
-python scripts/deck_cli.py render <client-name>
-
-# QA 검사 (v2.0)
-python scripts/deck_cli.py qa <client-name>
-
-# 미세 편집 (v2.1)
-python scripts/deck_cli.py polish <client-name>
-
-# 고객사 분석 리포트 (v2.2)
-python scripts/deck_cli.py analyze <client-name>
-
-# 전체 고객사 분석 요약 (v2.2)
-python scripts/deck_cli.py analyze --all
-
-# 요건 입력 기반 전략 추천 (v2.3)
-python scripts/deck_cli.py recommend <client-name>
-
-# 레이아웃 선호 반영 (v2.2)
-python scripts/deck_cli.py sync-layout <client-name>
-
-# evidence 자동 보강 (v2.2)
-python scripts/deck_cli.py enrich-evidence <client-name>
-
-# 기본 파이프라인 (검증 + 렌더링)
-python scripts/deck_cli.py pipeline <client-name>
-
-# 전체 파이프라인 (검증 + 렌더링 + QA) (v2.0)
-python scripts/deck_cli.py full-pipeline <client-name>
-
-# 전체 파이프라인 + 미세 편집 (v2.1)
-python scripts/deck_cli.py full-pipeline <client-name> --polish
-
-# 실무 권장 파이프라인 (v2.2)
-python scripts/deck_cli.py full-pipeline <client-name> --sync-layout --enrich-evidence --polish
+python scripts/deck_cli.py full-pipeline <client> \
+  --topic "<주제>" \
+  --sync-layout --enrich-evidence --polish \
+  --template-mode additional
 ```
 
----
+## CLI Rules
 
-## Non-Negotiables (항상 준수)
+### Client Creation
+- 기본 생성: `new <client>`
+- 동일 고객 다른 주제: `new <client> --topic "..." --new-folder-if-exists`
 
-### 1. Two-Stage Workflow (2단계 워크플로우)
-- 항상: `deck_outline.md` → `deck_spec.yaml` → PPTX 렌더링
-- **절대로** Deck Spec 없이 PPT로 바로 가지 않음
+### Research & Blueprint
+- `predeck`는 아래를 생성해야 한다.
+  - `research_report.md/json`
+  - `layout_blueprint.md/yaml`
+  - `layout_preferences.research.yaml`
+- 필요시 `--update-spec`로 spec 반영.
 
-### 2. Single Source of Truth (단일 진실 소스)
-- `clients/<client>/deck_spec.yaml`이 PPT 렌더링의 유일한 소스
-- 모든 컨텐츠 수정은 deck_spec.yaml에서 수행
+### Render Template Selection
+- `--template-mode auto`가 기본.
+- 우선순위: `additional` → `base` → `blank(16:9 fallback)`.
 
-### 3. Template + Tokens Enforcement (템플릿/토큰 강제)
-- 렌더링 시 항상 `templates/company/base-template.pptx` 사용
-- 디자인 토큰 (`templates/company/tokens.yaml`) 강제 적용:
-  - 제목: Noto Sans KR Bold 24pt
-  - 거버닝 메시지: Noto Sans KR Bold 16pt
-  - 본문: Noto Sans KR Regular 12pt
-- 배경: 흰색, 회사 승인 블루톤만 사용
+## Non-Negotiables
 
-### 4. Density Rules (밀도 규칙)
-슬라이드당:
-- 1개 제목 + 1개 거버닝 메시지
-- 일반 컨텐츠는 3-6개 불릿, chart/image 중심 슬라이드는 0-4개 (1줄 권장, 최대 2줄)
-- 긴 문단 금지, MECE 불릿 사용
+1. `deck_spec.yaml` 없는 렌더링 금지.
+2. 주장에는 근거(`evidence.source_anchor`)를 연결.
+3. 커버/섹션/마무리 외 일반 슬라이드는 빈 본문 금지.
+4. 본문 하단 공백이 큰 슬라이드는 narrative 또는 구조 재배치로 보정.
+5. 산출물은 `clients/<client>/outputs/`에 추적 가능하게 남긴다.
 
-### 5. Sources & Credibility (출처 및 신뢰성)
-- 리서치 출처는 `clients/<client>/sources.md`에 기록
-- 인사이트 도출 시 출처 명시 (섹션 앵커 사용)
-- 사실과 가정 명확히 구분
-- v2.0: 각 불릿에 evidence 필드로 출처 직접 연결 가능
+## Content Density Policy
 
-### 6. Per-Client Traceability (클라이언트별 추적성)
-모든 클라이언트에 대해 유지:
-- `brief.md`, `constraints.md`, `sources.md`
-- `deck_outline.md`, `deck_spec.yaml`
-- `outputs/` (렌더링 결과)
-- `lessons.md` (학습 내용)
+기본 가이드:
+- 컨텐츠 중심 슬라이드: 불릿 6~10개 권장(상황에 따라 `slide_constraints`로 제어)
+- 불릿은 문장형으로 작성(근거/조건/시사점 포함)
+- 표/차트 슬라이드도 해석 문단 또는 시사점 블록 포함
 
-재사용 가능한 학습은 `library/lessons/`로 추출
+금지 패턴:
+- 제목/거버닝만 있고 본문이 빈 상태
+- 데이터 설명 없이 도식만 있는 상태
+- 근거 없는 단정 문장 반복
 
----
+## Validation & QA Policy
 
-## 디렉토리 구조
+### validate
+- 스키마 + 비즈니스 규칙 검사.
+- 실패 시 해당 필드부터 수정 후 재검증.
 
-```
-value-architect-agent/
-├── CLAUDE.md                    # 이 파일 (프로젝트 규칙)
-├── scripts/
-│   ├── deck_cli.py             # 통합 CLI
-│   ├── analyze_client.py       # 고객사 분석 전략/준비도 리포터 (v2.2)
-│   ├── recommend_strategy.py   # 요건 입력 기반 전략/레이아웃 추천기 (v2.3)
-│   ├── layout_sync.py          # layout_preferences -> deck_spec 동기화 (v2.2)
-│   ├── enrich_evidence.py      # 불릿 evidence/source_anchor 자동 보강 (v2.2)
-│   ├── render_ppt.py           # PPTX 렌더러
-│   ├── qa_ppt.py               # QA 자동 검사기 (v2.0)
-│   ├── polish_ppt.py           # 미세 편집기 (v2.1)
-│   ├── validate_spec.py        # 스키마 검증
-│   └── new_client.py           # 클라이언트 생성
-├── schema/
-│   └── deck_spec.schema.json   # Deck Spec 스키마 v2.0
-├── templates/company/
-│   ├── base-template.pptx       # 베이스 템플릿 (회사 표준)
-│   ├── additional-template.pptx # 타사 보고서 사례 (80페이지, 참고용)
-│   ├── tokens.yaml              # 디자인 토큰
-│   └── layouts.yaml             # 레이아웃 매핑
-├── clients/
-│   ├── _template/              # 클라이언트 템플릿
-│   │   └── strategy_input.yaml # 요건/집중영역 입력 템플릿 (v2.3)
-│   └── <client>/               # 클라이언트별 작업 영역
-├── library/
-│   ├── patterns/               # 재사용 패턴
-│   ├── slides/                 # 프리셋 슬라이드
-│   └── lessons/                # 학습 내용
-└── .claude/
-    ├── skills/                 # 스킬 정의 (14개)
-    └── subagents/              # 서브에이전트 정의
-```
+### qa
+- 폰트/밀도/경계/Spec 정합/근거 연계를 확인.
+- 목표: 오류 0, 경고 0 (프로젝트 기준).
 
----
+## Repository Conventions
 
-## 레이아웃 유형
+- 공통 로직은 `scripts/`에 반영해 다른 고객에도 전파한다.
+- 고객별 임시 수정은 지양하고, 가능하면 파이프라인 일반화로 해결한다.
+- `_template`는 항상 유효한 최소 스펙 상태를 유지한다.
 
-| 레이아웃 | 용도 | 불릿 |
-|----------|------|------|
-| `cover` | 표지 | 0개 |
-| `exec_summary` | 요약 | 3-6개 |
-| `content` | 일반 컨텐츠 | 3-6개 |
-| `two_column` | 좌우 분할 | columns 사용 |
-| `three_column` | 3분할 | columns 사용 |
-| `comparison` | As-Is/To-Be | columns 사용 |
-| `timeline` | 로드맵/타임라인 | 단계별 |
-| `process_flow` | 프로세스 흐름 | 단계별 |
-| `chart_focus` | 차트 중심 | 0-4개 |
-| `image_focus` | 이미지 중심 | 0-4개 |
-| `quote` | 인용문 | 0개 |
-| `section_divider` | 섹션 구분 | 0개 |
-| `appendix` | 부록 | 3-6개 |
-| `thank_you` | 마무리 | 0개 |
+## Key Files
 
----
+- `scripts/deck_cli.py`: 통합 오케스트레이션
+- `scripts/predeck_research.py`: 심화 리서치/블루프린트
+- `scripts/densify_spec.py`: 본문 밀도 보강
+- `scripts/render_ppt.py`: 렌더러
+- `scripts/qa_ppt.py`: 품질 검사
+- `scripts/polish_ppt.py`: 미세 편집
+- `schema/deck_spec.schema.json`: 스키마
+- `templates/company/tokens.yaml`: 디자인 토큰
 
-## 품질 기준
+## Troubleshooting Checklist
 
-덱이 수용 가능한 조건:
-- ✅ 스토리라인이 일관되고 경영진 수준
-- ✅ 모든 슬라이드에 거버닝 메시지 포함
-- ✅ 불릿이 MECE 원칙 준수
-- ✅ 폰트/크기/색상 규칙 준수
-- ✅ Deck Spec이 스키마 검증 통과
-- ✅ 주장에 출처 명시
-- ✅ QA 검사 통과 (오류 0개)
+1. `validate` 통과 여부 확인
+2. `qa` 보고서에서 밀도/경계 경고 확인
+3. `layout_intent`, `content_blocks`, `slide_constraints` 점검
+4. 템플릿 이슈 시 `--template-mode blank`로 분리 테스트
+5. 필요 시 `predeck --update-spec`로 구조 재동기화
 
----
+## Do / Don't
 
-## v2.0 신규 기능
+Do:
+- 리서치 근거를 먼저 강화한 뒤 페이지를 작성
+- 레이아웃 의도와 본문 밀도를 함께 관리
+- 반복 실행으로 품질 게이트를 맞춘다
 
-### 2층 스펙 구조
-- **콘텐츠 스펙**: content_blocks로 bullets/table/chart/kpi 등 타입별 분리
-- **레이아웃 스펙**: layout_intent로 렌더러에 구체적 지시
-- **근거 연결**: evidence 필드로 sources.md 앵커와 직접 연결
-- **슬라이드별 제약**: slide_constraints로 로컬 규칙 적용
-
-### 자동 QA 검사
-- 레이아웃별 불릿 최소/최대/길이 검증
-- 불릿 2줄 초과 가능성 및 레이아웃 경계 이탈 검사
-- 폰트/사이즈 규칙 준수 확인
-- 콘텐츠 밀도 분석
-- 금지어 검사
-- Evidence 포맷 및 sources.md 앵커 존재 검사
-- JSON/Markdown 보고서 출력
-
-### 하이브리드 렌더 워크플로우
-- 1단계: Spec → PPTX 자동 생성 (구조/레이아웃 강제, chart `data_inline`/`data_path` 지원)
-- 2단계: /polish 스킬로 미세 편집 (문장 다듬기, 정렬 보정)
-
----
-
-## Work Mode (작업 방식)
-
-1. **파일 기반 출력 선호**: 채팅만의 컨텐츠보다 파일 출력
-2. **컨텍스트 관리**: 컨텍스트가 커지면 파일로 요약 후 참조
-3. **명시적 가정**: 누락된 정보는 가정을 명시하고 클라이언트 폴더에 기록
-4. **점진적 진행**: 각 단계 완료 후 다음 단계로 진행
-5. **검증 후 진행**: 스키마 검증 통과 후 렌더링
-
----
-
-## 에러 처리
-
-### 스키마 검증 실패
-1. 오류 메시지에서 문제 필드 확인
-2. deck_spec.yaml 수정
-3. 재검증
-
-### 렌더링 실패
-1. 템플릿 파일 존재 확인
-2. tokens.yaml, layouts.yaml 확인
-3. deck_spec.yaml 구조 확인
-
-### 불릿 밀도 경고
-1. 6개 초과 시 슬라이드 분할 고려
-2. 3개 미만 시 내용 보강 또는 다른 슬라이드와 통합
-
-### QA 검사 실패
-1. QA 보고서에서 이슈 확인
-2. deck_spec.yaml 수정
-3. 재렌더링 후 QA 재실행
-
----
-
-## 빠른 시작 예시
-
-```
-사용자: 삼성전자 AI 전환 전략 덱 만들어줘
-
-Claude: 새 프로젝트를 시작하겠습니다.
-
-[1] 클라이언트 팩 생성
-python scripts/deck_cli.py new samsung-ai-strategy
-
-[2] brief.md 작성 - 몇 가지 확인이 필요합니다:
-- 대상 청중은 누구인가요? (예: C-level, 사업부장)
-- 예상 슬라이드 수는 몇 장인가요?
-- 발표 시간은 어느 정도인가요?
-
-사용자: C-level 대상, 15장 내외, 30분 발표야
-
-Claude: 정보 확인했습니다. brief.md를 작성하겠습니다.
-[파일 작성...]
-
-다음 단계로 리서치를 진행할까요?
-아니면 이미 리서치 내용이 있으시면 공유해주세요.
-```
-
----
-
-## 참고 문서
-
-- 스킬 정의: `.claude/skills/*/SKILL.md`
-- 서브에이전트: `.claude/subagents/*.md`
-- 스키마: `schema/deck_spec.schema.json`
-- 예시 스펙: `clients/acme-demo/deck_spec.yaml`
+Don't:
+- 텍스트 밀도 부족 상태로 렌더 결과만 반복 확인
+- 템플릿에만 의존해 내용 품질 문제를 가리기
+- 특정 고객에만 통하는 하드코딩을 공통 로직에 넣기

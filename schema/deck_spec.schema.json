@@ -75,14 +75,14 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 10,
-          "default": 6,
+          "default": 9,
           "description": "기본 최대 불릿 수"
         },
         "default_max_chars_per_bullet": {
           "type": "integer",
           "minimum": 20,
           "maximum": 300,
-          "default": 100,
+          "default": 180,
           "description": "불릿당 기본 최대 문자 수"
         },
         "forbidden_words": {
@@ -215,7 +215,7 @@
           "type": "array",
           "description": "불릿 포인트 목록 (레거시 호환 및 단순 슬라이드용)",
           "default": [],
-          "maxItems": 8,
+          "maxItems": 10,
           "items": {
             "$ref": "#/$defs/bullet"
           }
@@ -408,8 +408,8 @@
         {
           "type": "string",
           "minLength": 1,
-          "maxLength": 100,
-          "description": "단순 불릿 텍스트 (최대 100자, global_constraints로 오버라이드 가능)"
+          "maxLength": 220,
+          "description": "단순 불릿 텍스트 (최대 220자, global_constraints로 오버라이드 가능)"
         },
         {
           "type": "object",
@@ -419,8 +419,8 @@
             "text": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 100,
-              "description": "불릿 텍스트 (최대 100자, global_constraints로 오버라이드 가능)"
+              "maxLength": 220,
+              "description": "불릿 텍스트 (최대 220자, global_constraints로 오버라이드 가능)"
             },
             "level": {
               "type": "integer",
@@ -455,7 +455,7 @@
         "heading": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 50,
+          "maxLength": 70,
           "description": "컬럼 제목"
         },
         "subheading": {
@@ -465,7 +465,7 @@
         },
         "bullets": {
           "type": "array",
-          "maxItems": 6,
+          "maxItems": 8,
           "items": {
             "$ref": "#/$defs/bullet"
           }

@@ -1,0 +1,838 @@
+{
+  "client_name": "ecopro",
+  "generated_at": "2026-02-08T13:30:55",
+  "topic": "배터리소재 성장·수익성 동시 달성",
+  "brief_summary": {
+    "industry": "이차전지 소재 밸류체인 (양극재/전구체/리튬/리사이클)",
+    "region": "한국 + 인도네시아 + 유럽(헝가리) + 북미 고객 대응",
+    "audience": "회장단/대표이사/전략·재무·사업부 임원",
+    "objective": "컨설팅형 전략 덱 (시장-진단-전략-실행 통합)",
+    "slide_range": "28-32",
+    "duration": "45 minutes",
+    "internal_data": "",
+    "language": ""
+  },
+  "key_questions": [
+    "2026~2030년 에코프로의 성장축은 어떤 포트폴리오 조합(Hi-Ni/HVM/LFP/SIB)이 최적인가?",
+    "정책(IRA/EU) 및 공급망 집중 리스크를 반영할 때, 글로벌 운영거점 우선순위는 어떻게 설정해야 하는가?",
+    "실적 반등을 일회성이 아닌 구조적 개선으로 전환하기 위한 KPI·거버넌스 체계는 무엇인가?"
+  ],
+  "issue_tree": [
+    {
+      "branch": "A. 시장/정책 구조",
+      "focus": "수요 성장성, 정책 규제, 글로벌 공급망 변화",
+      "key_questions": [
+        "배터리소재 성장·수익성 동시 달성의 외부 성장 가정은 향후 3~5년간 유효한가?",
+        "정책(IRA/EU/국내 규제) 변화가 제품·거점·원가에 미치는 영향은 무엇인가?",
+        "산업 수급 및 기술 전환(LFP/High-Ni/차세대) 속도는 어느 수준인가?"
+      ],
+      "evidence_anchor": "sources.md#market"
+    },
+    {
+      "branch": "B. 기업 경쟁력 진단",
+      "focus": "포트폴리오, 고객구성, 운영체계, 재무탄력성",
+      "key_questions": [
+        "현재 제품/고객/지역 포트폴리오가 변동성 구간에서 방어 가능한가?",
+        "경쟁사 대비 차별점과 구조적 열위는 무엇이며 얼마나 빠르게 보완 가능한가?",
+        "실적 변동의 핵심 드라이버(가격·물량·수율·재고·환율)는 무엇인가?"
+      ],
+      "evidence_anchor": "sources.md#client"
+    },
+    {
+      "branch": "C. 전략 옵션/실행력",
+      "focus": "옵션 우선순위, 가치 검증, 실행 거버넌스",
+      "key_questions": [
+        "어떤 전략 옵션 조합이 성장성과 수익성의 동시 달성 확률을 높이는가?",
+        "CAPEX·운영개선·조직변화의 단계별 우선순위는 무엇인가?",
+        "실행 실패를 줄이기 위한 KPI/거버넌스/리스크 통제는 어떻게 설계할 것인가?"
+      ],
+      "evidence_anchor": "sources.md#policy"
+    }
+  ],
+  "hypotheses": [
+    {
+      "name": "H1 공격 시나리오",
+      "thesis": "배터리소재 성장·수익성 동시 달성에서 성장 투자(제품/거점)를 선제 확대하면 시장점유율과 장기 수익성 동시 개선 가능",
+      "required_evidence": "수요 확정 물량, 고객 계약 강도, 신규 CAPA 램프업 리드타임",
+      "risk": "정책/수요 반전 시 고정비 부담 확대"
+    },
+    {
+      "name": "H2 방어 시나리오",
+      "thesis": "투자 속도를 낮추고 현금흐름/재고/원가 통제를 우선하면 하방 리스크 방어에 유리",
+      "required_evidence": "현금흐름 민감도, 차입 만기구조, 재고회전/가동률",
+      "risk": "회복 구간에서 성장 기회 상실"
+    },
+    {
+      "name": "H3 균형 시나리오",
+      "thesis": "핵심 성장 축은 유지하되 KPI 게이트 기반 단계투자로 자본 효율성과 민첩성을 동시에 확보",
+      "required_evidence": "KPI 트리거 정의, 투자 게이트 기준, 운영개선의 정량 효과",
+      "risk": "의사결정 지연 시 실행 타이밍 손실"
+    }
+  ],
+  "source_quality": {
+    "score": 82,
+    "total_items": 26,
+    "avg_trust": 80.8,
+    "avg_freshness": 66.5,
+    "tier_counts": {
+      "C": 7,
+      "A": 14,
+      "D": 5
+    },
+    "required_section_hit": 5
+  },
+  "evidence_library": [
+    {
+      "title": "Skepticism persists over EcoPro BM despite 2025 profit rebound - The Korea Times",
+      "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxPSVk5N3FsdldyMEVuaHhaNmo3VV95REFGeDM0aTkwMXY2aTgzeGg1XzhNZm91T1lBeHNTcXg4eEZsMHA1LUFOV1NGcnF5TXZ1TXYzb3RtMjNjM251S1J2TVhwQk93WlBQTlFvbXZ0MnRkcXJwRkM2UXZKSHpKVW1MQ29ibmM3TERvZF9XSUQwaWhGZ2JjeDhqTndHenJSbEhPeTViUnNXelFza0RyOV9tZEFjbzdfM3dqU0YyQ013RGjSAcABQVVfeXFMT0lZOTdxbHZXcjBFbmh4WjZqN1VfeURBRngzNGk5MDF2Nmk4M3hoNV84TWZvdU9ZQXhzU3F4OHhGbDBwNS1BTldTRnJxeU12dU12M290bTIzYzNudUtSdk1YcEJPd1pQUE5Rb212dDJ0ZHFycEZDNlF2Skh6SlVtTENvYm5jN0xEb2RfV0lEMGloRmdiY3g4ak53R3pyUmxIT3k1YlJzV3pRc2tEcjlfbWRBY283XzN3alNGMkNNd0Ro?oc=5",
+      "summary": "Skepticism persists over EcoPro BM despite 2025 profit rebound The Korea Times",
+      "published_at": "2026-02-06T16:00:00+00:00",
+      "published_raw": "Fri, 06 Feb 2026 16:00:00 GMT",
+      "domain": "news.google.com",
+      "source_name": "The Korea Times",
+      "source_kind": "news_rss",
+      "query": "ecopro latest earnings",
+      "trust_score": 74,
+      "freshness_score": 98,
+      "topical_score": 57,
+      "evidence_score": 77,
+      "trust_tier": "C",
+      "section": "client"
+    },
+    {
+      "title": "Ecopro, Ecopro BM return to profitability - 매일경제",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE5QU044ZnI0ZVRuVTBhcHF2OHdIN1haYkR2X0p6SGw4SGhLZ25zVTZneU9DT0RPOWs4NTV6OGJoazQ2TXBNYkdWVmsxamF2a3pBM0hVX2NlMA?oc=5",
+      "summary": "Ecopro, Ecopro BM return to profitability 매일경제",
+      "published_at": "2026-02-06T01:28:57+00:00",
+      "published_raw": "Fri, 06 Feb 2026 01:28:57 GMT",
+      "domain": "news.google.com",
+      "source_name": "매일경제",
+      "source_kind": "news_rss",
+      "query": "ecopro latest earnings",
+      "trust_score": 74,
+      "freshness_score": 98,
+      "topical_score": 57,
+      "evidence_score": 77,
+      "trust_tier": "C",
+      "section": "client"
+    },
+    {
+      "title": "Ecopro swings to profit in 2025 on Indonesia investments - The Korea Herald",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE5YRE80X2JuNWFDLS1kNzdSbFotVFc3QXlFTUY1UFoyOU5vU2k5emNJelFWVjhZQ3YtR0FtSmRXWUxhTHdDdUMwNXlEMnkyU290NzFTNDlFWQ?oc=5",
+      "summary": "Ecopro swings to profit in 2025 on Indonesia investments The Korea Herald",
+      "published_at": "2026-02-05T08:52:58+00:00",
+      "published_raw": "Thu, 05 Feb 2026 08:52:58 GMT",
+      "domain": "news.google.com",
+      "source_name": "The Korea Herald",
+      "source_kind": "news_rss",
+      "query": "ecopro latest earnings",
+      "trust_score": 74,
+      "freshness_score": 98,
+      "topical_score": 57,
+      "evidence_score": 77,
+      "trust_tier": "C",
+      "section": "client"
+    },
+    {
+      "title": "EcoPro sets up European sales unit in Germany - The Korea Herald",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE5iQ2NrMHJBNEljUUJSMkNSQWJRTzY1ZG5ZYklKY09MSXg0S2dKTXpxRHNtdXRMeENSMXU2eGhDZE5vUE5lYS11MlNoaGYySWxtNDg2ZnZ3RQ?oc=5",
+      "summary": "EcoPro sets up European sales unit in Germany The Korea Herald",
+      "published_at": "2026-01-28T05:09:02+00:00",
+      "published_raw": "Wed, 28 Jan 2026 05:09:02 GMT",
+      "domain": "news.google.com",
+      "source_name": "The Korea Herald",
+      "source_kind": "news_rss",
+      "query": "ecopro strategy 2026",
+      "trust_score": 74,
+      "freshness_score": 92,
+      "topical_score": 57,
+      "evidence_score": 76,
+      "trust_tier": "C",
+      "section": "policy"
+    },
+    {
+      "title": "ECOPRO Rally Spurs Investor Exits Post-Recovery - 조선일보",
+      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPb2l0WGZkanh5TW50dndVbFlKWDlWQ1NaYUlIS1N2Y2hUSmFFejhhX2pwVF9ZTnI2YldIV2NUdkNfRnhKNU8yc292amhRaHVVVzB4WWZUYUx5SGdYUGM2R3pZc1NaNDNGLVJWTm9fOGxBT3k2Z3gwNmJubEZYTWk3MXVFTkJPNU1vbEpUd3NB?oc=5",
+      "summary": "ECOPRO Rally Spurs Investor Exits Post-Recovery 조선일보",
+      "published_at": "2026-01-29T08:00:00+00:00",
+      "published_raw": "Thu, 29 Jan 2026 08:00:00 GMT",
+      "domain": "news.google.com",
+      "source_name": "조선일보",
+      "source_kind": "news_rss",
+      "query": "ecopro strategy 2026",
+      "trust_score": 72,
+      "freshness_score": 92,
+      "topical_score": 57,
+      "evidence_score": 75,
+      "trust_tier": "C",
+      "section": "client"
+    },
+    {
+      "title": "EcoPro Establishes European Subsidiary in Germany, Accelerates Expansion into European Market - 아시아경제",
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE85b0dhRUNtSzZVUW9PVXRsanRCdDZEWTFvSXhhYU1EY21NdXdYSU93NjJvTXpkSURsV3ZCTFhpZEFEU0EzczBNczUtRmJTOGM1Y1pERVlNX1JCRGtkaU5Xc25UNA?oc=5",
+      "summary": "EcoPro Establishes European Subsidiary in Germany, Accelerates Expansion into European Market 아시아경제",
+      "published_at": "2026-01-28T00:31:00+00:00",
+      "published_raw": "Wed, 28 Jan 2026 00:31:00 GMT",
+      "domain": "news.google.com",
+      "source_name": "아시아경제",
+      "source_kind": "news_rss",
+      "query": "ecopro strategy 2026",
+      "trust_score": 70,
+      "freshness_score": 92,
+      "topical_score": 57,
+      "evidence_score": 74,
+      "trust_tier": "C",
+      "section": "market"
+    },
+    {
+      "title": "IR자료 | EcoPro",
+      "url": "https://www.ecopro.co.kr/sub020403/view/id/2012",
+      "summary": "EcoPro",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "ecopro.co.kr",
+      "source_name": "ecopro.co.kr",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "client",
+      "trust_score": 94,
+      "freshness_score": 45,
+      "topical_score": 57,
+      "evidence_score": 73,
+      "trust_tier": "A",
+      "section": "client"
+    },
+    {
+      "title": "IR자료 | EcoPro",
+      "url": "https://www.ecopro.co.kr/sub020403/view/id/1941",
+      "summary": "EcoPro",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "ecopro.co.kr",
+      "source_name": "ecopro.co.kr",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "client",
+      "trust_score": 94,
+      "freshness_score": 45,
+      "topical_score": 57,
+      "evidence_score": 73,
+      "trust_tier": "A",
+      "section": "client"
+    },
+    {
+      "title": "IR자료 | EcoPro",
+      "url": "https://www.ecopro.co.kr/sub020403/view/id/1875",
+      "summary": "EcoPro",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "ecopro.co.kr",
+      "source_name": "ecopro.co.kr",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "client",
+      "trust_score": 94,
+      "freshness_score": 45,
+      "topical_score": 57,
+      "evidence_score": 73,
+      "trust_tier": "A",
+      "section": "client"
+    },
+    {
+      "title": "IR자료 | EcoPro",
+      "url": "https://www.ecopro.co.kr/sub020403/view/id/1804",
+      "summary": "EcoPro",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "ecopro.co.kr",
+      "source_name": "ecopro.co.kr",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "client",
+      "trust_score": 94,
+      "freshness_score": 45,
+      "topical_score": 57,
+      "evidence_score": 73,
+      "trust_tier": "A",
+      "section": "client"
+    },
+    {
+      "title": "IR자료 | EcoPro",
+      "url": "https://www.ecopro.co.kr/sub020403/view/id/1743",
+      "summary": "EcoPro",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "ecopro.co.kr",
+      "source_name": "ecopro.co.kr",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "client",
+      "trust_score": 94,
+      "freshness_score": 45,
+      "topical_score": 57,
+      "evidence_score": 73,
+      "trust_tier": "A",
+      "section": "client"
+    },
+    {
+      "title": "Executive summary – Global EV Outlook 2025 – Analysis - IEA",
+      "url": "https://www.iea.org/reports/global-ev-outlook-2025/executive-summary",
+      "summary": "Global EV Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "iea.org",
+      "source_name": "iea.org",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "market",
+      "trust_score": 95,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 71,
+      "trust_tier": "A",
+      "section": "market"
+    },
+    {
+      "title": "Electric vehicle batteries – Global EV Outlook 2025 – Analysis - IEA",
+      "url": "https://www.iea.org/reports/global-ev-outlook-2025/electric-vehicle-batteries",
+      "summary": "Global EV Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "iea.org",
+      "source_name": "iea.org",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "market",
+      "trust_score": 95,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 71,
+      "trust_tier": "A",
+      "section": "market"
+    },
+    {
+      "title": "Global EV Outlook 2024 – Analysis - IEA",
+      "url": "https://www.iea.org/reports/global-ev-outlook-2024",
+      "summary": "Global EV Outlook 2024 - Analysis and key findings. A report by the International Energy Agency.",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "iea.org",
+      "source_name": "iea.org",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "market",
+      "trust_score": 95,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 71,
+      "trust_tier": "A",
+      "section": "market"
+    },
+    {
+      "title": "Executive summary – Global Critical Minerals Outlook 2025 – Analysis - IEA",
+      "url": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
+      "summary": "Global Critical Minerals Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "iea.org",
+      "source_name": "iea.org",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "raw-materials",
+      "trust_score": 95,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 71,
+      "trust_tier": "A",
+      "section": "market"
+    },
+    {
+      "title": "Mineral commodity summaries 2025 | U.S. Geological Survey",
+      "url": "https://www.usgs.gov/publications/mineral-commodity-summaries-2025",
+      "summary": "Introduction Each mineral commodity chapter of the 2025 edition of the U.S. Geological Survey (USGS) Mineral Commodity Summaries (MCS) includes information on events, trends, and issues for each mineral commodity as well as discussions and tabular presentations on domestic industry structure, Government programs, tariffs, 5-year salient statistics, and world production, reserves, and resources",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "usgs.gov",
+      "source_name": "usgs.gov",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "raw-materials",
+      "trust_score": 93,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 70,
+      "trust_tier": "A",
+      "section": "client"
+    },
+    {
+      "title": "U.S. Department of the Treasury Releases Final Rules to Lower Consumer Costs, Continue U.S. Manufacturing Boom in Batteries and Clean Vehicles, Strengthen Energy Security | U.S. Department of the Treasury",
+      "url": "https://home.treasury.gov/news/press-releases/jy2323",
+      "summary": "WASHINGTON – Today the U.S. Department of the Treasury and Internal Revenue Service (IRS) released final rules on the clean vehicle provisions of the Inflation Reduction Act (IRA) that are lowering costs for consumers, spurring a boom in U.S. manufacturing, and strengthening energy security by building resilient supply chains with allies and partners. Since President Biden was elected, $173 billion in private-sector…",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "home.treasury.gov",
+      "source_name": "home.treasury.gov",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "policy",
+      "trust_score": 93,
+      "freshness_score": 45,
+      "topical_score": 47,
+      "evidence_score": 70,
+      "trust_tier": "A",
+      "section": "policy"
+    },
+    {
+      "title": "POSCO Future M Announces 2024 Financial Results - NEWSROOM - POSCO FUTURE M",
+      "url": "https://www.poscofuturem.com/en/pr/view.do?num=899",
+      "summary": "POSCO FUTURE M is opening up the future of materials. Meet POSCO FUTURE M",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "poscofuturem.com",
+      "source_name": "poscofuturem.com",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "competitors",
+      "trust_score": 94,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 70,
+      "trust_tier": "A",
+      "section": "competitors"
+    },
+    {
+      "title": "Full Year Results 2024 | Umicore",
+      "url": "https://www.umicore.com/en/media/newsroom/full-year-results-2024/",
+      "summary": "In 2024, headwinds impacted Umicore but our foundation businesses remained robust, delivering an overall performance in line with expectations.",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "umicore.com",
+      "source_name": "umicore.com",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "competitors",
+      "trust_score": 94,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 70,
+      "trust_tier": "A",
+      "section": "competitors"
+    },
+    {
+      "title": "EcoPro shares surge 57% in a week - 조선일보",
+      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOdkRZd0cwYkxDRm4zaFpYV1R5cGp4WkNXRU4wS3hDY05XcExFbWFCVkU4Zk12S3dMUVlWLUdJMGlSZEZIWk5DMjRjeDFyWGNtbVZLY0dCdldwbmowRklwTXZ3bWpHbmdaMHB4Zy1mZjFaal9UM2k4cGVaSDd6ZjV6RkVOQ3d4UmxKWjhhT3RB?oc=5",
+      "summary": "EcoPro shares surge 57% in a week 조선일보",
+      "published_at": "2025-10-17T07:00:00+00:00",
+      "published_raw": "Fri, 17 Oct 2025 07:00:00 GMT",
+      "domain": "news.google.com",
+      "source_name": "조선일보",
+      "source_kind": "news_rss",
+      "query": "ecopro latest earnings",
+      "trust_score": 72,
+      "freshness_score": 72,
+      "topical_score": 57,
+      "evidence_score": 69,
+      "trust_tier": "C",
+      "section": "client"
+    },
+    {
+      "title": "Regulation - 2023/1542 - EN - EUR-Lex",
+      "url": "https://eur-lex.europa.eu/eli/reg/2023/1542/oj",
+      "summary": "Regulation - 2023/1542 - EN - EUR-Lex × Skip to main content Log in My EUR-Lex My EUR-Lex Sign in Register My recent searches (0) English English Select your language Official EU languages: bg български es Español cs Čeština da Dansk de Deutsch et Eesti keel el Ελληνικά en English fr Français ga Gaeilge hr Hrvatski it…",
+      "published_at": null,
+      "published_raw": "",
+      "domain": "eur-lex.europa.eu",
+      "source_name": "eur-lex.europa.eu",
+      "source_kind": "listed_source",
+      "query": "",
+      "section_hint": "policy",
+      "trust_score": 92,
+      "freshness_score": 45,
+      "topical_score": 45,
+      "evidence_score": 69,
+      "trust_tier": "A",
+      "section": "policy"
+    },
+    {
+      "title": "EcoPro BM Hungary: Safety, Innovation, and Community – A New Era in Debrecen - The Debrecen Sun -",
+      "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxOc2NFbkRTVVNRN1dwMkNrMHI2Mm81ZTFYbkFyZFpXSEU2aTFXNzZQVGl2c3ZfV3VPYzRSY0NGcm5EYjlTSzRpSkR5V1NjejNwaDdNTnRERUlzcGw5ZERySG9mUlFZOUp2SVdOM0k5RFVaUU1kcFNYNXp5TXdyVTJZTV9OZHZUdGdDLTZ0LVlpcjM0VGRla0xXd2N4dUVBeWttWmhvNFNyc3lTdjlXSFFYUGlDSXNQR0E?oc=5",
+      "summary": "EcoPro BM Hungary: Safety, Innovation, and Community – A New Era in Debrecen The Debrecen Sun -",
+      "published_at": "2026-02-06T14:06:07+00:00",
+      "published_raw": "Fri, 06 Feb 2026 14:06:07 GMT",
+      "domain": "news.google.com",
+      "source_name": "The Debrecen Sun -",
+      "source_kind": "news_rss",
+      "query": "ecopro strategy 2026",
+      "trust_score": 55,
+      "freshness_score": 98,
+      "topical_score": 57,
+      "evidence_score": 67,
+      "trust_tier": "D",
+      "section": "client"
+    },
+    {
+      "title": "Public companies account for 43% of Ecopro Materials Co., Ltd.'s (KRX:450080) ownership, while individual investors account for 30% - simplywall.st",
+      "url": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxOSkhMQzBPUC01elYtNVl2Q3RsY2QwekZ1U3kxeEtuNzZpV09mN2w4bkZpU2QwRGdkTzFZTHJOXzFSWlJ2TndDbExLWTlwS0RuWkxSX0d1Y2pxRXVJckFycVRfYTZrSUJ1Wm9JVDF2Z29wT3hGRG9PNGdHOVk0R0stMmg0a2MzOE03YnJndUlKM1p5dEV5WFJsUExWN0luS1J5UzNxUHpyTnluQndtNG8waEdHUWtJRGVxX2tVNEN1S1daeEpjU3VXc0ZhamliVW5lRWNOUk1uRDQtX2ttblJldQ?oc=5",
+      "summary": "Public companies account for 43% of Ecopro Materials Co., Ltd.'s (KRX:450080) ownership, while individual investors account for 30% simplywall.st",
+      "published_at": "2026-02-03T01:12:46+00:00",
+      "published_raw": "Tue, 03 Feb 2026 01:12:46 GMT",
+      "domain": "news.google.com",
+      "source_name": "simplywall.st",
+      "source_kind": "news_rss",
+      "query": "ecopro latest earnings",
+      "trust_score": 55,
+      "freshness_score": 98,
+      "topical_score": 57,
+      "evidence_score": 67,
+      "trust_tier": "D",
+      "section": "client"
+    },
+    {
+      "title": "Ecopro Hn. Co., Ltd.'s (KOSDAQ:383310) Stock is Soaring But Financials Seem Inconsistent: Will The Uptrend Continue? - simplywall.st",
+      "url": "https://news.google.com/rss/articles/CBMi4wFBVV95cUxQUzNhYU1iaUJKNGNuMXpuOVBUX2FwVlR4Y2ZhSlZWNVVqM2IwUXpxc1JWMmxDb0ZBenh2bW0zWTdlYVZOa0pib2h2bW9BWFRVeExZeHU5VWVEbzdXLWptOEtfcWNIMy1DRnBaTlRxVDRLQUUwWUlZREFTNkVEQWgxX1BIQ1RleHRFYXhYaG5GY2hkMEcxUEFwRF94Z1N0dFlJTkczOTJyS09uQVN3Q1A2OWRETDFnb1lfbkRQN2FwcG9VUUN1NllQRDY2S056SVgwbU5BZTh2c3dYYmRrcE9aRHdzNNIB6AFBVV95cUxPZTZER3dpZlV5STJzY3MzUW80dk5Uay14UlE1T3o2VFVQWWtNbGpHdEtVRGVYdmF4ZjFQcXBjMU5kX0RLcFp1eFpQbktBTGtmWDdnNmpvUkFCTFVQc2JXNndOaUROQTNFbDV6OWlKMTFsMkRncmx2TFhBZ3N1WUlJNjVKUUp6Z29OTUM2S1FoUlhTdTJyUUdkNUF5ZkNQcW9jdkFOeV9TZXRiS3Vld3czY0FpOEVZdFJ0cnZwYnBtemRKXzdYd3pDRjNHUWJZaTBMYkJqcjZVWmFzU0ZiR0xYWUdPSzZJakRw?oc=5",
+      "summary": "Ecopro Hn. Co., Ltd.'s (KOSDAQ:383310) Stock is Soaring But Financials Seem Inconsistent: Will The Uptrend Continue? simplywall.st",
+      "published_at": "2026-01-27T08:00:00+00:00",
+      "published_raw": "Tue, 27 Jan 2026 08:00:00 GMT",
+      "domain": "news.google.com",
+      "source_name": "simplywall.st",
+      "source_kind": "news_rss",
+      "query": "ecopro latest earnings",
+      "trust_score": 55,
+      "freshness_score": 92,
+      "topical_score": 57,
+      "evidence_score": 66,
+      "trust_tier": "D",
+      "section": "client"
+    },
+    {
+      "title": "Olfactory discovery: Orlandi powers up its turnkey solutions strategy - Premium Beauty News",
+      "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxNQU9QTW9YSGZmVUt3SVpkdl9BTkJ2d3VxZGpkbHJMUFR5aGRHRmZZdy1QelpqeDg0SzQxUHZ6dXJGTjJKYVdjd2ktOUdFLXNNTDl1UjZIUEFXSTFGYVNja2tNZU5zbTBQakZ1OFJpNW8wcXVsVlV5a2lPaXhwOVQtZ3ZZWQ?oc=5",
+      "summary": "Olfactory discovery: Orlandi powers up its turnkey solutions strategy Premium Beauty News",
+      "published_at": "2026-02-02T23:43:17+00:00",
+      "published_raw": "Mon, 02 Feb 2026 23:43:17 GMT",
+      "domain": "news.google.com",
+      "source_name": "Premium Beauty News",
+      "source_kind": "news_rss",
+      "query": "ecopro strategy 2026",
+      "trust_score": 55,
+      "freshness_score": 98,
+      "topical_score": 45,
+      "evidence_score": 65,
+      "trust_tier": "D",
+      "section": "client"
+    },
+    {
+      "title": "EcoPro Materials and Green Li-ion Announce LOI to Establish Long-Term Strategic Partnership for Recycled NCM Hydroxide Supply - PR Newswire",
+      "url": "https://news.google.com/rss/articles/CBMijgJBVV95cUxOS0U1Y2FUNkdkUkhLY0x3M20zN0V6amhDbGVHLWlJdlBQU0J5RXFnd1VteFNxMVMxRHF6QnhiSVhiYVJYSHBxV0t3RmV6VDg4NkdnNFYxQWxaVUZ1NFFwcDRkdjU3Q0JYQ09pc01RbkNTNFV0QU9hT2d4M00xZndIek5DdndZeVhhTHdyRFRZZGlDUmVqcURhdXprSnBObTJCNmcwLURYTDJXb05TRjRqa21jSENUczJkY0JUVmUzZ3JGUXQ2QlUwQTBjZGZUWnVUT2huZzdsekt1MjRzYy12UFZJNzdnRXdVU29IdWo0NW5fcjRTbDZUZzhqRG56d2h2TkdEUFltc01BTmF1WFE?oc=5",
+      "summary": "EcoPro Materials and Green Li-ion Announce LOI to Establish Long-Term Strategic Partnership for Recycled NCM Hydroxide Supply PR Newswire",
+      "published_at": "2025-09-19T07:00:00+00:00",
+      "published_raw": "Fri, 19 Sep 2025 07:00:00 GMT",
+      "domain": "news.google.com",
+      "source_name": "PR Newswire",
+      "source_kind": "news_rss",
+      "query": "ecopro strategy 2026",
+      "trust_score": 55,
+      "freshness_score": 72,
+      "topical_score": 57,
+      "evidence_score": 60,
+      "trust_tier": "D",
+      "section": "client"
+    }
+  ],
+  "section_insights": {
+    "client": [
+      "Skepticism persists over EcoPro BM despite 2025 profit rebound - The Korea Times: Skepticism persists over EcoPro BM despite 2025 profit rebound The Korea Times",
+      "Ecopro, Ecopro BM return to profitability - 매일경제: Ecopro, Ecopro BM return to profitability 매일경제",
+      "Ecopro swings to profit in 2025 on Indonesia investments - The Korea Herald: Ecopro swings to profit in 2025 on Indonesia investments The Korea Herald",
+      "ECOPRO Rally Spurs Investor Exits Post-Recovery - 조선일보: ECOPRO Rally Spurs Investor Exits Post-Recovery 조선일보"
+    ],
+    "policy": [
+      "EcoPro sets up European sales unit in Germany - The Korea Herald: EcoPro sets up European sales unit in Germany The Korea Herald",
+      "U.S. Department of the Treasury Releases Final Rules to Lower Consumer Costs, Continue U.S. Manufacturing Boom in Batteries and Clean Vehicles, Strengthen Energy Security | U.S. Department of the Treasury: WASHINGTON –…",
+      "Regulation - 2023/1542 - EN - EUR-Lex: Regulation - 2023/1542 - EN - EUR-Lex × Skip to main content Log in My EUR-Lex My EUR-Lex Sign in Register My recent searches (0) English English Select your language Official EU l…"
+    ],
+    "market": [
+      "EcoPro Establishes European Subsidiary in Germany, Accelerates Expansion into European Market - 아시아경제: EcoPro Establishes European Subsidiary in Germany, Accelerates Expansion into European Market 아시아경제",
+      "Executive summary – Global EV Outlook 2025 – Analysis - IEA: Global EV Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "Electric vehicle batteries – Global EV Outlook 2025 – Analysis - IEA: Global EV Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "Global EV Outlook 2024 – Analysis - IEA: Global EV Outlook 2024 - Analysis and key findings. A report by the International Energy Agency."
+    ],
+    "competitors": [
+      "POSCO Future M Announces 2024 Financial Results - NEWSROOM - POSCO FUTURE M: POSCO FUTURE M is opening up the future of materials. Meet POSCO FUTURE M",
+      "Full Year Results 2024 | Umicore: In 2024, headwinds impacted Umicore but our foundation businesses remained robust, delivering an overall performance in line with expectations."
+    ]
+  },
+  "financial_snapshot": [
+    "2025Q4 기준 매출 7.336조원, 영업이익 0.662조원 (내부 CSV)",
+    "매출 QoQ -23.5% (2025Q3 → 2025Q4)",
+    "영업이익 2025Q3 1.494조원 → 2025Q4 0.662조원"
+  ],
+  "pdf_fact_lines": [
+    "ecopro_2025q4_ir.pdf: Metal-Driven Upside인도네시아 니켈 투자 및 트레이딩 이익 증가전구체 사업 수익성 개선, Green Eco Nickel 제련 마진 증가리튬 판가-원가 스프레드 확대, 실적 턴어라운드리사이클링 공정 및 Closed-Loop System 사업성 강화",
+    "ecopro_2025q4_ir.pdf: * 인니 제련소 투자 관련 연평균이익 전분기 추정 대비 20% 이상 상향* 리튬 시세 $12 기준 대비 추정 영업이익 증가율 100% 이상",
+    "ecopro_2025q4_ir.pdf: 전방 반도체 고객사의 투자 계획 조정 및 가동률 변동으로온실가스 저감 장치 공급 시차 발생하여 연간 매출 감소제품 Mix 변화 영향으로 전기 대비 영업이익률 하락",
+    "ecopro_2025q4_ir.pdf: 49%23%19%5%4%284케미컬필터온실가스저감미세먼지저감수처리기타영업실적매출액",
+    "ecopro_2025q4_ir.pdf: 영업이익57 76%10% 9.5%",
+    "ecopro_2025q4_ir.pdf: (단위 : 억원) (단위 : 억원)부문별 매출",
+    "ecopro_2025q4_ir.pdf: 실적전망실적분석반도체 업황 회복 및 고객사 투자 가속화에 따라온실가스 저감 및 케미컬 필터 사업의 전반적인 실적 회복세 예상해외 LNG 발전소 중심의 신규 수주 파이프라인 확보를 통해미세먼지 저감 사업의 매출 성장 기대",
+    "ecopro_2025q4_ir.pdf: 매입채무 증가로 인해 부채비율 소폭 상승하였으나안정적인 재무구조 지속 유지재무분석",
+    "ecopro_2025q4_ir.pdf: 58%44%51%24.4Q 25.3Q 25.4Q재무현황부채비율※ 부채비율 : 부채총액 / 순자산",
+    "ecopro_2025q4_ir.pdf: (단위 : 억원)매출액영업실적",
+    "ecopro_2025q4_ir.pdf: 2,9983,9252024 2025영업이익-25133%-40%2.9%-647-654-22%-17%25.4Q",
+    "ecopro_2025q4_ir.pdf: (단위 : 억원)영업실적25년 4분기 경영실적연결매출액",
+    "ecopro_2025q4_ir.pdf: 영업이익1,494662%16%9.0%-2,9302,332-9.4%6.8%",
+    "ecopro_2025q4_ir.pdf: 지주사자체사업(상품매출,지분법 외)운송사업및VC투자업등기타특수가스사업리사이클사업리튬사업(단위 : 억원)영업실적 실적분석 및 전망지주회사 자체 사업 지속 확대매출액",
+    "ecopro_2025q4_ir.pdf: (단위 : 억원)※ 부채비율 : 부채총액 / 순자산 (각 사 별도 기준)부채비율재무정보 재무현황25년 4분기 경영실적",
+    "ecopro_2025q3_ir.pdf: 39%22%13%21%5%390케미컬필터온실가스저감미세먼지저감수처리기타영업실적매출액",
+    "ecopro_2025q3_ir.pdf: 영업이익36 57EBITDA51 72",
+    "ecopro_2025q3_ir.pdf: (단위 : 억원) (단위 : 억원)부문별 매출",
+    "ecopro_2025q3_ir.pdf: 128%47%44%24.3Q 25.2Q 25.3Q재무현황부채비율※ 부채비율 : 부채총액 / 순자산",
+    "ecopro_2025q3_ir.pdf: (단위 : 억원)전구체(외부)전구체(내부)황산메탈기타(단위 : 억원)매출액부문별 매출영업실적",
+    "ecopro_2025q3_ir.pdf: 78163225.2Q 25.3Q영업이익-37 -385당기순이익-8 -277-288-251-3351,619",
+    "ecopro_2025q3_ir.pdf: (단위 : 억원)영업실적 실적분석25년 3분기 경영실적연결매출액",
+    "ecopro_2025q3_ir.pdf: 지주사자체사업(상품매출,지분법 외)운송사업및VC투자업등기타특수가스사업리사이클사업리튬사업(단위 : 억원)영업실적 실적분석 및 전망지주사 자체 사업 확대매출액",
+    "ecopro_2025q3_ir.pdf: (단위 : 억원)※ 부채비율 : 부채총액 / 순자산 (각 사 별도 기준)부채비율재무정보 재무현황25년 3분기 경영실적"
+  ],
+  "fact_bank": [
+    {
+      "fact": "2025Q4 기준 매출 7.336조원, 영업이익 0.662조원 (내부 CSV)",
+      "section": "finance",
+      "source": "internal_csv",
+      "confidence": "high"
+    },
+    {
+      "fact": "매출 QoQ -23.5% (2025Q3 → 2025Q4)",
+      "section": "finance",
+      "source": "internal_csv",
+      "confidence": "high"
+    },
+    {
+      "fact": "영업이익 2025Q3 1.494조원 → 2025Q4 0.662조원",
+      "section": "finance",
+      "source": "internal_csv",
+      "confidence": "high"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: Metal-Driven Upside인도네시아 니켈 투자 및 트레이딩 이익 증가전구체 사업 수익성 개선, Green Eco Nickel 제련 마진 증가리튬 판가-원가 스프레드 확대, 실적 턴어라운드리사이클링 공정 및 Closed-Loop System 사업성 강화",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: * 인니 제련소 투자 관련 연평균이익 전분기 추정 대비 20% 이상 상향* 리튬 시세 $12 기준 대비 추정 영업이익 증가율 100% 이상",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: 전방 반도체 고객사의 투자 계획 조정 및 가동률 변동으로온실가스 저감 장치 공급 시차 발생하여 연간 매출 감소제품 Mix 변화 영향으로 전기 대비 영업이익률 하락",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: 49%23%19%5%4%284케미컬필터온실가스저감미세먼지저감수처리기타영업실적매출액",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: 영업이익57 76%10% 9.5%",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: (단위 : 억원) (단위 : 억원)부문별 매출",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: 실적전망실적분석반도체 업황 회복 및 고객사 투자 가속화에 따라온실가스 저감 및 케미컬 필터 사업의 전반적인 실적 회복세 예상해외 LNG 발전소 중심의 신규 수주 파이프라인 확보를 통해미세먼지 저감 사업의 매출 성장 기대",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: 매입채무 증가로 인해 부채비율 소폭 상승하였으나안정적인 재무구조 지속 유지재무분석",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: 58%44%51%24.4Q 25.3Q 25.4Q재무현황부채비율※ 부채비율 : 부채총액 / 순자산",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ecopro_2025q4_ir.pdf: (단위 : 억원)매출액영업실적",
+      "section": "finance",
+      "source": "research/raw PDF",
+      "confidence": "medium"
+    },
+    {
+      "fact": "Skepticism persists over EcoPro BM despite 2025 profit rebound - The Korea Times — Skepticism persists over EcoPro BM despite 2025 profit rebound The Korea Times",
+      "section": "client",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "Ecopro, Ecopro BM return to profitability - 매일경제 — Ecopro, Ecopro BM return to profitability 매일경제",
+      "section": "client",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "Ecopro swings to profit in 2025 on Indonesia investments - The Korea Herald — Ecopro swings to profit in 2025 on Indonesia investments The Korea Herald",
+      "section": "client",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "EcoPro sets up European sales unit in Germany - The Korea Herald — EcoPro sets up European sales unit in Germany The Korea Herald",
+      "section": "policy",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "ECOPRO Rally Spurs Investor Exits Post-Recovery - 조선일보 — ECOPRO Rally Spurs Investor Exits Post-Recovery 조선일보",
+      "section": "client",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "EcoPro Establishes European Subsidiary in Germany, Accelerates Expansion into European Market - 아시아경제 — EcoPro Establishes European Subsidiary in Germany, Accelerates Expansion into European Market 아시아경제",
+      "section": "market",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "IR자료 | EcoPro — EcoPro",
+      "section": "client",
+      "source": "ecopro.co.kr",
+      "confidence": "high"
+    },
+    {
+      "fact": "IR자료 | EcoPro — EcoPro",
+      "section": "client",
+      "source": "ecopro.co.kr",
+      "confidence": "high"
+    },
+    {
+      "fact": "IR자료 | EcoPro — EcoPro",
+      "section": "client",
+      "source": "ecopro.co.kr",
+      "confidence": "high"
+    },
+    {
+      "fact": "IR자료 | EcoPro — EcoPro",
+      "section": "client",
+      "source": "ecopro.co.kr",
+      "confidence": "high"
+    },
+    {
+      "fact": "IR자료 | EcoPro — EcoPro",
+      "section": "client",
+      "source": "ecopro.co.kr",
+      "confidence": "high"
+    },
+    {
+      "fact": "Executive summary – Global EV Outlook 2025 – Analysis - IEA — Global EV Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "section": "market",
+      "source": "iea.org",
+      "confidence": "high"
+    },
+    {
+      "fact": "Electric vehicle batteries – Global EV Outlook 2025 – Analysis - IEA — Global EV Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "section": "market",
+      "source": "iea.org",
+      "confidence": "high"
+    },
+    {
+      "fact": "Global EV Outlook 2024 – Analysis - IEA — Global EV Outlook 2024 - Analysis and key findings. A report by the International Energy Agency.",
+      "section": "market",
+      "source": "iea.org",
+      "confidence": "high"
+    },
+    {
+      "fact": "Executive summary – Global Critical Minerals Outlook 2025 – Analysis - IEA — Global Critical Minerals Outlook 2025 - Analysis and key findings. A report by the International Energy Agency.",
+      "section": "market",
+      "source": "iea.org",
+      "confidence": "high"
+    },
+    {
+      "fact": "Mineral commodity summaries 2025 | U.S. Geological Survey — Introduction Each mineral commodity chapter of the 2025 edition of the U.S. Geological Survey (USGS) Mineral Commodity Summaries…",
+      "section": "client",
+      "source": "usgs.gov",
+      "confidence": "high"
+    },
+    {
+      "fact": "U.S. Department of the Treasury Releases Final Rules to Lower Consumer Costs, Continue U.S. Manufacturing Boom in Batte… — WASHINGTON – Today the U.S. Department of the Treasury and Internal Revenue Service (IRS) released final rules on the clean vehic…",
+      "section": "policy",
+      "source": "home.treasury.gov",
+      "confidence": "high"
+    },
+    {
+      "fact": "POSCO Future M Announces 2024 Financial Results - NEWSROOM - POSCO FUTURE M — POSCO FUTURE M is opening up the future of materials. Meet POSCO FUTURE M",
+      "section": "competitors",
+      "source": "poscofuturem.com",
+      "confidence": "high"
+    },
+    {
+      "fact": "Full Year Results 2024 | Umicore — In 2024, headwinds impacted Umicore but our foundation businesses remained robust, delivering an overall performance in line with…",
+      "section": "competitors",
+      "source": "umicore.com",
+      "confidence": "high"
+    },
+    {
+      "fact": "EcoPro shares surge 57% in a week - 조선일보 — EcoPro shares surge 57% in a week 조선일보",
+      "section": "client",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "Regulation - 2023/1542 - EN - EUR-Lex — Regulation - 2023/1542 - EN - EUR-Lex × Skip to main content Log in My EUR-Lex My EUR-Lex Sign in Register My recent searches (0)…",
+      "section": "policy",
+      "source": "eur-lex.europa.eu",
+      "confidence": "high"
+    },
+    {
+      "fact": "EcoPro BM Hungary: Safety, Innovation, and Community – A New Era in Debrecen - The Debrecen Sun - — EcoPro BM Hungary: Safety, Innovation, and Community – A New Era in Debrecen The Debrecen Sun -",
+      "section": "client",
+      "source": "news.google.com",
+      "confidence": "medium"
+    },
+    {
+      "fact": "Public companies account for 43% of Ecopro Materials Co., Ltd.'s (KRX:450080) ownership, while individual investors acc… — Public companies account for 43% of Ecopro Materials Co., Ltd.'s (KRX:450080) ownership, while individual investors account for 3…",
+      "section": "client",
+      "source": "news.google.com",
+      "confidence": "medium"
+    }
+  ],
+  "data_gaps": [],
+  "research_strength": 82,
+  "recommended_actions": [
+    "핵심 주장마다 최신 출처(발행일/도메인/신뢰등급)를 명시합니다.",
+    "슬라이드 작성 전에 layout_blueprint.yaml의 밀도 기준(min_body_chars/min_paragraphs)을 충족하도록 본문을 작성합니다.",
+    "As-Is/To-Be 대비 슬라이드에서는 문제-해결-효과의 인과를 한 페이지에서 닫습니다.",
+    "렌더 후 QA에서 빈 공간/경계 초과/근거 부족 경고가 0이 될 때까지 반복 검증합니다."
+  ],
+  "blueprint_summary": {
+    "page_count": 30,
+    "layout_distribution": {
+      "cover": 1,
+      "exec_summary": 1,
+      "section_divider": 4,
+      "chart_focus": 5,
+      "comparison": 3,
+      "content": 7,
+      "three_column": 3,
+      "image_focus": 1,
+      "process_flow": 3,
+      "timeline": 1,
+      "thank_you": 1
+    }
+  }
+}

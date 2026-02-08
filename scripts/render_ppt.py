@@ -26,11 +26,13 @@ from typing import Optional, List, Union
 import yaml
 from pptx import Presentation
 from pptx.chart.data import ChartData
-from pptx.util import Pt
+from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from pptx.enum.chart import XL_CHART_TYPE
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.oxml.ns import qn
+from pptx.oxml.xmlchemy import OxmlElement
 
 
 def load_yaml(path: Path) -> dict:
@@ -72,6 +74,22 @@ class DeckRenderer:
         if self.force_regular_weight:
             return False
         return bool(desired)
+
+    def _set_run_font_name(self, run, font_name: str):
+        """한글 렌더 호환을 위해 latin/eastAsia/cs 폰트를 함께 지정"""
+        name = str(font_name or "Noto Sans KR")
+        run.font.name = name
+        r = getattr(run, "_r", None)
+        if r is None:
+            return
+        r_pr = r.get_or_add_rPr()
+        r_fonts = r_pr.find(qn("a:rFonts"))
+        if r_fonts is None:
+            r_fonts = OxmlElement("a:rFonts")
+            r_pr.append(r_fonts)
+        r_fonts.set(qn("a:latin"), name)
+        r_fonts.set(qn("a:ea"), name)
+        r_fonts.set(qn("a:cs"), name)
 
     def _resolve_asset_path(self, raw_path: str) -> Optional[Path]:
         """spec 기준 상대경로를 실제 파일 경로로 해석"""
@@ -225,7 +243,7 @@ class DeckRenderer:
                 run.text = p.text if p.text else ""
 
             for run in p.runs:
-                run.font.name = font_cfg.get("name", "Noto Sans KR")
+                self._set_run_font_name(run, font_cfg.get("name", "Noto Sans KR"))
                 run.font.size = Pt(font_cfg.get("size_pt", 12))
                 run.font.bold = self._resolve_bold(font_cfg.get("bold", False))
                 run.font.color.rgb = hex_to_rgb(color)
@@ -302,7 +320,7 @@ class DeckRenderer:
             for run in para.runs if para.runs else [para.add_run()]:
                 if not para.runs:
                     run.text = text
-                run.font.name = body_font_cfg.get("name", "Noto Sans KR")
+                self._set_run_font_name(run, body_font_cfg.get("name", "Noto Sans KR"))
                 base_size = body_font_cfg.get("size_pt", 12)
                 if level == 1:
                     run.font.size = Pt(base_size - 1)
@@ -415,7 +433,7 @@ class DeckRenderer:
             for run in p.runs if p.runs else [p.add_run()]:
                 if not p.runs:
                     run.text = text
-                run.font.name = font_cfg.get("name", "Noto Sans KR")
+                self._set_run_font_name(run, font_cfg.get("name", "Noto Sans KR"))
 
                 # 레벨에 따른 폰트 크기 조정
                 base_size = font_cfg.get("size_pt", 12)
@@ -488,13 +506,13 @@ class DeckRenderer:
         total_lines = 0
         for bullet in bullets:
             text = bullet if isinstance(bullet, str) else str(bullet.get("text", ""))
-            # 1줄 권장, 길면 2줄까지 허용
-            lines = max(1, min(2, (len(text) // 42) + 1))
+            # 문장형 불릿 수용을 위해 4줄까지 허용
+            lines = max(1, min(4, (len(text) // 38) + 1))
             total_lines += lines
 
-        # 라인당 약 22pt + 상하 여백
-        estimated = 28 + (total_lines * 22)
-        return max(90, min(estimated, 320))
+        # 라인당 약 20pt + 상하 여백
+        estimated = 32 + (total_lines * 20)
+        return max(96, min(estimated, 420))
 
     def _slide_height_pt(self) -> int:
         """현재 프레젠테이션 슬라이드 높이(pt)"""
@@ -683,7 +701,8 @@ class DeckRenderer:
                 for para in cell.text_frame.paragraphs:
                     para.font.bold = self._resolve_bold(True)
                     para.font.size = Pt(10)
-                    para.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+                    for run in para.runs:
+                        self._set_run_font_name(run, self._get_font_config("body").get("name", "Noto Sans KR"))
 
             # 데이터 행 설정
             for row_idx, row in enumerate(rows):
@@ -693,7 +712,8 @@ class DeckRenderer:
                         cell.text = str(cell_text)
                         for para in cell.text_frame.paragraphs:
                             para.font.size = Pt(9)
-                            para.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+                            for run in para.runs:
+                                self._set_run_font_name(run, self._get_font_config("body").get("name", "Noto Sans KR"))
         else:
             # 플레이스홀더로 테이블 영역 표시
             shape = slide.shapes.add_shape(
@@ -904,7 +924,7 @@ class DeckRenderer:
             para.alignment = PP_ALIGN.CENTER
             for run in para.runs:
                 run.font.color.rgb = hex_to_rgb(self._get_color("background"))
-                run.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+                self._set_run_font_name(run, self._get_font_config("body").get("name", "Noto Sans KR"))
                 run.font.size = Pt(12)
                 run.font.bold = self._resolve_bold(True)
 
@@ -941,7 +961,7 @@ class DeckRenderer:
             para.alignment = PP_ALIGN.LEFT
             for run in para.runs:
                 run.font.color.rgb = hex_to_rgb(self._get_color("background"))
-                run.font.name = self._get_font_config("body").get("name", "Noto Sans KR")
+                self._set_run_font_name(run, self._get_font_config("body").get("name", "Noto Sans KR"))
                 run.font.size = Pt(11)
 
     def _render_text_block(self, slide, text: str, left_pt: int, top_pt: int, width_pt: int, height_pt: int = 50):
@@ -1048,10 +1068,58 @@ class DeckRenderer:
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
 
+    def _render_inline_columns(self, slide, columns: List[dict], start_top_pt: int = 160, body_height: int = 210) -> bool:
+        """content 레이아웃에서도 columns 데이터를 실제로 표시"""
+        if not columns or len(columns) < 2:
+            return False
+
+        if len(columns) >= 3:
+            col_positions = [43, 330, 617]
+            col_widths = [270, 270, 270]
+            max_cols = 3
+        else:
+            col_positions = [43, 480]
+            col_widths = [400, 400]
+            max_cols = 2
+
+        for i, col in enumerate(columns[:max_cols]):
+            left_pt = col_positions[i]
+            width_pt = col_widths[i]
+            heading = str(col.get("heading", "")).strip()
+            if heading:
+                tx_head = slide.shapes.add_textbox(Pt(left_pt), Pt(125), Pt(width_pt), Pt(30))
+                tf = tx_head.text_frame
+                tf.text = heading
+                self._apply_text_style(tf, "governing", "primary_blue")
+
+            if col.get("content_blocks"):
+                column_blocks = []
+                for block in col.get("content_blocks", []):
+                    block_copy = dict(block)
+                    block_copy.setdefault("left_pt", left_pt)
+                    block_copy.setdefault("width_pt", width_pt)
+                    block_copy.setdefault("position", "main")
+                    column_blocks.append(block_copy)
+                self._render_content_blocks(slide, column_blocks, start_top_pt=start_top_pt)
+            else:
+                self._add_bullets(
+                    slide,
+                    col.get("bullets", []),
+                    left_pt=left_pt,
+                    top_pt=start_top_pt,
+                    width_pt=width_pt,
+                    height_pt=body_height,
+                )
+
+        return True
+
     def _render_content(self, slide, slide_data: dict):
         """일반 컨텐츠 슬라이드 렌더링"""
         self._set_title(slide, slide_data.get("title", ""))
         self._add_governing_message(slide, slide_data.get("governing_message", ""))
+
+        columns = slide_data.get("columns", []) if isinstance(slide_data.get("columns", []), list) else []
+        rendered_columns = self._render_inline_columns(slide, columns, start_top_pt=160, body_height=220)
 
         # content_blocks + bullets 병행 지원 (표/콜아웃 + 핵심 불릿 동시 표현)
         if slide_data.get("content_blocks"):
@@ -1059,10 +1127,27 @@ class DeckRenderer:
             bullets = slide_data.get("bullets", [])
             if bullets and not any(isinstance(b, dict) and b.get("type") == "bullets" for b in blocks):
                 blocks.insert(0, {"type": "bullets", "bullets": bullets})
-            self._render_content_blocks(slide, blocks)
+
+            if rendered_columns:
+                normalized_blocks = []
+                for block in blocks:
+                    block_copy = dict(block)
+                    if not isinstance(block_copy.get("top_pt"), (int, float)):
+                        block_copy["top_pt"] = 392
+                    normalized_blocks.append(block_copy)
+                self._render_content_blocks(slide, normalized_blocks, start_top_pt=392)
+            else:
+                self._render_content_blocks(slide, blocks)
         else:
             bullets = slide_data.get("bullets", [])
-            if not (self.use_body_placeholder_for_bullets and self._set_body_placeholder_bullets(slide, bullets)):
+            if rendered_columns:
+                if bullets:
+                    self._render_content_blocks(
+                        slide,
+                        [{"type": "bullets", "top_pt": 392, "bullets": bullets}],
+                        start_top_pt=392,
+                    )
+            elif not (self.use_body_placeholder_for_bullets and self._set_body_placeholder_bullets(slide, bullets)):
                 self._add_bullets(slide, bullets)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
@@ -1150,7 +1235,7 @@ class DeckRenderer:
         if slide_data.get("content_blocks"):
             extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
             if extra_blocks:
-                self._render_content_blocks(slide, extra_blocks, start_top_pt=430)
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=392)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1251,7 +1336,7 @@ class DeckRenderer:
         if slide_data.get("content_blocks"):
             extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
             if extra_blocks:
-                self._render_content_blocks(slide, extra_blocks, start_top_pt=430)
+                self._render_content_blocks(slide, extra_blocks, start_top_pt=392)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1324,11 +1409,19 @@ class DeckRenderer:
                     color_key="background"
                 )
 
-        # 슬라이드 레벨 보조 블록(하단 서술 등)
-        if slide_data.get("content_blocks"):
-            extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
-            if extra_blocks:
-                self._render_content_blocks(slide, extra_blocks, start_top_pt=430)
+            # 슬라이드 레벨 보조 블록(하단 서술 등)
+            if slide_data.get("content_blocks"):
+                extra_blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
+                if extra_blocks:
+                    self._render_content_blocks(slide, extra_blocks, start_top_pt=392)
+        else:
+            # columns 데이터가 없는 comparison도 content_blocks/bullets를 상단부터 렌더링
+            blocks = [b for b in slide_data.get("content_blocks", []) if isinstance(b, dict)]
+            bullets = slide_data.get("bullets", [])
+            if bullets and not any(block.get("type") == "bullets" for block in blocks):
+                blocks.insert(0, {"type": "bullets", "bullets": bullets})
+            if blocks:
+                self._render_content_blocks(slide, blocks, start_top_pt=160)
 
         self._add_footnotes(slide, slide_data.get("footnotes", []))
         self._add_notes(slide, slide_data.get("notes", ""))
@@ -1640,6 +1733,9 @@ class DeckRenderer:
                 del self.prs.slides._sldIdLst[0]
         else:
             self.prs = Presentation()
+            # 템플릿 미사용 시에도 16:9 와이드 규격으로 통일
+            self.prs.slide_width = Inches(13.333)
+            self.prs.slide_height = Inches(7.5)
             print(f"Warning: 템플릿 없음, 빈 프레젠테이션 사용: {template_path}")
 
         # 레이아웃별 렌더러 매핑

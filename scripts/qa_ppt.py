@@ -46,23 +46,24 @@ try:
         FONT_SIZE_TOLERANCE_PT, ALLOWED_FONTS,
         DENSITY_MAX_CHARS, DENSITY_MIN_CHARS, DENSITY_MIN_PARAGRAPHS,
         NO_BULLET_LAYOUTS, COLUMN_LAYOUTS, EVIDENCE_ANCHOR_PATTERN,
-        get_max_bullets, get_max_chars_per_bullet, get_forbidden_words, get_bullet_bounds
+        get_max_bullets, get_max_chars_per_bullet, get_forbidden_words, get_bullet_bounds,
+        get_column_bullet_limit
     )
 except ImportError:
     # 폴백 상수
-    BULLET_MAX_CHARS = 100
-    BULLET_MAX_COUNT = 6
+    BULLET_MAX_CHARS = 180
+    BULLET_MAX_COUNT = 9
     BULLET_MIN_COUNT = 3
-    BULLET_CHARS_PER_LINE = 42
-    BULLET_MAX_LINES = 2
+    BULLET_CHARS_PER_LINE = 38
+    BULLET_MAX_LINES = 4
     TITLE_FONT_SIZE_PT = 24
     GOVERNING_FONT_SIZE_PT = 16
     BODY_FONT_SIZE_PT = 12
     FONT_SIZE_TOLERANCE_PT = 2
     ALLOWED_FONTS = ["Noto Sans KR", "NotoSansKR"]
-    DENSITY_MAX_CHARS = 800
+    DENSITY_MAX_CHARS = 1200
     DENSITY_MIN_CHARS = 50
-    DENSITY_MIN_PARAGRAPHS = 2
+    DENSITY_MIN_PARAGRAPHS = 3
     NO_BULLET_LAYOUTS = ["cover", "section_divider", "thank_you", "quote"]
     COLUMN_LAYOUTS = ["two_column", "three_column", "comparison"]
     EVIDENCE_ANCHOR_PATTERN = r"^sources\.md#[\w-]+$"
@@ -96,8 +97,13 @@ except ImportError:
         if layout in NO_BULLET_LAYOUTS:
             return 0, 0
         if layout in ("chart_focus", "image_focus"):
-            return 0, min(max_bullets, 4)
+            return 0, min(max_bullets, 8)
         return min_bullets, max_bullets
+
+    def get_column_bullet_limit(max_bullets):
+        if max_bullets <= 0:
+            return 0
+        return max(3, min(8, max_bullets))
 
 
 class Severity(Enum):
@@ -656,7 +662,7 @@ class PPTQAChecker:
         total_bullets = len(bullet_texts)
         if layout_name in COLUMN_LAYOUTS and spec_slide and spec_slide.get("columns"):
             # 컬럼 레이아웃은 총합이 아닌 컬럼별 과밀/공백 중심으로 점검
-            per_column_limit = max(3, min(5, max_bullets))
+            per_column_limit = get_column_bullet_limit(max_bullets)
             for col_idx, col in enumerate(spec_slide.get("columns", [])):
                 col_texts = self._collect_column_bullet_texts_spec(col)
                 col_count = len(col_texts)

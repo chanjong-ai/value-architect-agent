@@ -5,12 +5,12 @@ client_meta:
   audience: "C-level"
   objective: "ERP + AI transformation value case and roadmap"
   language: "ko"
-  version: "v2.1"
+  version: "v2.4"
 
 global_constraints:
   max_slides: 12
-  default_max_bullets: 6
-  default_max_chars_per_bullet: 100
+  default_max_bullets: 9
+  default_max_chars_per_bullet: 180
   forbidden_words: ["추정", "아마"]
   required_sections: ["cover", "exec_summary", "timeline", "thank_you"]
 

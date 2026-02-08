@@ -1,6 +1,6 @@
 meta:
   name: "Company Consulting Deck Tokens"
-  version: "0.2"
+  version: "0.3"
   notes: >
     Design tokens enforced by the renderer. Update these to match the official template.
     Font names must match the exact font names recognized by PowerPoint.
@@ -44,7 +44,7 @@ density_rules:
   bullets_min: 4
   bullets_max: 7
   prefer_single_line: true
-  max_lines_per_bullet: 2
+  max_lines_per_bullet: 4
 
 render_options:
   # 템플릿에서 디자인을 잡고, spec에서는 콘텐츠 중심으로 주입하기 위한 옵션

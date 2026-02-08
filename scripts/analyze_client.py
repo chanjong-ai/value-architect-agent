@@ -690,7 +690,7 @@ def render_markdown(report: dict) -> str:
         "## 7) Consulting-Grade Quality Gates",
         "",
         f"- 주장-근거 연결(evidence/source_anchor) {int(TARGET_EVIDENCE_COVERAGE * 100)}% 이상",
-        "- 레이아웃별 불릿 규칙 준수 (일반 3-6, 시각중심 0-4, no-bullet 0)",
+        "- 레이아웃별 불릿 규칙 준수 (일반 3-10, 시각중심 0-8, no-bullet 0)",
         "- 최신 QA 보고서 오류 0 유지",
         "- Value Case 수치는 시나리오/가정/근거를 슬라이드 노트에 명시",
     ])

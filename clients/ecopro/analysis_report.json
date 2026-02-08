@@ -1,0 +1,300 @@
+{
+  "client_name": "ecopro",
+  "generated_at": "2026-02-08T10:45:12",
+  "client_dir": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/ecopro",
+  "brief": {
+    "client_name": "에코프로 (ECOPRO Group)",
+    "industry": "이차전지 소재 밸류체인 (양극재/전구체/리튬/리사이클)",
+    "audience": "회장단/대표이사/전략·재무·사업부 임원",
+    "slide_range": "28-32",
+    "duration": "45 minutes",
+    "objective": "컨설팅형 전략 덱 (시장-진단-전략-실행 통합)",
+    "internal_data": "Partial (공개 IR/보도자료 중심)",
+    "key_questions": [
+      "2026~2030년 에코프로의 성장축은 어떤 포트폴리오 조합(Hi-Ni/HVM/LFP/SIB)이 최적인가?",
+      "정책(IRA/EU) 및 공급망 집중 리스크를 반영할 때, 글로벌 운영거점 우선순위는 어떻게 설정해야 하는가?",
+      "실적 반등을 일회성이 아닌 구조적 개선으로 전환하기 위한 KPI·거버넌스 체계는 무엇인가?"
+    ]
+  },
+  "constraints_exists": true,
+  "sources": {
+    "sections": {
+      "market": {
+        "checked": 3,
+        "items": 3,
+        "lines": [
+          "- [x] IEA, Global EV Outlook 2025 - Executive Summary: https://www.iea.org/reports/global-ev-outlook-2025/executive-summary",
+          "- [x] IEA, Global EV Outlook 2025 - Electric vehicle batteries: https://www.iea.org/reports/global-ev-outlook-2025/electric-vehicle-batteries",
+          "- [x] IEA, Global EV Outlook 2024 - battery and demand context: https://www.iea.org/reports/global-ev-outlook-2024"
+        ]
+      },
+      "demand-forecast": {
+        "checked": 3,
+        "items": 3,
+        "lines": [
+          "- [x] IEA GEO 2025: 2024년 EV 판매 1,700만대+, 판매비중 20%+",
+          "- [x] IEA GEO 2025: 2025년 EV 판매 2,000만대+, 판매비중 25%+",
+          "- [x] IEA GEO 2025: 2030년 EV 판매비중 40%+ (현행 정책 기준)"
+        ]
+      },
+      "raw-materials": {
+        "checked": 3,
+        "items": 3,
+        "lines": [
+          "- [x] IEA Global EV Outlook 2025 batteries chapter (critical minerals concentration)",
+          "- [x] IEA Global Critical Minerals Outlook 2025: https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
+          "- [x] USGS Mineral Commodity Summaries 2025: https://www.usgs.gov/publications/mineral-commodity-summaries-2025"
+        ]
+      },
+      "policy": {
+        "checked": 2,
+        "items": 2,
+        "lines": [
+          "- [x] U.S. Treasury FEOC final rules (IRA): https://home.treasury.gov/news/press-releases/jy2323",
+          "- [x] EU Battery Regulation (EU) 2023/1542: https://eur-lex.europa.eu/eli/reg/2023/1542/oj"
+        ]
+      },
+      "client": {
+        "checked": 5,
+        "items": 5,
+        "lines": [
+          "- [x] ECOPRO 2025년 4분기 실적발표회 자료 (게시 2026-02-05): https://www.ecopro.co.kr/sub020403/view/id/2012",
+          "- [x] ECOPRO 2025년 3분기 실적발표회 자료 (251105): https://www.ecopro.co.kr/sub020403/view/id/1941",
+          "- [x] ECOPRO 2025년 2분기 실적발표회 자료 (250806): https://www.ecopro.co.kr/sub020403/view/id/1875",
+          "- [x] ECOPRO 2025년 1분기 실적발표회 자료 (250430): https://www.ecopro.co.kr/sub020403/view/id/1804",
+          "- [x] ECOPRO 2024년 4분기 실적발표회 자료 (250211): https://www.ecopro.co.kr/sub020403/view/id/1743"
+        ]
+      },
+      "competitors": {
+        "checked": 3,
+        "items": 3,
+        "lines": [
+          "- [x] POSCO Future M 2024 Financial Results PR: https://www.poscofuturem.com/en/pr/view.do?num=899",
+          "- [x] Umicore Full Year Results 2024: https://www.umicore.com/en/media/newsroom/full-year-results-2024/",
+          "- [x] LG Chem Battery Materials page: https://www.lgchem.com/business/battery-materials"
+        ]
+      },
+      "tech-trends": {
+        "checked": 2,
+        "items": 2,
+        "lines": [
+          "- [x] IEA GEO 2025 batteries chapter: LFP/고성능 배터리/공급망 집중도",
+          "- [x] ECOPRO 2025.3Q IR 키워드 슬라이드: HV/HVM/LFP/SIB 제품전략"
+        ]
+      },
+      "risk-scenarios": {
+        "checked": 3,
+        "items": 3,
+        "lines": [
+          "- [x] 수요 둔화 시나리오: EV 침투율 상승 속도 둔화",
+          "- [x] 가격 하락 시나리오: 메탈 가격 조정 및 재고평가 영향",
+          "- [x] 정책 변화 시나리오: FEOC/원산지/추적성 요건 강화"
+        ]
+      }
+    },
+    "total_checked": 24,
+    "total_items": 24,
+    "anchors": [
+      "sources.md#market",
+      "sources.md#demand-forecast",
+      "sources.md#raw-materials",
+      "sources.md#policy",
+      "sources.md#client",
+      "sources.md#competitors",
+      "sources.md#tech-trends",
+      "sources.md#risk-scenarios"
+    ]
+  },
+  "outline": {
+    "slide_headers": [
+      "에코프로 중장기 전략 제언",
+      "Executive Summary: 핵심 제언 5가지",
+      "Section A. 시장·정책 구조 변화",
+      "Global EV Sales Outlook (2024-2030)",
+      "Battery Demand vs Manufacturing Capacity",
+      "Supply Chain Concentration: Cathode/Anode Criticality",
+      "Policy Impact: IRA FEOC vs EU Battery Regulation",
+      "Scenario Matrix: Demand / Price / Policy",
+      "Section B. 에코프로 현재 진단",
+      "Business Portfolio Diagnostic",
+      "Financial Trajectory: 2024Q4 → 2025Q3",
+      "Profitability Driver Decomposition",
+      "Product Strategy: HV / HVM / LFP / SIB",
+      "Global Operating Footprint (Korea-Indonesia-Europe)",
+      "Subsidiary Performance Snapshot (IR-based)",
+      "Benchmark: ECOPRO vs Peers (Strategic Positioning)",
+      "Operational Bottleneck → Improvement Flow",
+      "Strategic Implications (Diagnosis Summary)",
+      "Section C. 전략 옵션 및 가치 검증",
+      "Strategic Option Portfolio",
+      "Option Scoring Matrix (Attractiveness vs Feasibility)",
+      "Value Case A: Revenue Growth Scenario",
+      "Value Case B: Margin & EBITDA Recovery",
+      "CAPEX & Funding Priority Framework",
+      "Risk Mitigation Architecture",
+      "Section D. 실행 로드맵과 거버넌스",
+      "First 100 Days Action Plan",
+      "2026-2030 Execution Roadmap (3 Waves)",
+      "Governance & KPI Dashboard",
+      "결론 및 제언"
+    ],
+    "governing_messages": [
+      "단기 실적 반등을 구조적 경쟁우위로 전환하려면 제품 포트폴리오와 거점 전략을 동시에 재설계해야 합니다.",
+      "에코프로는 Hi-Ni 리더십에 LFP/HVM/SIB 옵션을 결합하고, 인도네시아 원료축을 통해 원가·정책 리스크를 동시에 관리해야 합니다.",
+      "시장 총량은 확대되지만 지역·정책·원료 리스크의 분산 설계가 성패를 좌우합니다.",
+      "EV 판매는 2025년 2천만대+로 확대되며 2030년 판매비중 40%+로 구조적 성장 국면이 지속될 전망입니다.",
+      "배터리 수요 1TWh 시대에서 CAPA가 3TWh+로 확대되며, 공급망 주도권은 비용·품질·속도의 경쟁으로 이동했습니다.",
+      "양극재·음극재 공급망의 높은 집중도는 소재기업의 원료 조달과 정책 적합성 리스크를 동시에 증폭시킵니다.",
+      "미국과 유럽의 규제는 모두 공급망 투명성과 현지화 역량을 요구하며, 대응 속도 차이가 시장 점유율 차이로 연결됩니다.",
+      "에코프로의 전략은 단일 전망이 아닌 3축 시나리오 관리 체계로 설계되어야 변동성을 흡수할 수 있습니다.",
+      "실적 반등의 질을 진단하고, 구조적 경쟁우위로 전환할 실행 레버를 도출합니다.",
+      "에코프로는 소재 밸류체인을 다층으로 보유하지만, 각 축의 수익성·성장성·리스크가 상이해 선택과 집중이 필요합니다.",
+      "2024년 저점 이후 2025년 실적은 회복 국면에 진입했으며, 회복의 지속가능성은 제품믹스와 비용통제에 달려 있습니다.",
+      "실적 회복은 판매량 반등과 일부 평가손익 요인의 결합이며, 구조적 수익성으로 전환하려면 운영모델 재설계가 필요합니다.",
+      "제품 전략은 프리미엄(Hi-Ni)과 볼륨(LFP) 사이의 균형 포지셔닝으로 설계되어야 하며, 기술로드맵의 상용화 타이밍이 핵심입니다.",
+      "거점별 역할을 분명히 분리하면 비용·정책·고객근접성의 트레이드오프를 최소화할 수 있습니다.",
+      "가족사별 매출·이익 편차가 크므로 공통 KPI와 선택형 지원전략을 결합한 운영체계가 필요합니다.",
+      "경쟁사 대비 에코프로의 핵심 차별점은 통합 밸류체인과 원료축이며, 보완점은 수익성 안정성과 지역 분산 속도입니다.",
+      "실행 병목은 수요예측·재고·가동률·원가·규제데이터의 연결부에서 발생하며, 단일 워룸 체계가 필요합니다.",
+      "단기 회복 구간에서 구조적 경쟁우위를 만들기 위해서는 제품전략, 거점전략, 운영체계를 통합 설계해야 합니다.",
+      "대안 비교를 통해 우선순위를 확정하고, 재무/운영 관점의 실현가능성을 검증합니다.",
+      "전략 옵션은 상호배타가 아니라 병행 설계 대상이며, 투자 타이밍과 실행강도를 다르게 설정해야 합니다.",
+      "최적 경로는 단일 옵션이 아닌 A+B를 우선 추진하고 C를 단계적으로 결합하는 포트폴리오 전략입니다.",
+      "A+B 우선 전략은 2030년까지 매출 성장 탄력성을 높이고, 다운사이드 시나리오에서도 성장 하방을 방어합니다.",
+      "원가/재고/가동률 연동 운영이 정착되면 EBITDA 회복 속도가 빨라지고 현금흐름 변동성이 축소됩니다.",
+      "투자는 성장성보다 회수가능성과 규제적합성을 먼저 평가해야 하며, 단계별 투자게이트를 명확히 운영해야 합니다.",
+      "리스크 대응은 사후 통제가 아니라 사전 설계여야 하며, 정책·가격·수요 신호를 동시에 모니터링해야 합니다.",
+      "전략의 성패는 100일 실행속도와 3년 운영체계 고도화에 의해 결정됩니다.",
+      "초기 100일에는 의사결정 구조와 데이터 파이프라인을 먼저 고정해 실행 실패 확률을 줄여야 합니다.",
+      "전략 실행은 안정화-확장-고도화의 3단계로 구분하고, 각 단계마다 성과지표와 투자게이트를 명시해야 합니다.",
+      "경영진은 전략 KPI를 단일 화면에서 관리하고, 각 사업부는 실행 KPI를 주간 단위로 점검해야 합니다.",
+      "에코프로는 2025년 반등 모멘텀을 기반으로 Hi-Ni 리더십과 LFP/HVM 확장을 결합한 포트폴리오 전략을 실행하고, 인니 원료축과 규제대응 역량을 결합해 2030년 질적 성장을 달성해야 합니다."
+    ],
+    "slide_count": 30,
+    "governing_count": 30
+  },
+  "spec_meta": {
+    "client_name": "ECOPRO",
+    "industry": "Battery Materials",
+    "date": "2026-02-08",
+    "audience": "Chairman/CEO/CFO/CSO",
+    "objective": "2026~2030 Growth + Profitability Strategy",
+    "language": "ko",
+    "version": "v3.0",
+    "confidentiality": "internal"
+  },
+  "spec_metrics": {
+    "slide_count": 30,
+    "layout_counts": {
+      "cover": 1,
+      "exec_summary": 1,
+      "section_divider": 4,
+      "chart_focus": 5,
+      "content": 7,
+      "comparison": 3,
+      "three_column": 3,
+      "image_focus": 1,
+      "process_flow": 3,
+      "timeline": 1,
+      "thank_you": 1
+    },
+    "bullet_total": 147,
+    "bullet_with_evidence": 147,
+    "bullet_evidence_coverage": 1.0,
+    "slides_with_metadata_sources": 2,
+    "slides_without_governing": 0
+  },
+  "spec_validation": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 0,
+    "issues": []
+  },
+  "latest_qa": {
+    "pptx_path": "clients/ecopro/outputs/ecopro_20260208_103823_polished.pptx",
+    "total_slides": 30,
+    "passed": true,
+    "summary": {
+      "errors": 0,
+      "warnings": 0,
+      "info": 0
+    },
+    "issues": [],
+    "_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/ecopro/outputs/ecopro_20260208_103823_polished_qa_report.json",
+    "_mtime": "2026-02-08T10:40:17"
+  },
+  "analysis_modules": [
+    {
+      "id": "M1",
+      "name": "Issue Tree & Hypothesis",
+      "priority": "HIGH",
+      "objective": "경영진 질문을 이슈 트리로 구조화하고 검증 가설을 정의",
+      "methods": "Issue Tree, Pyramid Principle, Hypothesis Backlog",
+      "required_data": "brief, 핵심 질문, 경영진 의사결정 포인트",
+      "slides": "Exec Summary / Section Divider / Storyline backbone"
+    },
+    {
+      "id": "M2",
+      "name": "External Context & Market Drivers",
+      "priority": "HIGH",
+      "objective": "시장/기술/규제 요인이 고객사의 전략 선택에 미치는 영향 정량화",
+      "methods": "Market sizing, trend decomposition, scenario framing",
+      "required_data": "시장 리포트, 거시/산업 데이터, 기술 채택 지표",
+      "slides": "Industry Context / Strategic Implications"
+    },
+    {
+      "id": "M3",
+      "name": "Current State Diagnostic",
+      "priority": "HIGH",
+      "objective": "As-Is 운영/데이터/조직의 병목과 손실 구간 파악",
+      "methods": "KPI baseline, process bottleneck mapping, maturity assessment",
+      "required_data": "내부 KPI, 프로세스 현황, 시스템 인터페이스",
+      "slides": "Current State / Pain Points"
+    },
+    {
+      "id": "M4",
+      "name": "Benchmark & Competitive Gap",
+      "priority": "HIGH",
+      "objective": "선도사와의 격차를 capability 및 KPI 관점으로 계량화",
+      "methods": "Peer benchmarking, capability heatmap, gap scoring",
+      "required_data": "경쟁사 공개자료, 벤치마크 KPI, 사례 비교",
+      "slides": "Competitive Landscape / Comparison"
+    },
+    {
+      "id": "M5",
+      "name": "Option Design & Value Case",
+      "priority": "HIGH",
+      "objective": "실행 옵션별 효과/비용/리스크를 비교해 우선순위 도출",
+      "methods": "Option matrix, cost-benefit model, sensitivity analysis",
+      "required_data": "투자비, 운영비, 기대효과, 가정 파라미터",
+      "slides": "Value Case / Recommendation"
+    },
+    {
+      "id": "M6",
+      "name": "Roadmap, Governance, and Risks",
+      "priority": "MEDIUM",
+      "objective": "실행 로드맵, PMO, 리스크 대응 체계 구체화",
+      "methods": "Wave planning, milestone design, risk-control matrix",
+      "required_data": "프로젝트 일정, 조직 구조, 의사결정 체계",
+      "slides": "Timeline / Process Flow / Closing"
+    }
+  ],
+  "readiness": {
+    "brief_score": 100,
+    "source_score": 100,
+    "storyline_score": 100,
+    "spec_score": 100,
+    "execution_score": 100,
+    "overall_score": 100,
+    "maturity": "READY_FOR_EXEC_DECK",
+    "quality_gate_failed": false,
+    "target_evidence_coverage": 0.8
+  },
+  "gaps": [],
+  "actions": [
+    "`clients/ecopro/brief.md`에 의사결정 질문, 성과 KPI, 발표 목적을 수치 중심으로 명확화",
+    "`clients/ecopro/sources.md` 각 항목에 발행일/URL/접근일 추가 (감사 추적성 확보)",
+    "`clients/ecopro/deck_spec.yaml`의 핵심 불릿에 evidence/source_anchor 우선 연결",
+    "`python scripts/deck_cli.py full-pipeline ecopro --sync-layout --enrich-evidence --polish`로 품질 게이트 재확인"
+  ]
+}

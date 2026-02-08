@@ -1,0 +1,227 @@
+{
+  "client_name": "seah-besteel",
+  "generated_at": "2026-02-08T10:47:00",
+  "input_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/seah-besteel/strategy_input.yaml",
+  "industry": "Special Steel Manufacturing",
+  "industry_bucket": "manufacturing",
+  "audience": "CEO/CFO/COO/CIO",
+  "objective": "2026~2028 수익성 회복과 운영/디지털 전환 동시 달성",
+  "data_readiness_level": "partial",
+  "input_focus_areas": [
+    "cost_reduction",
+    "operational_excellence",
+    "risk_control",
+    "data_foundation",
+    "ai_scaling"
+  ],
+  "must_answer_questions": [
+    "수익성 개선 과제의 우선순위와 연간 효과는?",
+    "생산/품질/원가 데이터 표준화와 책임체계는 어떻게 고정할 것인가?",
+    "AI 기반 품질/수요/재고 최적화의 12개월 실행안은 무엇인가?"
+  ],
+  "expected_slide_count": 30,
+  "storytelling_mode": "decision_first",
+  "focus_priority": [
+    {
+      "id": "cost_reduction",
+      "label": "비용 절감/수익성 개선",
+      "score": 6,
+      "guidance": "원가 구조 분해, 손실 구간 식별, 시나리오 기반 절감안 우선순위화"
+    },
+    {
+      "id": "operational_excellence",
+      "label": "운영 효율/프로세스 혁신",
+      "score": 5,
+      "guidance": "현업 프로세스 병목과 의사결정 리드타임을 함께 개선하는 실행 시나리오 설계"
+    },
+    {
+      "id": "data_foundation",
+      "label": "데이터 기반/거버넌스",
+      "score": 5,
+      "guidance": "데이터 표준/소유권/품질관리 체계를 설계해 분석 신뢰도 확보"
+    },
+    {
+      "id": "ai_scaling",
+      "label": "AI 확산/자동화",
+      "score": 4,
+      "guidance": "우선 유스케이스를 선별하고 효과/난이도 기반으로 확산 순서를 설계"
+    },
+    {
+      "id": "risk_control",
+      "label": "리스크 통제/컴플라이언스",
+      "score": 3,
+      "guidance": "통제 사각지대와 규제 영향도를 반영한 단계별 리스크 완화 계획 수립"
+    }
+  ],
+  "module_priority": [
+    {
+      "id": "M6",
+      "name": "Roadmap, Governance, and Risks",
+      "stage": "실행설계",
+      "score": 23
+    },
+    {
+      "id": "M3",
+      "name": "Current State Diagnostic",
+      "stage": "현황진단",
+      "score": 16
+    },
+    {
+      "id": "M5",
+      "name": "Option Design & Value Case",
+      "stage": "가치검증",
+      "score": 15
+    },
+    {
+      "id": "M2",
+      "name": "External Context & Market Drivers",
+      "stage": "외부환경",
+      "score": 7
+    },
+    {
+      "id": "M4",
+      "name": "Benchmark & Competitive Gap",
+      "stage": "벤치마크",
+      "score": 3
+    },
+    {
+      "id": "M1",
+      "name": "Issue Tree & Hypothesis",
+      "stage": "문제정의",
+      "score": 2
+    }
+  ],
+  "recommended_layout_sequence": [
+    "cover",
+    "exec_summary",
+    "section_divider",
+    "content",
+    "comparison",
+    "content",
+    "section_divider",
+    "chart_focus",
+    "timeline",
+    "process_flow",
+    "appendix",
+    "content",
+    "content",
+    "content",
+    "content",
+    "content",
+    "content",
+    "content",
+    "content",
+    "thank_you"
+  ],
+  "recommended_slide_map": [
+    {
+      "slide": 1,
+      "layout": "cover",
+      "theme": "프로젝트 목적과 경영진 의사결정 주제"
+    },
+    {
+      "slide": 2,
+      "layout": "exec_summary",
+      "theme": "핵심 결론과 결정 포인트"
+    },
+    {
+      "slide": 3,
+      "layout": "section_divider",
+      "theme": "분석 파트 전환"
+    },
+    {
+      "slide": 4,
+      "layout": "content",
+      "theme": "비용 절감/수익성 개선"
+    },
+    {
+      "slide": 5,
+      "layout": "comparison",
+      "theme": "As-Is vs To-Be / 경쟁사 격차"
+    },
+    {
+      "slide": 6,
+      "layout": "content",
+      "theme": "운영 효율/프로세스 혁신"
+    },
+    {
+      "slide": 7,
+      "layout": "section_divider",
+      "theme": "분석 파트 전환"
+    },
+    {
+      "slide": 8,
+      "layout": "chart_focus",
+      "theme": "정량 효과/ROI/민감도"
+    },
+    {
+      "slide": 9,
+      "layout": "timeline",
+      "theme": "단계별 로드맵"
+    },
+    {
+      "slide": 10,
+      "layout": "process_flow",
+      "theme": "실행 운영모델/거버넌스"
+    },
+    {
+      "slide": 11,
+      "layout": "appendix",
+      "theme": "가정/데이터 상세"
+    },
+    {
+      "slide": 12,
+      "layout": "content",
+      "theme": "데이터 기반/거버넌스"
+    },
+    {
+      "slide": 13,
+      "layout": "content",
+      "theme": "AI 확산/자동화"
+    },
+    {
+      "slide": 14,
+      "layout": "content",
+      "theme": "리스크 통제/컴플라이언스"
+    },
+    {
+      "slide": 15,
+      "layout": "content",
+      "theme": "비용 절감/수익성 개선"
+    },
+    {
+      "slide": 16,
+      "layout": "content",
+      "theme": "운영 효율/프로세스 혁신"
+    },
+    {
+      "slide": 17,
+      "layout": "content",
+      "theme": "데이터 기반/거버넌스"
+    },
+    {
+      "slide": 18,
+      "layout": "content",
+      "theme": "AI 확산/자동화"
+    },
+    {
+      "slide": 19,
+      "layout": "content",
+      "theme": "리스크 통제/컴플라이언스"
+    },
+    {
+      "slide": 20,
+      "layout": "thank_you",
+      "theme": "의사결정 요청 및 다음 단계"
+    }
+  ],
+  "generated_pref_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/seah-besteel/layout_preferences.generated.yaml",
+  "warnings": [],
+  "actions": [
+    "`python scripts/deck_cli.py sync-layout seah-besteel --pref /Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/seah-besteel/layout_preferences.generated.yaml`",
+    "`python scripts/deck_cli.py analyze seah-besteel`",
+    "`python scripts/deck_cli.py full-pipeline seah-besteel --sync-layout --enrich-evidence --polish`",
+    "내부 데이터 부분 보유: KPI 정의/기간/단위 표준화 후 민감도 분석"
+  ],
+  "json_path": "/Users/chanjonglee/Documents/GitHub/value-architect-agent/clients/seah-besteel/strategy_report.json"
+}

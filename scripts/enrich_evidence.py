@@ -60,6 +60,17 @@ def _first_valid_anchor(candidates: List[str], anchors: Set[str]) -> Optional[st
     return None
 
 
+def _coerce_anchor(anchor: str, anchors: Set[str], default_anchor: Optional[str]) -> Optional[str]:
+    value = str(anchor or "").strip()
+    if value and value in anchors:
+        return value
+    if default_anchor and default_anchor in anchors:
+        return default_anchor
+    if anchors:
+        return sorted(list(anchors))[0]
+    return None
+
+
 def infer_default_anchor(slide: dict, anchors: Set[str]) -> Optional[str]:
     if not anchors:
         return None
@@ -191,6 +202,18 @@ def enrich_spec(spec: dict, anchors: Set[str], confidence: str, overwrite: bool)
         if not default_anchor:
             stats["slides_without_anchor"] += 1
 
+        # metadata.source_refs 정규화
+        metadata = slide.get("metadata", {}) if isinstance(slide.get("metadata"), dict) else {}
+        refs = metadata.get("source_refs", [])
+        if isinstance(refs, list):
+            normalized_refs = [str(r) for r in refs if str(r) in anchors]
+            if default_anchor and default_anchor not in normalized_refs:
+                normalized_refs.append(default_anchor)
+            if not normalized_refs and anchors:
+                normalized_refs.append(sorted(list(anchors))[0])
+            metadata["source_refs"] = normalized_refs[:6]
+            slide["metadata"] = metadata
+
         # top-level bullets
         bullets = slide.get("bullets", [])
         if isinstance(bullets, list):
@@ -201,6 +224,17 @@ def enrich_spec(spec: dict, anchors: Set[str], confidence: str, overwrite: bool)
 
         # columns bullets / column content_blocks
         for col in slide.get("columns", []):
+            if isinstance(col.get("visual"), dict):
+                visual = col["visual"]
+                ev = visual.get("evidence")
+                if isinstance(ev, dict):
+                    new_anchor = _coerce_anchor(ev.get("source_anchor", ""), anchors, default_anchor)
+                    if new_anchor and (overwrite or ev.get("source_anchor") not in anchors):
+                        ev["source_anchor"] = new_anchor
+                    if overwrite or not ev.get("confidence"):
+                        ev["confidence"] = confidence
+                    visual["evidence"] = ev
+
             col_bullets = col.get("bullets", [])
             if isinstance(col_bullets, list):
                 new_bullets, touched, total = enrich_bullet_list(col_bullets, default_anchor, confidence, overwrite)
@@ -209,6 +243,15 @@ def enrich_spec(spec: dict, anchors: Set[str], confidence: str, overwrite: bool)
                 stats["bullets_updated"] += touched
 
             for block in col.get("content_blocks", []):
+                if isinstance(block, dict):
+                    ev = block.get("evidence")
+                    if isinstance(ev, dict):
+                        new_anchor = _coerce_anchor(ev.get("source_anchor", ""), anchors, default_anchor)
+                        if new_anchor and (overwrite or ev.get("source_anchor") not in anchors):
+                            ev["source_anchor"] = new_anchor
+                        if overwrite or not ev.get("confidence"):
+                            ev["confidence"] = confidence
+                        block["evidence"] = ev
                 if block.get("type") == "bullets" and isinstance(block.get("bullets", []), list):
                     new_bullets, touched, total = enrich_bullet_list(
                         block["bullets"], default_anchor, confidence, overwrite
@@ -219,6 +262,15 @@ def enrich_spec(spec: dict, anchors: Set[str], confidence: str, overwrite: bool)
 
         # slide-level content_blocks bullets
         for block in slide.get("content_blocks", []):
+            if isinstance(block, dict):
+                ev = block.get("evidence")
+                if isinstance(ev, dict):
+                    new_anchor = _coerce_anchor(ev.get("source_anchor", ""), anchors, default_anchor)
+                    if new_anchor and (overwrite or ev.get("source_anchor") not in anchors):
+                        ev["source_anchor"] = new_anchor
+                    if overwrite or not ev.get("confidence"):
+                        ev["confidence"] = confidence
+                    block["evidence"] = ev
             if block.get("type") == "bullets" and isinstance(block.get("bullets", []), list):
                 new_bullets, touched, total = enrich_bullet_list(
                     block["bullets"], default_anchor, confidence, overwrite
@@ -226,6 +278,18 @@ def enrich_spec(spec: dict, anchors: Set[str], confidence: str, overwrite: bool)
                 block["bullets"] = new_bullets
                 stats["bullets_total"] += total
                 stats["bullets_updated"] += touched
+
+        visuals = slide.get("visuals", []) if isinstance(slide.get("visuals", []), list) else []
+        for visual in visuals:
+            if isinstance(visual, dict):
+                ev = visual.get("evidence")
+                if isinstance(ev, dict):
+                    new_anchor = _coerce_anchor(ev.get("source_anchor", ""), anchors, default_anchor)
+                    if new_anchor and (overwrite or ev.get("source_anchor") not in anchors):
+                        ev["source_anchor"] = new_anchor
+                    if overwrite or not ev.get("confidence"):
+                        ev["confidence"] = confidence
+                    visual["evidence"] = ev
 
     spec["slides"] = slides
     return spec, stats

@@ -28,15 +28,16 @@ try:
         BULLET_CHARS_PER_LINE, BULLET_MAX_LINES,
         TITLE_MAX_CHARS, GOVERNING_MAX_CHARS,
         NO_BULLET_LAYOUTS, COLUMN_LAYOUTS, EVIDENCE_ANCHOR_PATTERN,
-        get_max_bullets, get_max_chars_per_bullet, get_forbidden_words, get_bullet_bounds
+        get_max_bullets, get_max_chars_per_bullet, get_forbidden_words, get_bullet_bounds,
+        get_column_bullet_limit
     )
 except ImportError:
     # 폴백 상수
-    BULLET_MAX_CHARS = 100
-    BULLET_MAX_COUNT = 6
+    BULLET_MAX_CHARS = 180
+    BULLET_MAX_COUNT = 9
     BULLET_MIN_COUNT = 3
-    BULLET_CHARS_PER_LINE = 42
-    BULLET_MAX_LINES = 2
+    BULLET_CHARS_PER_LINE = 38
+    BULLET_MAX_LINES = 4
     TITLE_MAX_CHARS = 100
     GOVERNING_MAX_CHARS = 200
     NO_BULLET_LAYOUTS = ["cover", "section_divider", "thank_you", "quote"]
@@ -72,8 +73,13 @@ except ImportError:
         if layout in NO_BULLET_LAYOUTS:
             return 0, 0
         if layout in ("chart_focus", "image_focus"):
-            return 0, min(max_bullets, 4)
+            return 0, min(max_bullets, 8)
         return min_bullets, max_bullets
+
+    def get_column_bullet_limit(max_bullets):
+        if max_bullets <= 0:
+            return 0
+        return max(3, min(8, max_bullets))
 
 
 def load_yaml(path: Path):
@@ -197,7 +203,8 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
             ))
 
         # 3. 레이아웃 구조 검사
-        if layout in COLUMN_LAYOUTS and len(columns) < 2:
+        has_content_blocks = isinstance(slide.get("content_blocks"), list) and len(slide.get("content_blocks", [])) > 0
+        if layout in COLUMN_LAYOUTS and len(columns) < 2 and not has_content_blocks:
             issues.append(ValidationIssue(
                 "warning",
                 f"{slide_path}.columns",
@@ -260,7 +267,7 @@ def validate_business_rules(spec: dict) -> List[ValidationIssue]:
 
         if layout in COLUMN_LAYOUTS and columns:
             # 컬럼 레이아웃은 "슬라이드 총합" 대신 "컬럼별 과밀" 중심으로 점검
-            per_column_limit = max(3, min(5, max_bullets))
+            per_column_limit = get_column_bullet_limit(max_bullets)
             for col_idx, col in enumerate(columns):
                 col_bullets = _collect_column_bullet_texts(col)
                 col_count = len(col_bullets)
@@ -578,7 +585,7 @@ def _validate_bullets(
                 f"불릿이 {max_chars}자를 초과합니다 ({len(text)}자)"
             ))
 
-        # 2줄 초과 가능성 검사 (휴리스틱)
+        # 줄 수 초과 가능성 검사 (휴리스틱)
         estimated_lines = max(1, (len(text) - 1) // BULLET_CHARS_PER_LINE + 1)
         if estimated_lines > BULLET_MAX_LINES:
             issues.append(ValidationIssue(

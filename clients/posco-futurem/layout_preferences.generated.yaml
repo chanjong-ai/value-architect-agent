@@ -1,0 +1,62 @@
+meta:
+  version: '1.0'
+  description: strategy_input 기반 자동 생성 레이아웃 선호 설정
+  generated_at: '2026-02-07T23:21:42'
+global:
+  default_layout_intent:
+    emphasis: balanced
+    content_density: normal
+layout_sequence:
+- cover
+- exec_summary
+- section_divider
+- three_column
+- comparison
+- content
+- section_divider
+- chart_focus
+- timeline
+- process_flow
+- appendix
+- content
+- content
+- content
+- content
+- content
+- content
+- content
+- content
+- thank_you
+slide_overrides: {}
+title_keyword_overrides:
+- keywords:
+  - Executive Summary
+  - 요약
+  layout: exec_summary
+- keywords:
+  - Benchmark
+  - 비교
+  - Gap
+  - 경쟁
+  layout: comparison
+- keywords:
+  - Roadmap
+  - 로드맵
+  - 실행 계획
+  layout: timeline
+- keywords:
+  - Value Case
+  - ROI
+  - 기대 효과
+  - 효과
+  layout: chart_focus
+  layout_intent:
+    visual_position: right
+    emphasis: balanced
+layout_intents:
+  chart_focus:
+    visual_position: right
+    emphasis: balanced
+  image_focus:
+    visual_position: right
+    emphasis: visual

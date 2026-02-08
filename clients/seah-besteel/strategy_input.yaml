@@ -1,0 +1,66 @@
+meta:
+  version: "1.0"
+  description: "세아베스틸 C레벨 전략 보고용 입력"
+
+client_profile:
+  industry: "Special Steel Manufacturing"
+  business_model: "B2B"
+  region: "Korea + Global export"
+  audience: "CEO/CFO/COO/CIO"
+  presentation_context: "ExCom"
+
+engagement:
+  objective: "2026~2028 수익성 회복과 운영/디지털 전환 동시 달성"
+  decision_type: "전략 방향 확정 및 실행 투자 승인"
+  expected_slide_count: 30
+  presentation_minutes: 60
+  language: "ko"
+
+priorities:
+  focus_areas:
+    - cost_reduction
+    - operational_excellence
+    - risk_control
+    - data_foundation
+    - ai_scaling
+  must_answer_questions:
+    - "수익성 개선 과제의 우선순위와 연간 효과는?"
+    - "생산/품질/원가 데이터 표준화와 책임체계는 어떻게 고정할 것인가?"
+    - "AI 기반 품질/수요/재고 최적화의 12개월 실행안은 무엇인가?"
+  success_metrics:
+    - name: "영업이익률 개선"
+      target: "+1.5~2.5%p"
+      horizon: "12-18개월"
+    - name: "원가 절감"
+      target: "3~5%"
+      horizon: "12개월"
+    - name: "납기준수율"
+      target: "+4~6%p"
+      horizon: "12개월"
+    - name: "불량/클레임"
+      target: "20~30% 감축"
+      horizon: "18개월"
+
+data_readiness:
+  internal_data_level: "partial"
+  available_datasets:
+    - "생산실적(라인/월)"
+    - "품질불량/재작업 이력"
+    - "원가/에너지 사용량"
+    - "재고/납기/판매 실적"
+  constraints:
+    - "사업부별 데이터 정의 상이"
+    - "실시간 데이터 연계 미흡"
+    - "현장 시스템 인터페이스 표준 부재"
+
+deck_preferences:
+  storytelling_mode: "decision_first"
+  must_have_layouts:
+    - "exec_summary"
+    - "comparison"
+    - "timeline"
+    - "chart_focus"
+    - "process_flow"
+  avoid_layouts: []
+  visual_emphasis: "balanced"
+  content_density: "normal"
