@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "brief.schema.json",
+  "type": "object",
+  "required": [
+    "project_id",
+    "client_name",
+    "industry",
+    "topic",
+    "target_company",
+    "competitors",
+    "report_date",
+    "target_audience",
+    "language",
+    "page_count",
+    "tone",
+    "must_include",
+    "must_avoid",
+    "output_style",
+    "constraints"
+  ],
+  "properties": {
+    "project_id": { "type": "string", "minLength": 1 },
+    "client_name": { "type": "string", "minLength": 1 },
+    "industry": { "type": "string", "minLength": 1 },
+    "topic": { "type": "string", "minLength": 1 },
+    "target_company": { "type": "string", "minLength": 1 },
+    "competitors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0,
+      "maxItems": 5
+    },
+    "report_date": { "type": "string", "minLength": 4 },
+    "target_audience": {
+      "type": "string",
+      "enum": ["CFO", "COO", "CIO", "CEO", "CSO"]
+    },
+    "language": { "type": "string", "const": "ko-KR" },
+    "page_count": { "type": "integer", "minimum": 13, "maximum": 20 },
+    "tone": { "type": "string", "minLength": 1 },
+    "must_include": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0
+    },
+    "must_avoid": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0
+    },
+    "output_style": { "type": "string", "const": "consulting" },
+    "constraints": {
+      "type": "object",
+      "required": [
+        "max_governing_message_chars",
+        "min_evidence_per_claim",
+        "max_bullets_per_slide"
+      ],
+      "properties": {
+        "max_governing_message_chars": { "type": "integer", "minimum": 20 },
+        "min_evidence_per_claim": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "max_bullets_per_slide": { "type": "integer", "minimum": 3, "maximum": 8 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

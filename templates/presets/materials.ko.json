@@ -1,0 +1,6 @@
+{
+  "industry": "소재",
+  "tone": "risk-balanced portfolio",
+  "must_include": ["원재료 민감도", "가격 전가 전략", "공급망 리스크"],
+  "must_avoid": ["출처 누락", "기간 불명 데이터"]
+}

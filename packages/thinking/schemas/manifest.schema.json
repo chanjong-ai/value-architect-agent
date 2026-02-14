@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "manifest.schema.json",
+  "type": "object",
+  "required": [
+    "run_id",
+    "started_at",
+    "ended_at",
+    "input_hash",
+    "research_hash",
+    "spec_hash",
+    "renderer_version",
+    "qa_score",
+    "status",
+    "deterministic_mode",
+    "deterministic_seed"
+  ],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "input_hash": { "type": "string", "minLength": 10 },
+    "research_hash": { "type": "string", "minLength": 10 },
+    "spec_hash": { "type": "string", "minLength": 10 },
+    "renderer_version": { "type": "string", "minLength": 1 },
+    "qa_score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "status": { "type": "string", "enum": ["success", "failed"] },
+    "deterministic_mode": { "type": "boolean" },
+    "deterministic_seed": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

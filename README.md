@@ -1,227 +1,183 @@
-# Value Architect Agent
+# consulting-ppt-agent
 
-고객사별 경영진용 컨설팅 PPT를 생성/검증하는 자동화 파이프라인입니다.
+한국어 전략 컨설팅 보고서(PPT)를 자동으로 만드는 **Thinking → Making** 2단계 에이전트입니다.
 
-핵심 방향:
-- 최신·신뢰 근거 기반 리서치 강화
-- 슬라이드 블록 구조(`blocks`) 기반 설계
-- 16:9 기준 헤더/본문 일관 디자인
-- `validate → render → qa` 품질 게이트 자동화
+이 프로젝트는 "슬라이드 예쁘게 만들기"보다,
+- 논리 구조(스토리라인),
+- 근거 추적(claim ↔ evidence ↔ source),
+- QA 게이트(점수 기반 통과/실패)
+를 우선하도록 설계되어 있습니다.
 
-## 핵심 아키텍처
+---
 
-### 1) Deck Spec: 텍스트 배열이 아닌 블록 구조
-`deck_spec.yaml`은 아래 구조를 권장합니다.
+## 이 프로젝트가 하는 일
 
-- `layout`: `cover | exec_summary | two_column | chart_insight | competitor_2x2 | strategy_cards | timeline | kpi_cards`
-- `blocks[]`:
-  - `headline`, `key_message`
-  - `bullets`, `action_list`
-  - `chart`, `matrix_2x2`, `timeline_steps`, `kpi_cards`
+1. **Thinking 단계**
+   - 브리프를 정규화합니다.
+   - 리서치 팩(또는 외부 리서치 파일)을 준비합니다.
+   - 13~20장 스토리라인을 설계하고 `slidespec.json`을 만듭니다.
 
-렌더러는 `headline`/`key_message` 블록이 있으면 `title`/`governing_message`보다 우선 적용합니다.
+2. **Making 단계**
+   - `slidespec.json`을 검증한 뒤 PptxGenJS로 `report.pptx`를 생성합니다.
+   - 슬라이드별 근거 매핑이 포함된 provenance를 저장합니다.
 
-레거시 필드(`bullets`, `content_blocks`, `columns`)는 호환되지만, 파이프라인이 자동으로 `blocks` 중심으로 정규화합니다.
+3. **QA 단계**
+   - 구조/데이터/메시지/가독성/출처를 점수화합니다.
+   - threshold 미달이면 실행을 실패 처리합니다.
 
-### 2) Layout 슬롯 기반 렌더링
-`templates/company/layouts.yaml`에서 슬롯 좌표를 정의합니다.
+---
 
-- `title_box`, `governing_box`
-- `left_column`, `right_column`
-- `chart_box`, `insight_box`
-- `matrix_box`, `timeline_box`
-- `kpi_card_1..4`, `action_box`, `assumptions_box`
+## 빠른 시작 (Quickstart)
 
-렌더러는 슬롯 좌표를 읽어 도형/텍스트를 배치하므로, 별도 PPT 템플릿 파일 없이도 일관된 결과를 생성합니다.
+아래 순서대로 실행하면 가장 안전합니다.
 
-### 3) 폰트/타이포 정책
-기본 폰트는 `Noto Sans KR` 일반체를 사용합니다.
+### 1) 의존성 설치
+```bash
+pnpm install
+```
 
-- Title: `24pt`
-- Governing Message: `16pt`
-- Body: `12pt` (레이아웃에 따라 `14pt` 허용)
-- Footnote: `9pt`
+### 2) 빌드
+```bash
+pnpm build
+```
 
-## 실무 고정 레이아웃 세트 (8)
+### 3) 기본 E2E 실행
+```bash
+pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj
+```
 
-자동 생성/보강에서 우선 사용하는 레이아웃:
+### 4) 에너지 소재(양극재/음극재) 실전형 실행
+```bash
+pnpm agent run \
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_cathode_anode \
+  --research ./examples/research.energy-materials.ko.json \
+  --threshold 80
+```
 
-1. `cover`
-2. `exec_summary`
-3. `two_column`
-4. `chart_insight`
-5. `competitor_2x2`
-6. `strategy_cards`
-7. `timeline`
-8. `kpi_cards`
+### 5) 재현 가능한 실행(Deterministic)
+```bash
+pnpm agent run \
+  --brief ./examples/brief.posco.ko.json \
+  --project posco_cvj \
+  --deterministic --seed posco_v1
+```
 
-레거시 레이아웃(`content`, `comparison`, `three_column`, `process_flow`, `chart_focus`, `image_focus`)은 자동 보강 단계에서 위 8개로 정규화될 수 있습니다.
+---
 
-## 디렉터리 구조
+## 실행 결과 위치
+
+모든 실행 결과는 아래 구조로 저장됩니다.
 
 ```text
-value-architect-agent/
-├── scripts/
-│   ├── deck_cli.py
-│   ├── client_bootstrap.py
-│   ├── quality_gate.py
-│   ├── new_client.py
-│   ├── predeck_research.py
-│   ├── densify_spec.py
-│   ├── enrich_evidence.py
-│   ├── validate_spec.py
-│   ├── render_ppt.py
-│   ├── qa_ppt.py
-│   ├── polish_ppt.py
-│   ├── constants.py
-│   └── block_utils.py
-├── schema/
-│   ├── deck_spec.schema.json
-│   └── deck_spec.example.yaml
-├── templates/company/
-│   ├── tokens.yaml
-│   └── layouts.yaml
-├── .github/workflows/
-│   └── quality-gate.yml
-└── clients/
-    ├── _template/
-    └── <client>/
+runs/YYYY-MM-DD/<project>/<run_id>/
+├─ input/brief.raw.json
+├─ input/brief.normalized.json
+├─ input/learning.rules.json
+├─ research/research.pack.json
+├─ spec/slidespec.json
+├─ output/report.pptx
+├─ output/provenance.json
+├─ qa/qa.report.json
+├─ qa/qa.summary.md
+├─ qa/autofix.json
+└─ manifest.json
 ```
 
-## 설치
+`qa/qa.summary.md`를 먼저 보면, 왜 통과/실패했는지 빠르게 파악할 수 있습니다.
+
+---
+
+## 자주 쓰는 명령
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install python-pptx pyyaml jsonschema pypdf
+# Thinking만 실행
+pnpm agent think --brief ./examples/brief.posco.ko.json --project posco_cvj
+
+# Making만 실행
+pnpm agent make --spec ./runs/<date>/<project>/<run_id>/spec/slidespec.json
+
+# QA만 실행
+pnpm agent qa --run ./runs/<date>/<project>/<run_id> --threshold 80
+
+# 피드백 저장
+pnpm agent feedback --run_id <run_id> --file ./examples/feedback.sample.json
 ```
 
-## 빠른 시작
+---
 
-### 1) 신규 고객 생성
+## 품질 기준 (McKinsey/BCG 스타일 대응)
+
+엔진이 기본적으로 아래를 강제합니다.
+- 거버닝 메시지 중복 감지 및 Takeaway 형식 점검
+- 수치 claim의 교차 근거(2개 이상 evidence) 점검
+- table visual의 `data_ref` 정합성 점검
+- source footer 완전성 점검
+- 스토리 아크(cover → 분석 → 리스크 → 실행) 점검
+
+사람이 최종 검토해야 하는 영역도 남아 있습니다.
+- 산업 특화 인사이트의 현실성
+- 조직/의사결정 구조를 반영한 실행 가능성
+- 대외 커뮤니케이션 문구(IR/규제) 정합성
+
+---
+
+## 프로젝트 구조
+
+```text
+apps/
+  cli/      # run/think/make/qa/feedback
+  worker/   # 배치 확장 엔트리
+packages/
+  shared/   # 공통 타입/로깅/해시/시간/에러
+  thinking/ # Stage A + JSON schema
+  making/   # PptxGenJS 렌더러
+  qa/       # QA 게이트
+  memory/   # run/feedback 저장 및 학습 규칙
+templates/  # theme/storyline/preset
+examples/   # 샘플 brief/research/feedback
+docs/       # 아키텍처/계약/운영/품질 문서
+runs/       # 실행 산출물
+```
+
+---
+
+## 검증 명령 모음
 
 ```bash
-python scripts/deck_cli.py new ecopro
+pnpm build
+pnpm typecheck
+pnpm test
+pnpm lint
+pnpm schema:validate
+pnpm regression:check
+pnpm smoke
 ```
 
-동일 고객의 다른 주제로 새 폴더 생성:
+---
 
-```bash
-python scripts/deck_cli.py new ecopro --topic "원가혁신" --new-folder-if-exists
-```
+## 트러블슈팅
 
-### 2) 전체 파이프라인 실행
+- 한글 폰트가 깨질 때
+  - 시스템에 `Malgun Gothic` 또는 대체 한글 폰트를 설치한 뒤 다시 실행해 주세요.
 
-```bash
-python scripts/deck_cli.py full-pipeline ecopro \
-  --topic "배터리소재 성장·수익성 동시 달성" \
-  --sync-layout --enrich-evidence --overwrite-evidence --polish \
-  --template-mode layout
-```
+- QA 점수가 낮을 때
+  - `qa/qa.summary.md`의 `Fail Reasons`와 `[high]` 이슈부터 수정하면 가장 빠릅니다.
 
-`full-pipeline` 기본 흐름:
+- 텍스트가 과밀할 때
+  - `brief.page_count`를 늘리거나 `must_include` 항목을 줄여 밀도를 낮춰 주세요.
 
-1. `predeck` (심화 리서치 + 블루프린트)
-2. `densify` (blocks 정규화 + 필수 블록 보강)
-3. `sync-layout` (옵션)
-4. `enrich-evidence` (옵션)
-5. `validate`
-6. `render`
-7. `qa`
-8. `qa 실패 시 자동 보정 루프` (`densify → validate → render → qa`, 기본 2회)
-9. `polish` (옵션)
+- lockfile 충돌이 있을 때
+  - `pnpm install`을 다시 실행해 `pnpm-lock.yaml`을 동기화해 주세요.
 
-## 주요 명령
+---
 
-```bash
-python scripts/deck_cli.py --help
-```
+## 문서
 
-- `new`: 신규 고객 템플릿 생성
-- `predeck`: 리서치/블루프린트 생성 (+ `--update-spec`)
-- `densify`: 레이아웃 정규화 + blocks 보강 + 밀도 개선
-- `enrich-evidence`: 불릿/블록 evidence 자동 보강
-- `validate`: 스키마 + 비즈니스 규칙 검증
-- `render`: PPTX 생성
-- `qa`: 폰트/밀도/경계/블록 필수요건 검사
-- `full-pipeline`: end-to-end 실행
-
-## CI / Quality Gate
-
-로컬/CI 공통 품질 게이트:
-
-```bash
-python scripts/quality_gate.py --template-mode layout
-```
-
-검사 항목:
-- `scripts/*.py` 문법 컴파일(`py_compile`)
-- `clients/_template` 제외 전체 고객 `validate`
-- `qa-sanity-client` 기준 `render(layout-driven)` + `qa` 스모크 테스트
-
-GitHub Actions는 `.github/workflows/quality-gate.yml`에서 동일 게이트를 실행합니다.
-
-## 품질 정책
-
-### 컨텐츠 정책
-
-- 거버닝 메시지: 단문 1문장, 권장 길이 `28~45자`
-- 본문: 문제-영향-시사점이 닫히는 문장형 서술 유지
-- bullets 블록: `3~5`개, action_list 블록: `2~3`개 권장
-- 불릿 길이: 권장 `18~110자` (문장형 컨설팅 톤 허용)
-- 원인→영향→시사점 구조 불릿은 슬라이드당 1개 권장
-
-### QA 정책
-
-- 허용 폰트: `Noto Sans KR` 계열
-- 레이아웃별 필수 블록 누락 검사
-- 블록 단위 밀도 규칙(아이템 수/문장 길이) 검사
-- 텍스트 오버플로우 추정 검사
-- 근거 앵커(`sources.md#...`) 포맷/존재 검사
-
-## Troubleshooting
-
-### validate 실패
-
-```bash
-python scripts/deck_cli.py validate <client>
-```
-
-확인 포인트:
-- `layout` enum/오타
-- `blocks` 타입 및 필수 필드
-- `evidence.source_anchor` 형식
-
-### QA 경고가 많을 때
-
-```bash
-python scripts/deck_cli.py densify <client>
-python scripts/deck_cli.py validate <client>
-python scripts/deck_cli.py render <client>
-python scripts/deck_cli.py qa <client>
-```
-
-### 렌더 모드 분리
-
-```bash
-python scripts/deck_cli.py render <client> --template-mode layout
-```
-
-외부 템플릿을 임시로 적용하려면:
-
-```bash
-python scripts/deck_cli.py render <client> --template /absolute/path/to/custom-template.pptx
-```
-
-## 산출물
-
-`clients/<client>/outputs/` 하위:
-- `*.pptx`
-- `*_qa_report.json`
-- `*_polished.pptx` / `*.polish.json`
-
-`clients/<client>/` 하위:
-- `research_report.md|json`
-- `layout_blueprint.md|yaml`
-- `layout_preferences.research.yaml`
-- `deck_spec.yaml`
+- `docs/architecture.md`
+- `docs/schema-contracts.md`
+- `docs/qa-rubric.md`
+- `docs/consulting-quality-benchmark.md`
+- `docs/prompt-alignment.md`
+- `docs/project-audit.md`
+- `docs/runbook.md`

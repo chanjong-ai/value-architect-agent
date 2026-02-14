@@ -1,0 +1,6 @@
+{
+  "industry": "유통",
+  "tone": "growth with profitability",
+  "must_include": ["매출 믹스", "재고 회전", "채널 전략"],
+  "must_avoid": ["검증되지 않은 TAM", "중복 메시지"]
+}

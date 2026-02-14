@@ -1,0 +1,51 @@
+name: nightly-regression
+
+on:
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Golden brief 1
+        run: pnpm agent run --brief ./examples/brief.posco.ko.json --project regression_posco --deterministic --seed regression_posco
+
+      - name: Golden brief 2
+        run: pnpm agent run --brief ./examples/brief.commerce.ko.json --project regression_commerce --deterministic --seed regression_commerce
+
+      - name: Golden brief 3
+        run: pnpm agent run --brief ./examples/brief.posco.ko.json --project regression_posco_alt --deterministic --seed regression_posco_alt
+
+      - name: Regression gate
+        run: pnpm regression:check
+
+      - name: Upload regression report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-regression-report
+          path: artifacts/nightly-regression.md

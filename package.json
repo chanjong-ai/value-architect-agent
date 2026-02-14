@@ -1,0 +1,26 @@
+{
+  "name": "consulting-ppt-agent",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Thinking → Making consulting PPT agent with PptxGenJS",
+  "license": "MIT",
+  "packageManager": "pnpm@10.4.1",
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "turbo run clean && rimraf node_modules",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "schema:validate": "pnpm agent think --brief ./examples/brief.posco.ko.json --project schema_check --deterministic --seed schema",
+    "regression:check": "node ./scripts/regression-check.mjs",
+    "agent": "pnpm --filter @consulting-ppt/cli start",
+    "agent:worker": "pnpm --filter @consulting-ppt/worker start",
+    "smoke": "pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

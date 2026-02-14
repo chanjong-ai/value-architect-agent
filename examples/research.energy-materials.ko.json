@@ -1,0 +1,277 @@
+{
+  "project_id": "energy_materials_cathode_anode",
+  "run_id": "override_by_runtime",
+  "generated_at": "2026-02-14T12:00:00.000Z",
+  "sources": [
+    {
+      "source_id": "src_iea_2025_battery",
+      "title": "Global EV Outlook 2025 - Electric vehicle batteries",
+      "publisher": "IEA",
+      "date": "2025-05-14",
+      "url_or_ref": "https://www.iea.org/reports/global-ev-outlook-2025/electric-vehicle-batteries",
+      "reliability_score": 0.96,
+      "axis": "market"
+    },
+    {
+      "source_id": "src_iea_2024_trends",
+      "title": "Global EV Outlook 2024 - Trends in EV batteries",
+      "publisher": "IEA",
+      "date": "2024-04-23",
+      "url_or_ref": "https://www.iea.org/reports/global-ev-outlook-2024/trends-in-electric-vehicle-batteries",
+      "reliability_score": 0.95,
+      "axis": "market"
+    },
+    {
+      "source_id": "src_iea_2025_supply",
+      "title": "Global EV Outlook 2025 - Battery component concentration",
+      "publisher": "IEA",
+      "date": "2025-05-14",
+      "url_or_ref": "https://www.iea.org/reports/global-ev-outlook-2025/electric-vehicle-batteries",
+      "reliability_score": 0.96,
+      "axis": "competition"
+    },
+    {
+      "source_id": "src_ecopro_highnickel",
+      "title": "EcoPro BM high-nickel and precursor integrated production",
+      "publisher": "EcoPro BM",
+      "date": "2025-03-31",
+      "url_or_ref": "https://www.ecoprobm.co.kr/eng/sub010101",
+      "reliability_score": 0.87,
+      "axis": "competition"
+    },
+    {
+      "source_id": "src_posco_2024_results",
+      "title": "POSCO Future M Announces 2024 Financial Results",
+      "publisher": "POSCO Group Newsroom",
+      "date": "2025-02-10",
+      "url_or_ref": "https://newsroom.posco.com/en/posco-future-m-announces-2024-financial-results/",
+      "reliability_score": 0.9,
+      "axis": "finance"
+    },
+    {
+      "source_id": "src_ecopro_overview",
+      "title": "EcoPro BM Company Overview",
+      "publisher": "EcoPro BM",
+      "date": "2025-03-31",
+      "url_or_ref": "https://www.ecoprobm.co.kr/eng/sub010101",
+      "reliability_score": 0.88,
+      "axis": "finance"
+    },
+    {
+      "source_id": "src_lgchem_cathode",
+      "title": "LG Chem Cathode Material Product and Capacity Plan",
+      "publisher": "LG Chem",
+      "date": "2025-12-01",
+      "url_or_ref": "https://www.lgchem.com/product-detail/cathode-material",
+      "reliability_score": 0.88,
+      "axis": "technology"
+    },
+    {
+      "source_id": "src_posco_tech_2024",
+      "title": "POSCO Future M next-generation battery materials roadmap",
+      "publisher": "POSCO Group Newsroom",
+      "date": "2025-02-10",
+      "url_or_ref": "https://newsroom.posco.com/en/posco-future-m-announces-2024-financial-results/",
+      "reliability_score": 0.9,
+      "axis": "technology"
+    },
+    {
+      "source_id": "src_iea_2024_import",
+      "title": "Global EV Outlook 2024 - Import share by region",
+      "publisher": "IEA",
+      "date": "2024-04-23",
+      "url_or_ref": "https://www.iea.org/reports/global-ev-outlook-2024/trends-in-electric-vehicle-batteries",
+      "reliability_score": 0.95,
+      "axis": "regulation"
+    },
+    {
+      "source_id": "src_posco_anode_japan",
+      "title": "POSCO Future M signs anode material supply contract with a Japanese battery company",
+      "publisher": "POSCO Group Newsroom",
+      "date": "2025-07-23",
+      "url_or_ref": "https://newsroom.posco.com/en/posco-future-m-signs-anode-material-supply-contract-with-a-japanese-battery-company-accelerating-global-customer-expansion/",
+      "reliability_score": 0.9,
+      "axis": "regulation"
+    },
+    {
+      "source_id": "src_iea_2025_price",
+      "title": "Global EV Outlook 2025 - Battery prices",
+      "publisher": "IEA",
+      "date": "2025-05-14",
+      "url_or_ref": "https://www.iea.org/reports/global-ev-outlook-2025/electric-vehicle-batteries",
+      "reliability_score": 0.96,
+      "axis": "risk"
+    },
+    {
+      "source_id": "src_iea_2025_capacity",
+      "title": "Global EV Outlook 2025 - Battery manufacturing capacity",
+      "publisher": "IEA",
+      "date": "2025-05-14",
+      "url_or_ref": "https://www.iea.org/reports/global-ev-outlook-2025/electric-vehicle-batteries",
+      "reliability_score": 0.96,
+      "axis": "risk"
+    }
+  ],
+  "evidences": [
+    {
+      "evidence_id": "ev_market_1",
+      "source_id": "src_iea_2025_battery",
+      "claim_text": "EV 배터리 수요 확대로 양극재·음극재 연동 수요가 고성장 구간을 유지",
+      "numeric_values": [28.0],
+      "quote_snippet": "Battery demand continues strong growth trajectory",
+      "unit": "%",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_market_2",
+      "source_id": "src_iea_2024_trends",
+      "claim_text": "시장 성장의 중심은 가격경쟁력과 화학계열 다변화",
+      "numeric_values": [25.0],
+      "quote_snippet": "Battery deployment sustained high growth in EV markets",
+      "unit": "%",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_comp_1",
+      "source_id": "src_iea_2025_supply",
+      "claim_text": "중국 중심의 소재 가공 집중으로 글로벌 플레이어의 차별화 압력 확대",
+      "numeric_values": [85.0],
+      "quote_snippet": "China remains highly concentrated in component manufacturing",
+      "unit": "%",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_comp_2",
+      "source_id": "src_ecopro_highnickel",
+      "claim_text": "하이니켈 및 전구체 연계 모델은 프리미엄 세그먼트 경쟁 우위 요소",
+      "numeric_values": [80.0],
+      "quote_snippet": "High-nickel and integrated precursor-cathode production model",
+      "unit": "Ni%+ class",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_fin_1",
+      "source_id": "src_posco_2024_results",
+      "claim_text": "포스코퓨처엠은 2024년 매출 3.6999조원 규모로 양/음극재 동시 포지션을 보유",
+      "numeric_values": [3.6999],
+      "quote_snippet": "Consolidated revenue KRW 3.6999 trillion",
+      "unit": "KRW trillion",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_fin_2",
+      "source_id": "src_ecopro_overview",
+      "claim_text": "에코프로비엠은 2024년 매출 2.7668조원으로 하이니켈 중심 수익 구조를 운영",
+      "numeric_values": [2.7668],
+      "quote_snippet": "Sales KRW 2.7668 trillion",
+      "unit": "KRW trillion",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_tech_1",
+      "source_id": "src_lgchem_cathode",
+      "claim_text": "LG화학은 2030년 36만톤/년 CAPA 계획으로 글로벌 스케일 경쟁을 강화",
+      "numeric_values": [360.0],
+      "quote_snippet": "Capacity plan to 360,000 tons per year by 2030",
+      "unit": "kt/y",
+      "period": "roadmap"
+    },
+    {
+      "evidence_id": "ev_tech_2",
+      "source_id": "src_posco_tech_2024",
+      "claim_text": "포스코퓨처엠은 차세대 소재 2028년 양산 목표로 기술 포트폴리오를 확장",
+      "numeric_values": [320.0],
+      "quote_snippet": "Next-generation battery materials ramp-up roadmap",
+      "unit": "strategy-index",
+      "period": "roadmap"
+    },
+    {
+      "evidence_id": "ev_reg_1",
+      "source_id": "src_iea_2024_import",
+      "claim_text": "미국/유럽의 수입 의존 구조는 비중국 공급선 확보를 전략 과제로 부각",
+      "numeric_values": [30.0],
+      "quote_snippet": "US and Europe keep meaningful import dependence",
+      "unit": "%",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_reg_2",
+      "source_id": "src_posco_anode_japan",
+      "claim_text": "포스코퓨처엠의 일본 고객 계약은 규제 대응형 글로벌 고객 다변화 전략 사례",
+      "numeric_values": [27.0],
+      "quote_snippet": "Anode supply contract with Japanese battery company",
+      "unit": "%",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_risk_1",
+      "source_id": "src_iea_2025_price",
+      "claim_text": "가격 하락 속도 차이는 지역별 수익성 격차와 판가 압박 리스크를 동반",
+      "numeric_values": [30.0],
+      "quote_snippet": "Battery pack prices fell sharply in major markets",
+      "unit": "%",
+      "period": "2024"
+    },
+    {
+      "evidence_id": "ev_risk_2",
+      "source_id": "src_iea_2025_capacity",
+      "claim_text": "CAPA 과잉 국면은 품질·원가·고객 포트폴리오 경쟁을 동시에 요구",
+      "numeric_values": [24.0],
+      "quote_snippet": "Manufacturing capacity expansion may outpace near-term demand",
+      "unit": "%",
+      "period": "2024"
+    }
+  ],
+  "normalized_tables": [
+    {
+      "table_id": "tbl-energy-market-kpi",
+      "title": "에너지 소재 시장 핵심 지표",
+      "columns": ["지표", "현재", "중기", "시사점"],
+      "rows": [
+        {
+          "지표": "시장 성장성(%)",
+          "현재": 26.0,
+          "중기": 24.0,
+          "시사점": "성장 지속이나 가격경쟁 심화"
+        },
+        {
+          "지표": "공급망 집중도(%)",
+          "현재": 85.0,
+          "중기": 80.0,
+          "시사점": "탈중국 공급선 다변화 필요"
+        },
+        {
+          "지표": "가격 하락 압력(%)",
+          "현재": 30.0,
+          "중기": 20.0,
+          "시사점": "원가경쟁력·제품믹스 대응 필요"
+        }
+      ]
+    },
+    {
+      "table_id": "tbl-energy-player-compare",
+      "title": "주요 플레이어 비교",
+      "columns": ["기업", "핵심 아키텍처", "시장 포지셔닝", "성장 전략"],
+      "rows": [
+        {
+          "기업": "포스코퓨처엠",
+          "핵심 아키텍처": "양극재+음극재 동시 운영",
+          "시장 포지셔닝": "통합 밸류체인형",
+          "성장 전략": "원료-소재 연계 및 글로벌 고객 다변화"
+        },
+        {
+          "기업": "에코프로비엠",
+          "핵심 아키텍처": "하이니켈 양극재 중심",
+          "시장 포지셔닝": "프리미엄 밀도형",
+          "성장 전략": "전구체-양극재 수직 연계 고도화"
+        },
+        {
+          "기업": "LG화학",
+          "핵심 아키텍처": "양극재 대규모 CAPA",
+          "시장 포지셔닝": "글로벌 스케일형",
+          "성장 전략": "미국 포함 CAPA 확장·포트폴리오 다변화"
+        }
+      ]
+    }
+  ]
+}

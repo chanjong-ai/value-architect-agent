@@ -1,0 +1,6 @@
+{
+  "industry": "제조",
+  "tone": "fact-based transformation",
+  "must_include": ["원가 구조", "운영 KPI", "CAPEX 우선순위"],
+  "must_avoid": ["근거 없는 수치", "추상적 문구"]
+}

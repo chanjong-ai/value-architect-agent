@@ -1,0 +1,141 @@
+{
+  "project_id": "sample_project",
+  "run_id": "sample_run",
+  "generated_at": "2026-02-14T00:00:00.000Z",
+  "sources": [
+    {
+      "source_id": "src_market_a",
+      "title": "배터리 소재 시장 성장률",
+      "publisher": "KOTRA",
+      "date": "2026-01-30",
+      "url_or_ref": "KOTRA 2026-01-30",
+      "reliability_score": 0.9,
+      "axis": "market"
+    },
+    {
+      "source_id": "src_market_b",
+      "title": "배터리 소재 수요 전망",
+      "publisher": "한국산업연구원",
+      "date": "2026-01-29",
+      "url_or_ref": "KIET 2026-01-29",
+      "reliability_score": 0.88,
+      "axis": "market"
+    },
+    {
+      "source_id": "src_comp_a",
+      "title": "경쟁사 마진 벤치마크",
+      "publisher": "DART",
+      "date": "2026-01-28",
+      "url_or_ref": "DART 2026-01-28",
+      "reliability_score": 0.87,
+      "axis": "competition"
+    },
+    {
+      "source_id": "src_comp_b",
+      "title": "상위사 운영지표",
+      "publisher": "S&P Capital IQ",
+      "date": "2026-01-27",
+      "url_or_ref": "S&P 2026-01-27",
+      "reliability_score": 0.86,
+      "axis": "competition"
+    },
+    {
+      "source_id": "src_fin_a",
+      "title": "현금흐름 분석",
+      "publisher": "한국거래소",
+      "date": "2026-01-25",
+      "url_or_ref": "KRX 2026-01-25",
+      "reliability_score": 0.9,
+      "axis": "finance"
+    },
+    {
+      "source_id": "src_fin_b",
+      "title": "재무 안정성",
+      "publisher": "연결감사보고서",
+      "date": "2026-01-24",
+      "url_or_ref": "Audit 2026-01-24",
+      "reliability_score": 0.89,
+      "axis": "finance"
+    },
+    {
+      "source_id": "src_tech_a",
+      "title": "자동화 투자 효과",
+      "publisher": "WIPO",
+      "date": "2026-01-23",
+      "url_or_ref": "WIPO 2026-01-23",
+      "reliability_score": 0.85,
+      "axis": "technology"
+    },
+    {
+      "source_id": "src_tech_b",
+      "title": "특허 기반 공정 개선",
+      "publisher": "특허청",
+      "date": "2026-01-22",
+      "url_or_ref": "KIPO 2026-01-22",
+      "reliability_score": 0.84,
+      "axis": "technology"
+    },
+    {
+      "source_id": "src_reg_a",
+      "title": "규제 비용 영향",
+      "publisher": "환경부",
+      "date": "2026-01-21",
+      "url_or_ref": "MOE 2026-01-21",
+      "reliability_score": 0.83,
+      "axis": "regulation"
+    },
+    {
+      "source_id": "src_reg_b",
+      "title": "EU 규제 트렌드",
+      "publisher": "EU Commission",
+      "date": "2026-01-20",
+      "url_or_ref": "EU 2026-01-20",
+      "reliability_score": 0.82,
+      "axis": "regulation"
+    },
+    {
+      "source_id": "src_risk_a",
+      "title": "원재료 변동성",
+      "publisher": "S&P Global",
+      "date": "2026-01-19",
+      "url_or_ref": "S&P 2026-01-19",
+      "reliability_score": 0.87,
+      "axis": "risk"
+    },
+    {
+      "source_id": "src_risk_b",
+      "title": "공급망 리스크 지표",
+      "publisher": "국가통계포털",
+      "date": "2026-01-18",
+      "url_or_ref": "KOSIS 2026-01-18",
+      "reliability_score": 0.86,
+      "axis": "risk"
+    }
+  ],
+  "evidences": [
+    { "evidence_id": "ev_market_a", "source_id": "src_market_a", "claim_text": "시장 수요는 성장", "numeric_values": [8.9], "quote_snippet": "수요 성장 8.9%", "unit": "%", "period": "2026-YTD" },
+    { "evidence_id": "ev_market_b", "source_id": "src_market_b", "claim_text": "시장 수요는 성장", "numeric_values": [8.6], "quote_snippet": "수요 성장 8.6%", "unit": "%", "period": "2026-YTD" },
+    { "evidence_id": "ev_comp_a", "source_id": "src_comp_a", "claim_text": "경쟁사 대비 마진 격차", "numeric_values": [3.8], "quote_snippet": "격차 3.8%p", "unit": "%p", "period": "2026-YTD" },
+    { "evidence_id": "ev_comp_b", "source_id": "src_comp_b", "claim_text": "경쟁사 대비 마진 격차", "numeric_values": [3.6], "quote_snippet": "격차 3.6%p", "unit": "%p", "period": "2026-YTD" },
+    { "evidence_id": "ev_fin_a", "source_id": "src_fin_a", "claim_text": "현금흐름 개선", "numeric_values": [640], "quote_snippet": "개선 640억원", "unit": "억원", "period": "2026-YTD" },
+    { "evidence_id": "ev_fin_b", "source_id": "src_fin_b", "claim_text": "현금흐름 개선", "numeric_values": [618], "quote_snippet": "개선 618억원", "unit": "억원", "period": "2026-YTD" },
+    { "evidence_id": "ev_tech_a", "source_id": "src_tech_a", "claim_text": "자동화 원가 절감", "numeric_values": [13.7], "quote_snippet": "절감 13.7%", "unit": "%", "period": "2026-YTD" },
+    { "evidence_id": "ev_tech_b", "source_id": "src_tech_b", "claim_text": "자동화 원가 절감", "numeric_values": [13.2], "quote_snippet": "절감 13.2%", "unit": "%", "period": "2026-YTD" },
+    { "evidence_id": "ev_reg_a", "source_id": "src_reg_a", "claim_text": "규제 대응 비용", "numeric_values": [2.5], "quote_snippet": "비용 2.5%", "unit": "%", "period": "2026-YTD" },
+    { "evidence_id": "ev_reg_b", "source_id": "src_reg_b", "claim_text": "규제 대응 비용", "numeric_values": [2.3], "quote_snippet": "비용 2.3%", "unit": "%", "period": "2026-YTD" },
+    { "evidence_id": "ev_risk_a", "source_id": "src_risk_a", "claim_text": "원재료 리스크", "numeric_values": [10.9], "quote_snippet": "변동성 10.9%", "unit": "%", "period": "2026-YTD" },
+    { "evidence_id": "ev_risk_b", "source_id": "src_risk_b", "claim_text": "원재료 리스크", "numeric_values": [10.4], "quote_snippet": "변동성 10.4%", "unit": "%", "period": "2026-YTD" }
+  ],
+  "normalized_tables": [
+    {
+      "table_id": "tbl-sample-kpi",
+      "title": "핵심 KPI 추이",
+      "columns": ["항목", "현재", "목표", "격차"],
+      "rows": [
+        { "항목": "매출성장률", "현재": 6.4, "목표": 9.2, "격차": -2.8 },
+        { "항목": "영업이익률", "현재": 8.6, "목표": 11.5, "격차": -2.9 },
+        { "항목": "재고회전", "현재": 4.3, "목표": 5.2, "격차": -0.9 }
+      ]
+    }
+  ]
+}

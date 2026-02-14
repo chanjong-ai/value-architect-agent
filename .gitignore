@@ -1,29 +1,27 @@
-# Python
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache/
-.mypy_cache/
+# Node
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Build
+dist/
+**/dist/
+coverage/
+.turbo/
+**/.turbo/
+
+# Runtime artifacts
+runs/*
+!runs/.gitkeep
+artifacts/
+reports/
 
 # OS / Editor
 .DS_Store
 .vscode/
 .idea/
+.venv/
 
-# Build / Output
-outputs/
-clients/*/outputs/
-clients/*/research/
-*.pptx
-*.potx
-*.log
-
-# Secrets / Local memory
-CLAUDE.local.md
+# Env
 .env
 .env.*
-
-# Temporary
-tmp/

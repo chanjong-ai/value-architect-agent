@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research-pack.schema.json",
+  "type": "object",
+  "required": ["project_id", "run_id", "generated_at", "sources", "evidences", "normalized_tables"],
+  "properties": {
+    "project_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "sources": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["source_id", "title", "publisher", "date", "url_or_ref", "reliability_score", "axis"],
+        "properties": {
+          "source_id": { "type": "string" },
+          "title": { "type": "string" },
+          "publisher": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "url_or_ref": { "type": "string" },
+          "reliability_score": { "type": "number", "minimum": 0, "maximum": 1 },
+          "axis": {
+            "type": "string",
+            "enum": ["market", "competition", "finance", "technology", "regulation", "risk"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidences": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["evidence_id", "source_id", "claim_text", "numeric_values", "quote_snippet"],
+        "properties": {
+          "evidence_id": { "type": "string" },
+          "source_id": { "type": "string" },
+          "claim_text": { "type": "string" },
+          "numeric_values": {
+            "type": "array",
+            "items": { "type": "number" }
+          },
+          "quote_snippet": { "type": "string" },
+          "unit": { "type": "string" },
+          "period": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "normalized_tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["table_id", "title", "columns", "rows"],
+        "properties": {
+          "table_id": { "type": "string" },
+          "title": { "type": "string" },
+          "columns": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [{ "type": "string" }, { "type": "number" }]
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

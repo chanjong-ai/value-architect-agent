@@ -1,0 +1,27 @@
+{
+  "project_id": "commerce_growth",
+  "client_name": "가상커머스",
+  "industry": "유통",
+  "topic": "수익성 기반 성장전략 재설계",
+  "target_company": "가상커머스",
+  "competitors": [
+    "네이버 커머스",
+    "쿠팡",
+    "11번가"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "COO",
+  "language": "ko-KR",
+  "page_count": 15,
+  "tone": "fact-based transformation",
+  "must_include": [
+    "재고 회전 개선",
+    "채널 손익 비교",
+    "리스크 대응 계획"
+  ],
+  "must_avoid": [
+    "단기 매출 중심 처방",
+    "출처 없는 수치"
+  ],
+  "output_style": "consulting"
+}

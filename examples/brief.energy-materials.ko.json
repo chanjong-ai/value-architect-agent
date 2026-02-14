@@ -1,0 +1,35 @@
+{
+  "project_id": "energy_materials_cathode_anode",
+  "client_name": "에너지소재전략TF",
+  "industry": "에너지 소재(양극재/음극재)",
+  "topic": "양극재·음극재 시장 종합 분석 및 주요 플레이어 비교",
+  "target_company": "포스코퓨처엠",
+  "competitors": [
+    "에코프로비엠",
+    "LG화학",
+    "엘앤에프"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "CEO",
+  "language": "ko-KR",
+  "page_count": 13,
+  "tone": "executive concise",
+  "must_include": [
+    "포스코퓨처엠",
+    "에코프로비엠",
+    "LG화학",
+    "핵심 아키텍처",
+    "시장 포지셔닝",
+    "경쟁 우위",
+    "성장 전략",
+    "양극재",
+    "음극재",
+    "리스크 대응"
+  ],
+  "must_avoid": [
+    "근거 없는 낙관",
+    "출처 없는 수치",
+    "과장된 1위 표현"
+  ],
+  "output_style": "consulting"
+}

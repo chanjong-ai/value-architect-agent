@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "slidespec.schema.json",
+  "type": "object",
+  "required": ["meta", "slides"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["project_id", "run_id", "locale", "aspect_ratio", "theme", "created_at"],
+      "properties": {
+        "project_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "locale": { "type": "string" },
+        "aspect_ratio": { "type": "string", "enum": ["LAYOUT_WIDE", "LAYOUT_16x9"] },
+        "theme": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "title", "governing_message", "claims", "visuals", "source_footer"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["cover", "exec-summary", "market-landscape", "benchmark", "risks-issues", "roadmap", "appendix"]
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "governing_message": { "type": "string", "minLength": 1 },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["text", "evidence_ids"],
+              "properties": {
+                "text": { "type": "string", "minLength": 1 },
+                "evidence_ids": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "visuals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind"],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "bullets",
+                    "table",
+                    "kpi-cards",
+                    "matrix",
+                    "timeline",
+                    "bar-chart",
+                    "pie-chart",
+                    "flow",
+                    "icon-list",
+                    "action-cards",
+                    "so-what-grid",
+                    "insight-box"
+                  ]
+                },
+                "data_ref": { "type": "string" },
+                "options": { "type": "object" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "source_footer": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

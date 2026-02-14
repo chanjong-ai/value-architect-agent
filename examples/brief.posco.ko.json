@@ -1,0 +1,27 @@
+{
+  "project_id": "posco_cvj",
+  "client_name": "포스코퓨처엠",
+  "industry": "소재",
+  "topic": "이차전지 소재 가치 개선 로드맵",
+  "target_company": "포스코퓨처엠",
+  "competitors": [
+    "에코프로비엠",
+    "엘앤에프",
+    "LG화학"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "CFO",
+  "language": "ko-KR",
+  "page_count": 13,
+  "tone": "executive concise",
+  "must_include": [
+    "수익성 개선 드라이버",
+    "CAPEX 우선순위",
+    "90일 실행계획"
+  ],
+  "must_avoid": [
+    "근거 없는 시장 전망",
+    "실행 주체 없는 액션"
+  ],
+  "output_style": "consulting"
+}

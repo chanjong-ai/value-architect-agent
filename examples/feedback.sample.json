@@ -1,0 +1,26 @@
+{
+  "run_id": "replace_with_run_id",
+  "reviewer": "strategy-lead",
+  "score_breakdown": {
+    "logic": 82,
+    "density": 75,
+    "design": 78,
+    "evidence": 88
+  },
+  "comments": [
+    {
+      "slide_id": "s05",
+      "category": "density",
+      "text": "핵심 메시지 2개만 남기고 나머지 상세는 부록으로 이동 필요"
+    },
+    {
+      "slide_id": "s09",
+      "category": "evidence",
+      "text": "숫자 문장에 단위와 기간을 함께 표기 필요"
+    }
+  ],
+  "actions": [
+    "tighten_governing_message",
+    "force_evidence_for_numeric_claims"
+  ]
+}
