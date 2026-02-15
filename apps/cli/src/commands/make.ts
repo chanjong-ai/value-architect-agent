@@ -8,6 +8,8 @@ import { buildDetailedProvenance } from "../provenance";
 
 export interface MakeCommandOptions {
   spec: string;
+  layoutProvider?: string;
+  layoutModel?: string;
 }
 
 export async function makeCommand(options: MakeCommandOptions): Promise<{ runRoot: string; output: string }> {
@@ -27,8 +29,26 @@ export async function makeCommand(options: MakeCommandOptions): Promise<{ runRoo
     throw new PipelineError("Research pack is required for make command when table visuals are present");
   }
 
-  const result = await renderPptxFromSpec(spec, outputDir, workspaceRoot(), researchPack);
-  const provenance = buildDetailedProvenance(spec.meta.run_id, spec, researchPack);
+  const provider = options.layoutProvider?.trim().toLowerCase();
+  if (provider && provider !== "agentic" && provider !== "heuristic" && provider !== "openai" && provider !== "anthropic") {
+    throw new PipelineError(`Invalid layout provider: ${options.layoutProvider}`);
+  }
+  const normalizedProvider =
+    provider === "agentic" || provider === "heuristic" || provider === "openai" || provider === "anthropic"
+      ? (provider as "agentic" | "heuristic" | "openai" | "anthropic")
+      : undefined;
+
+  const result = await renderPptxFromSpec(spec, outputDir, workspaceRoot(), researchPack, {
+    layoutPlanner: {
+      provider: normalizedProvider,
+      model: options.layoutModel?.trim() || undefined
+    }
+  });
+  const effectiveSpec = result.effectiveSpec;
+  const specDir = path.join(runRoot, "spec");
+  ensureDir(specDir);
+  writeJson(path.join(specDir, "slidespec.effective.json"), effectiveSpec);
+  const provenance = buildDetailedProvenance(effectiveSpec.meta.run_id, effectiveSpec, researchPack);
   writeJson(path.join(outputDir, "provenance.json"), provenance);
   logger.info({ reportPath: result.reportPath }, "Making completed");
 

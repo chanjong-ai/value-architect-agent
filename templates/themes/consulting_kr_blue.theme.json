@@ -2,9 +2,9 @@
   "name": "consulting_kr_blue",
   "font_family": "Calibri",
   "fonts": {
-    "title": "Georgia",
+    "title": "Calibri",
     "body": "Calibri",
-    "mono": "Consolas"
+    "mono": "Calibri"
   },
   "colors": {
     "background": "FFFFFF",

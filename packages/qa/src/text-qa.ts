@@ -17,6 +17,18 @@ function tokenize(value: string): string[] {
     .filter((token) => token.length >= 2);
 }
 
+function isConsultingToneGoverningMessage(value: string): boolean {
+  const normalized = normalizeForDupCheck(value);
+  if (!normalized) {
+    return false;
+  }
+  const hasFormulaTone = /([a-z0-9가-힣][^=]{1,40}\+\s*[a-z0-9가-힣][^=]{1,40}=\s*[a-z0-9가-힣])/i.test(normalized);
+  if (hasFormulaTone || normalized.includes("결론")) {
+    return true;
+  }
+  return /(우선순위|재정렬|재설계|전환|구체화|강화|고도화|필요|해야)/.test(normalized);
+}
+
 export function runTextQa(spec: SlideSpec): TextQaResult {
   const issues: QAIssue[] = [];
   const governingMessageSet = new Set<string>();
@@ -60,16 +72,13 @@ export function runTextQa(spec: SlideSpec): TextQaResult {
     }
     governingMessageSet.add(gmKey);
 
-    if (slide.id !== "s01") {
-      const takeawayLike = slide.governing_message.includes(":") && slide.governing_message.includes("=");
-      if (!takeawayLike) {
-        issues.push({
-          rule: "takeaway_format_missing",
-          severity: "medium",
-          slide_id: slide.id,
-          message: "Takeaway는 '팩트A + 팩트B = So What' 형식을 권장합니다"
-        });
-      }
+    if (!isConsultingToneGoverningMessage(slide.governing_message)) {
+      issues.push({
+        rule: "governing_tone_non_consulting",
+        severity: "medium",
+        slide_id: slide.id,
+        message: "거버닝 메시지가 컨설팅 의사결정 문체(우선순위/전환/재정렬) 기준에 미달합니다"
+      });
     }
 
     const titleTokens = tokenize(slide.title);

@@ -1,0 +1,32 @@
+{
+  "project_id": "posco_future_m_global_energy_materials_strategy_2026",
+  "client_name": "포스코퓨처엠",
+  "industry": "글로벌 에너지소재(양극재/음극재)",
+  "topic": "현재 글로벌 에너지소재 시장 상황에 따른 회사의 비즈니스 전략 방향성",
+  "target_company": "포스코퓨처엠",
+  "competitors": [
+    "LG화학",
+    "에코프로비엠",
+    "Umicore",
+    "BTR"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "CEO",
+  "language": "ko-KR",
+  "page_count": 15,
+  "tone": "executive detailed",
+  "must_include": [
+    "글로벌 양극재/음극재 시장 규모, 성장률, 지역별 수요 변화",
+    "주요 플레이어별 포지셔닝, CAPA, 고객 포트폴리오 비교",
+    "포스코퓨처엠의 수익성 구조(원가/판가/가동률) 및 CAPEX 우선순위",
+    "기술 로드맵(하이니켈, LFP, 실리콘계 음극재)과 상용화 전략",
+    "정책/규제(IRA, EU 배터리 규정, CBAM) 대응 전략",
+    "원재료/공급망/환율 리스크 시나리오 및 실행 로드맵"
+  ],
+  "must_avoid": [
+    "출처 없는 시장 수치",
+    "근거 없는 경쟁우위 주장",
+    "실행 주체와 일정이 없는 권고안"
+  ],
+  "output_style": "consulting"
+}

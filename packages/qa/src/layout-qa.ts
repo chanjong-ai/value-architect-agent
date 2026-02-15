@@ -1,26 +1,25 @@
-import { QAIssue, SlideSpec } from "@consulting-ppt/shared";
+import { QAIssue, SlideSpec, SlideType } from "@consulting-ppt/shared";
 
 export interface LayoutQaResult {
   score: number;
   issues: QAIssue[];
 }
 
+const REQUIRED_VISUAL_GROUPS_BY_TYPE: Partial<Record<SlideType, string[][]>> = {
+  "exec-summary": [["kpi-cards", "action-cards", "so-what-grid"], ["bullets", "icon-list", "table", "insight-box"]],
+  "market-landscape": [["bar-chart", "table", "flow", "kpi-cards", "insight-box"]],
+  benchmark: [["matrix", "table", "bar-chart", "icon-list", "insight-box"]],
+  "risks-issues": [["matrix", "action-cards", "bullets", "insight-box"]],
+  roadmap: [["timeline", "action-cards", "table", "flow"]],
+  appendix: [["table", "bullets", "insight-box"]]
+};
+
+function hasAnyVisual(slideVisualKinds: Set<string>, candidates: string[]): boolean {
+  return candidates.some((candidate) => slideVisualKinds.has(candidate));
+}
+
 export function runLayoutQa(spec: SlideSpec): LayoutQaResult {
   const issues: QAIssue[] = [];
-  const requiredVisualsBySlideId: Record<string, string[]> = {
-    s02: ["kpi-cards", "bullets"],
-    s03: ["bar-chart", "kpi-cards", "insight-box"],
-    s04: ["matrix", "table"],
-    s05: ["table", "pie-chart", "action-cards"],
-    s06: ["table"],
-    s07: ["table", "timeline"],
-    s08: ["flow", "insight-box"],
-    s09: ["bar-chart", "table", "insight-box"],
-    s10: ["icon-list", "action-cards"],
-    s11: ["matrix", "bullets"],
-    s12: ["so-what-grid", "insight-box"],
-    s13: ["timeline", "action-cards"]
-  };
 
   if (spec.slides.length < 13 || spec.slides.length > 20) {
     issues.push({
@@ -47,23 +46,15 @@ export function runLayoutQa(spec: SlideSpec): LayoutQaResult {
     });
   }
 
-  if (
-    firstExecSummary < 0 ||
-    firstMarket < 0 ||
-    firstBenchmark < 0 ||
-    firstRoadmap < 0 ||
-    firstRisks < 0
-  ) {
+  if (firstExecSummary < 0 || firstMarket < 0 || firstBenchmark < 0 || firstRoadmap < 0 || firstRisks < 0) {
     issues.push({
       rule: "story_arc_missing",
       severity: "high",
       message: "스토리라인 핵심 슬라이드 유형(exec-summary/market/benchmark/risks/roadmap)이 누락되었습니다"
     });
   } else {
-    const ordered = firstExecSummary < firstMarket &&
-      firstMarket < firstBenchmark &&
-      firstBenchmark < firstRisks &&
-      firstRisks < firstRoadmap;
+    const ordered =
+      firstExecSummary < firstMarket && firstMarket < firstBenchmark && firstBenchmark < firstRisks && firstRisks < firstRoadmap;
 
     if (!ordered) {
       issues.push({
@@ -73,41 +64,66 @@ export function runLayoutQa(spec: SlideSpec): LayoutQaResult {
       });
     }
 
-    if (firstAppendix >= 0 && firstAppendix !== spec.slides.length - 1) {
-      issues.push({
-        rule: "appendix_not_last",
-        severity: "low",
-        message: "appendix는 마지막 슬라이드에 위치하는 것이 권장됩니다"
-      });
+    if (firstAppendix >= 0) {
+      const hasNonAppendixAfterAppendix = spec.slides
+        .slice(firstAppendix)
+        .some((slide) => slide.type !== "appendix");
+
+      if (hasNonAppendixAfterAppendix) {
+        issues.push({
+          rule: "appendix_not_last",
+          severity: "low",
+          message: "appendix는 문서 마지막 구간에 연속 배치되는 것이 권장됩니다"
+        });
+      }
     }
   }
 
   for (const slide of spec.slides) {
+    const isCover = slide.type === "cover";
+
     if (slide.visuals.length === 0) {
+      if (isCover) {
+        continue;
+      }
       issues.push({
         rule: "visual_missing",
         severity: "medium",
         slide_id: slide.id,
         message: "시각 요소가 없는 슬라이드입니다"
       });
+      continue;
     }
 
-    const requiredVisuals = requiredVisualsBySlideId[slide.id] ?? [];
-    if (requiredVisuals.length > 0) {
-      const visualKinds = new Set(slide.visuals.map((visual) => visual.kind));
-      for (const requiredKind of requiredVisuals) {
-        if (!visualKinds.has(requiredKind as typeof slide.visuals[number]["kind"])) {
-          issues.push({
-            rule: "required_visual_missing",
-            severity: "high",
-            slide_id: slide.id,
-            message: `필수 시각 요소 누락: ${requiredKind}`
-          });
-        }
+    const visualKinds = new Set(slide.visuals.map((visual) => visual.kind));
+    const requiredGroups = REQUIRED_VISUAL_GROUPS_BY_TYPE[slide.type] ?? [];
+
+    for (const group of requiredGroups) {
+      if (!hasAnyVisual(visualKinds, group)) {
+        issues.push({
+          rule: "required_visual_missing",
+          severity: "high",
+          slide_id: slide.id,
+          message: `${slide.type} 슬라이드는 다음 시각요소 중 하나 이상이 필요합니다: ${group.join(", ")}`
+        });
       }
     }
 
-    if (slide.id !== "s01") {
+    const hasLayoutHint = slide.visuals.some((visual) => {
+      const hint = visual.options?.layout_hint;
+      return typeof hint === "string" && hint.trim().length > 0;
+    });
+
+    if (!hasLayoutHint && !isCover) {
+      issues.push({
+        rule: "layout_hint_missing",
+        severity: "low",
+        slide_id: slide.id,
+        message: "동적 레이아웃 선택을 위해 visual.options.layout_hint 입력이 권장됩니다"
+      });
+    }
+
+    if (!isCover) {
       const nonTextVisualCount = slide.visuals.filter((visual) => visual.kind !== "bullets").length;
       if (nonTextVisualCount === 0) {
         issues.push({

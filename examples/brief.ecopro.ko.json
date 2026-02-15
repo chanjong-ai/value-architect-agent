@@ -1,0 +1,36 @@
+{
+  "project_id": "ecopro_strategy_2026",
+  "client_name": "에코프로 전략기획실",
+  "industry": "이차전지 소재 밸류체인(전구체·양극재·리사이클)",
+  "topic": "에코프로 그룹의 산업 흐름 대응 전략과 중장기 성장 방향",
+  "target_company": "에코프로",
+  "competitors": [
+    "포스코홀딩스",
+    "LG화학",
+    "SK이노베이션"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "CEO",
+  "language": "ko-KR",
+  "page_count": 15,
+  "tone": "executive detailed",
+  "must_include": [
+    "에코프로",
+    "지주사 포트폴리오",
+    "전구체",
+    "양극재",
+    "리사이클",
+    "시장 포지셔닝",
+    "경쟁 우위",
+    "원가 경쟁력",
+    "고객 다변화",
+    "규제 대응",
+    "실행 로드맵"
+  ],
+  "must_avoid": [
+    "근거 없는 낙관",
+    "출처 없는 수치",
+    "과장된 1위 표현"
+  ],
+  "output_style": "consulting"
+}

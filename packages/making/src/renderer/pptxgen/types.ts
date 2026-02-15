@@ -1,17 +1,22 @@
 import { NormalizedTable, SlideSpecSlide } from "@consulting-ppt/shared";
 import { ThemeTokens } from "./theme";
 import { LayoutSlots } from "./layout-engine";
+import { LayoutPlan } from "./layout-planner";
+import { IconAssetMap } from "./icon-library";
 
 export interface SlideLike {
   addText: (text: string | string[], options?: Record<string, unknown>) => void;
   addShape: (shapeName: string, options?: Record<string, unknown>) => void;
   addTable: (rows: Array<Array<unknown>>, options?: Record<string, unknown>) => void;
+  addImage?: (options?: Record<string, unknown>) => void;
 }
 
 export interface RenderContext {
   theme: ThemeTokens;
   layout: LayoutSlots;
+  layoutPlan?: LayoutPlan;
   tablesById?: Map<string, NormalizedTable>;
+  iconAssets?: IconAssetMap;
 }
 
 export interface SlideRenderer {

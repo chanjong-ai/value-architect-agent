@@ -5,6 +5,10 @@
   "description": "Thinking → Making consulting PPT agent with PptxGenJS",
   "license": "MIT",
   "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=18.18.0",
+    "pnpm": ">=10.0.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "clean": "turbo run clean && rimraf node_modules",

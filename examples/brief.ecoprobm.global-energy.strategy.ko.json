@@ -1,0 +1,31 @@
+{
+  "project_id": "ecoprobm_global_energy_strategy_2026",
+  "client_name": "에코프로비엠",
+  "industry": "글로벌 에너지소재(양극재/음극재)",
+  "topic": "현재 글로벌 에너지소재 시장 상황에 따른 회사의 비즈니스 전략 방향성",
+  "target_company": "에코프로비엠",
+  "competitors": [
+    "포스코퓨처엠",
+    "LG화학",
+    "Umicore",
+    "엘앤에프"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "CEO",
+  "language": "ko-KR",
+  "page_count": 15,
+  "tone": "executive detailed",
+  "must_include": [
+    "글로벌 양극재/음극재 시장 규모 및 성장률",
+    "주요 경쟁사 포지셔닝과 CAPA 비교",
+    "에코프로비엠의 경쟁우위 및 구조적 한계",
+    "핵심 이슈(원가/고객/규제/기술)별 실행 가능한 권고안",
+    "단기·중기·장기 실행 로드맵과 KPI"
+  ],
+  "must_avoid": [
+    "출처 없는 시장 수치",
+    "근거 없는 경쟁우위 주장",
+    "실행 주체/일정 없는 권고안"
+  ],
+  "output_style": "consulting"
+}

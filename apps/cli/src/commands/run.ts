@@ -24,9 +24,16 @@ import {
   writeText
 } from "@consulting-ppt/memory";
 import { runQa } from "@consulting-ppt/qa";
-import { normalizeBrief, runThinking, validateSchema } from "@consulting-ppt/thinking";
+import {
+  buildTrustedWebResearchPack,
+  mergeResearchPacks,
+  normalizeBrief,
+  runThinking,
+  validateSchema
+} from "@consulting-ppt/thinking";
 import { normalizePath, readJson, workspaceRoot } from "../io";
 import { buildDetailedProvenance } from "../provenance";
+import { buildStorylineDebugArtifacts } from "../storyline-debug";
 
 export interface RunCommandOptions {
   brief: string;
@@ -35,11 +42,19 @@ export interface RunCommandOptions {
   deterministic?: boolean;
   seed?: string;
   research?: string;
+  layoutProvider?: string;
+  layoutModel?: string;
+  webResearch?: boolean;
+  webResearchAttempts?: string;
+  webResearchTimeoutMs?: string;
+  webResearchConcurrency?: string;
 }
 
 const MAX_CLAIM_CHARS = 170;
 const MAX_GOVERNING_MESSAGE_CHARS = 92;
 const MAX_CLAIMS_ON_OVERFLOW = 4;
+const ALLOWED_LAYOUT_PROVIDERS = new Set(["agentic", "heuristic", "openai", "anthropic"]);
+const MIN_WEB_RESEARCH_ATTEMPTS = 30;
 
 function normalizeMessageKey(value: string): string {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
@@ -56,6 +71,59 @@ function truncate(text: string, maxChars: number): string {
     return text;
   }
   return `${text.slice(0, maxChars - 3)}...`;
+}
+
+function resolveLayoutPlannerOptions(options: RunCommandOptions): {
+  provider?: "agentic" | "heuristic" | "openai" | "anthropic";
+  model?: string;
+} {
+  const rawProvider = options.layoutProvider?.trim().toLowerCase();
+  if (rawProvider && !ALLOWED_LAYOUT_PROVIDERS.has(rawProvider)) {
+    throw new PipelineError(`Invalid layout provider: ${options.layoutProvider}`);
+  }
+  const provider = rawProvider && ALLOWED_LAYOUT_PROVIDERS.has(rawProvider)
+    ? (rawProvider as "agentic" | "heuristic" | "openai" | "anthropic")
+    : undefined;
+
+  return {
+    provider,
+    model: options.layoutModel?.trim() || undefined
+  };
+}
+
+function parseIntegerOption(value: string | undefined, optionName: string, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new PipelineError(`Invalid ${optionName}: ${value}`);
+  }
+
+  return Math.floor(parsed);
+}
+
+function resolveWebResearchConfig(options: RunCommandOptions): {
+  enabled: boolean;
+  minimumAttempts: number;
+  timeoutMs: number;
+  concurrency: number;
+} {
+  const enabled = options.webResearch !== false;
+  const minimumAttempts = Math.max(
+    MIN_WEB_RESEARCH_ATTEMPTS,
+    parseIntegerOption(options.webResearchAttempts, "--web-research-attempts", MIN_WEB_RESEARCH_ATTEMPTS)
+  );
+  const timeoutMs = parseIntegerOption(options.webResearchTimeoutMs, "--web-research-timeout-ms", 12000);
+  const concurrency = parseIntegerOption(options.webResearchConcurrency, "--web-research-concurrency", 6);
+
+  return {
+    enabled,
+    minimumAttempts,
+    timeoutMs,
+    concurrency
+  };
 }
 
 function collectFallbackEvidenceIds(researchPack: ResearchPack): string[] {
@@ -232,12 +300,52 @@ export async function runCommand(options: RunCommandOptions): Promise<{ runRoot:
 
   const startedAt = clock.deterministic ? clock.nowIso : nowIso();
   const runId = clock.deterministic ? createDeterministicRunId(inputHash, clock.seed) : createRunId(clock.now);
-  const researchOverride = options.research
+  const layoutPlannerOptions = resolveLayoutPlannerOptions(options);
+  const webResearchConfig = resolveWebResearchConfig(options);
+  const manualResearchOverride = options.research
     ? readJson<import("@consulting-ppt/shared").ResearchPack>(normalizePath(options.research))
     : undefined;
+
+  const webResearchResult = webResearchConfig.enabled
+    ? await buildTrustedWebResearchPack(evolvedBrief, runId, clock, {
+      minimumAttempts: webResearchConfig.minimumAttempts,
+      timeoutMs: webResearchConfig.timeoutMs,
+      concurrency: webResearchConfig.concurrency
+    })
+    : undefined;
+
+  const requiredWebAttempts = webResearchResult
+    ? Math.min(webResearchConfig.minimumAttempts, webResearchResult.report.attempts_planned)
+    : webResearchConfig.minimumAttempts;
+
+  if (webResearchResult && webResearchResult.report.attempts_completed < requiredWebAttempts) {
+    throw new PipelineError(
+      `Live web research attempts are insufficient (${webResearchResult.report.attempts_completed}/${requiredWebAttempts})`
+    );
+  }
+
+  if (webResearchResult) {
+    const minimumRelevantSuccesses = Math.max(6, Math.floor(requiredWebAttempts * 0.25));
+    if (webResearchResult.report.relevant_successes < minimumRelevantSuccesses) {
+      throw new PipelineError(
+        `Live web research relevance is insufficient (${webResearchResult.report.relevant_successes}/${minimumRelevantSuccesses})`
+      );
+    }
+
+    const coveredAxes = Object.values(webResearchResult.report.per_axis_successes).filter((count) => count > 0).length;
+    if (coveredAxes < 4) {
+      throw new PipelineError(`Live web research axis coverage is insufficient (${coveredAxes}/6)`);
+    }
+  }
+
+  const mergedResearchOverride = mergeResearchPacks(evolvedBrief.project_id, runId, clock.nowIso, [
+    manualResearchOverride,
+    webResearchResult?.researchPack
+  ]);
+
   const thinking = runThinking(rawBrief, runId, options.project, {
     clock,
-    researchPackOverride: researchOverride,
+    researchPackOverride: mergedResearchOverride,
     briefOverride: evolvedBrief
   });
   const runPaths = initRunStore(thinking.brief.project_id, runId, root, clock.now);
@@ -249,15 +357,40 @@ export async function runCommand(options: RunCommandOptions): Promise<{ runRoot:
     rules: learningRules
   });
   writeJson(path.join(runPaths.researchDir, "research.pack.json"), thinking.researchPack);
+  if (webResearchResult) {
+    writeJson(path.join(runPaths.researchDir, "web.research.report.json"), webResearchResult.report);
+    writeJson(path.join(runPaths.researchDir, "web.research.attempts.json"), webResearchResult.attempts);
+  }
+  writeJson(path.join(runPaths.specDir, "slidespec.raw.json"), thinking.slideSpec);
   writeJson(path.join(runPaths.specDir, "slidespec.json"), thinking.slideSpec);
+  writeJson(path.join(runPaths.specDir, "thinking.review.json"), thinking.reviewReport);
+  writeJson(path.join(runPaths.specDir, "content.quality.pre-render.json"), thinking.contentQualityReport);
+  const preRenderDebug = buildStorylineDebugArtifacts({
+    runId,
+    generatedAt: clock.deterministic ? clock.nowIso : nowIso(),
+    brief: thinking.brief,
+    researchPack: thinking.researchPack,
+    slideSpec: thinking.slideSpec,
+    reviewReport: thinking.reviewReport,
+    narrativePlan: thinking.narrativePlan
+  });
+  writeJson(path.join(runPaths.specDir, "storyline.pre-render.debug.json"), preRenderDebug.json);
+  writeText(path.join(runPaths.specDir, "storyline.pre-render.debug.md"), preRenderDebug.markdown);
 
-  validateTableDataRefs(thinking.slideSpec, thinking.researchPack);
-  let rendering = await renderPptxFromSpec(thinking.slideSpec, runPaths.outputDir, root, thinking.researchPack);
+  let effectiveSpec = JSON.parse(JSON.stringify(thinking.slideSpec)) as SlideSpec;
+
+  validateTableDataRefs(effectiveSpec, thinking.researchPack);
+  let rendering = await renderPptxFromSpec(effectiveSpec, runPaths.outputDir, root, thinking.researchPack, {
+    layoutPlanner: layoutPlannerOptions
+  });
+  effectiveSpec = rendering.effectiveSpec;
+  writeJson(path.join(runPaths.specDir, "slidespec.effective.json"), effectiveSpec);
+  writeJson(path.join(runPaths.specDir, "slidespec.json"), effectiveSpec);
 
   const writeProvenance = (): void => {
     const provenance = buildDetailedProvenance(
       runId,
-      thinking.slideSpec,
+      effectiveSpec,
       thinking.researchPack,
       clock.deterministic ? clock.nowIso : nowIso()
     );
@@ -269,19 +402,24 @@ export async function runCommand(options: RunCommandOptions): Promise<{ runRoot:
   if (!Number.isFinite(threshold) || threshold <= 0 || threshold > 100) {
     throw new PipelineError(`Invalid threshold value: ${options.threshold}`);
   }
-  let qa = runQa(runId, thinking.slideSpec, thinking.researchPack, { threshold });
+  let qa = runQa(runId, effectiveSpec, thinking.researchPack, { threshold });
   let autoFixRulesApplied: string[] = [];
 
   if (!qa.report.passed) {
-    const autoFix = applyPostQaAutoFix(thinking.slideSpec, thinking.researchPack, qa.report.issues);
+    const autoFix = applyPostQaAutoFix(effectiveSpec, thinking.researchPack, qa.report.issues);
     if (autoFix.applied) {
       autoFixRulesApplied = autoFix.rules;
-      validateTableDataRefs(thinking.slideSpec, thinking.researchPack);
-      writeJson(path.join(runPaths.specDir, "slidespec.json"), thinking.slideSpec);
+      validateTableDataRefs(effectiveSpec, thinking.researchPack);
+      writeJson(path.join(runPaths.specDir, "slidespec.json"), effectiveSpec);
 
-      rendering = await renderPptxFromSpec(thinking.slideSpec, runPaths.outputDir, root, thinking.researchPack);
+      rendering = await renderPptxFromSpec(effectiveSpec, runPaths.outputDir, root, thinking.researchPack, {
+        layoutPlanner: layoutPlannerOptions
+      });
+      effectiveSpec = rendering.effectiveSpec;
+      writeJson(path.join(runPaths.specDir, "slidespec.effective.json"), effectiveSpec);
+      writeJson(path.join(runPaths.specDir, "slidespec.json"), effectiveSpec);
       writeProvenance();
-      qa = runQa(runId, thinking.slideSpec, thinking.researchPack, { threshold });
+      qa = runQa(runId, effectiveSpec, thinking.researchPack, { threshold });
     }
   }
 
@@ -298,7 +436,7 @@ export async function runCommand(options: RunCommandOptions): Promise<{ runRoot:
     ended_at: clock.deterministic ? clock.nowIso : nowIso(),
     input_hash: inputHash,
     research_hash: hashJson(thinking.researchPack),
-    spec_hash: hashJson(thinking.slideSpec),
+    spec_hash: hashJson(effectiveSpec),
     renderer_version: rendering.rendererVersion,
     qa_score: qa.report.qa_score,
     status: qa.report.passed ? "success" : "failed",
@@ -316,7 +454,8 @@ export async function runCommand(options: RunCommandOptions): Promise<{ runRoot:
       report: rendering.reportPath,
       qaScore: qa.report.qa_score,
       passed: qa.report.passed,
-      autoFixRulesApplied
+      autoFixRulesApplied,
+      webResearch: webResearchResult?.report
     },
     "Pipeline completed"
   );

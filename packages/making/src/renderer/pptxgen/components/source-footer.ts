@@ -5,8 +5,8 @@ import { Box } from "../layout-engine";
 
 export function addSourceFooter(slide: SlideLike, slideSpec: SlideSpecSlide, box: Box, theme: ThemeTokens): void {
   const sourceText = slideSpec.source_footer.length
-    ? `Sources: ${slideSpec.source_footer.join(" | ")}`
-    : "Sources: N/A";
+    ? `Source: ${slideSpec.source_footer.join(" | ")}`
+    : "Source: N/A";
 
   slide.addText(sourceText, {
     x: box.x,

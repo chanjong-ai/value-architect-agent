@@ -1,0 +1,36 @@
+{
+  "project_id": "ecoprobm_consulting_2026",
+  "client_name": "에코프로비엠 전략기획실",
+  "industry": "에너지 소재(양극재/음극재)",
+  "topic": "에코프로비엠 산업흐름 대응 전략 및 경쟁우위 강화 방안",
+  "target_company": "에코프로비엠",
+  "competitors": [
+    "포스코퓨처엠",
+    "LG화학",
+    "엘앤에프"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "CEO",
+  "language": "ko-KR",
+  "page_count": 15,
+  "tone": "executive detailed",
+  "must_include": [
+    "에코프로비엠",
+    "양극재",
+    "음극재",
+    "시장 포지셔닝",
+    "핵심 아키텍처",
+    "경쟁 우위",
+    "성장 전략",
+    "원가 경쟁력",
+    "고객 다변화",
+    "규제 대응",
+    "실행 로드맵"
+  ],
+  "must_avoid": [
+    "근거 없는 낙관",
+    "출처 없는 수치",
+    "과장된 1위 표현"
+  ],
+  "output_style": "consulting"
+}

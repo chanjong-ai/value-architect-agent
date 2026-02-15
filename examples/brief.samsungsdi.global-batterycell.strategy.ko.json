@@ -1,0 +1,33 @@
+{
+  "project_id": "samsungsdi_global_batterycell_strategy_2026",
+  "client_name": "삼성SDI",
+  "industry": "글로벌 배터리셀 시장",
+  "topic": "현재 글로벌 배터리셀 시장 상황에 따른 회사의 비즈니스 전략 방향성",
+  "target_company": "삼성SDI",
+  "competitors": [
+    "CATL",
+    "BYD",
+    "LG에너지솔루션",
+    "SK온",
+    "파나소닉",
+    "EVE Energy"
+  ],
+  "report_date": "2026-02",
+  "target_audience": "CEO",
+  "language": "ko-KR",
+  "page_count": 15,
+  "tone": "executive detailed",
+  "must_include": [
+    "글로벌 배터리셀 시장 규모/성장률/지역별 수요 변화",
+    "주요 경쟁사 점유율/포지셔닝/CAPA/기술전략 비교",
+    "삼성SDI의 경쟁우위와 구조적 약점",
+    "핵심 이슈(원가/고객/규제/기술/공급망) 기반 실행 권고안",
+    "단기·중기·장기 실행 로드맵과 KPI"
+  ],
+  "must_avoid": [
+    "출처 없는 수치",
+    "근거 없는 1위 주장",
+    "실행 주체/일정 없는 권고안"
+  ],
+  "output_style": "consulting"
+}

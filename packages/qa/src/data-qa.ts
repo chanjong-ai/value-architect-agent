@@ -5,10 +5,63 @@ export interface DataQaResult {
   issues: QAIssue[];
 }
 
+const AXES = ["market", "competition", "finance", "technology", "regulation", "risk"] as const;
+const MIN_SOURCES_PER_AXIS = 3;
+const MIN_EVIDENCES_PER_AXIS = 4;
+const MIN_TOTAL_SOURCES = AXES.length * MIN_SOURCES_PER_AXIS;
+const MIN_TOTAL_EVIDENCES = AXES.length * MIN_EVIDENCES_PER_AXIS;
+const MIN_TOTAL_TABLES = 8;
+
 export function runDataQa(spec: SlideSpec, researchPack: ResearchPack): DataQaResult {
   const issues: QAIssue[] = [];
   const evidenceById = new Map(researchPack.evidences.map((item) => [item.evidence_id, item]));
+  const sourceById = new Map(researchPack.sources.map((item) => [item.source_id, item]));
   const tableIds = new Set(researchPack.normalized_tables.map((table) => table.table_id));
+
+  if (researchPack.sources.length < MIN_TOTAL_SOURCES || researchPack.evidences.length < MIN_TOTAL_EVIDENCES || researchPack.normalized_tables.length < MIN_TOTAL_TABLES) {
+    issues.push({
+      rule: "research_depth_insufficient",
+      severity: "high",
+      message: `리서치 깊이가 부족합니다 (sources>=${MIN_TOTAL_SOURCES}, evidences>=${MIN_TOTAL_EVIDENCES}, tables>=${MIN_TOTAL_TABLES} 권장)`
+    });
+  }
+
+  const sourceByAxis = new Map<string, number>();
+  const evidenceByAxis = new Map<string, number>();
+  for (const axis of AXES) {
+    sourceByAxis.set(axis, 0);
+    evidenceByAxis.set(axis, 0);
+  }
+
+  for (const source of researchPack.sources) {
+    sourceByAxis.set(source.axis, (sourceByAxis.get(source.axis) ?? 0) + 1);
+  }
+
+  for (const evidence of researchPack.evidences) {
+    const source = sourceById.get(evidence.source_id);
+    if (!source) {
+      continue;
+    }
+    evidenceByAxis.set(source.axis, (evidenceByAxis.get(source.axis) ?? 0) + 1);
+  }
+
+  for (const axis of AXES) {
+    if ((sourceByAxis.get(axis) ?? 0) < MIN_SOURCES_PER_AXIS) {
+      issues.push({
+        rule: "axis_source_coverage_sparse",
+        severity: "medium",
+        message: `${axis} 축의 source 커버리지가 부족합니다`
+      });
+    }
+
+    if ((evidenceByAxis.get(axis) ?? 0) < MIN_EVIDENCES_PER_AXIS) {
+      issues.push({
+        rule: "axis_evidence_coverage_sparse",
+        severity: "medium",
+        message: `${axis} 축의 evidence 커버리지가 부족합니다`
+      });
+    }
+  }
 
   for (const slide of spec.slides) {
     for (const visual of slide.visuals) {

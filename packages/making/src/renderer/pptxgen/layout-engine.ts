@@ -1,12 +1,15 @@
 import { SlideType } from "@consulting-ppt/shared";
 
-export type LayoutMode =
-  | "cover"
-  | "one-column-insights"
-  | "two-column-compare"
-  | "matrix-2x2"
-  | "table-heavy"
-  | "roadmap-timeline";
+export type AdaptiveLayoutTemplate =
+  | "cover-hero"
+  | "single-panel"
+  | "two-column"
+  | "top-bottom"
+  | "left-focus"
+  | "right-focus"
+  | "quad"
+  | "timeline"
+  | "kpi-dashboard";
 
 export interface Box {
   x: number;
@@ -16,6 +19,7 @@ export interface Box {
 }
 
 export interface LayoutSlots {
+  template: AdaptiveLayoutTemplate;
   title: Box;
   takeaway: Box;
   governingMessage: Box;
@@ -25,6 +29,7 @@ export interface LayoutSlots {
   footer: Box;
   source: Box;
   pageNumber: Box;
+  contentAreas: Box[];
 }
 
 const PAGE = {
@@ -38,80 +43,141 @@ const PAGE = {
   pageY: 5.3
 };
 
-function baseLayout(): LayoutSlots {
+function baseLayout(): Omit<LayoutSlots, "template" | "contentAreas"> {
   const width = PAGE.right - PAGE.left;
+  const content: Box = { x: PAGE.left, y: PAGE.contentY, w: width, h: PAGE.contentBottom - PAGE.contentY };
+
   return {
     title: { x: PAGE.left, y: PAGE.titleY, w: width, h: 0.28 },
-    takeaway: { x: PAGE.left, y: PAGE.takeawayY, w: width, h: 0.32 },
-    governingMessage: { x: PAGE.left, y: PAGE.takeawayY, w: width, h: 0.32 },
-    content: { x: PAGE.left, y: PAGE.contentY, w: width, h: PAGE.contentBottom - PAGE.contentY },
-    leftBody: { x: PAGE.left, y: PAGE.contentY, w: 4.55, h: PAGE.contentBottom - PAGE.contentY },
-    rightBody: { x: 5.0, y: PAGE.contentY, w: 4.5, h: PAGE.contentBottom - PAGE.contentY },
+    takeaway: { x: PAGE.left, y: PAGE.takeawayY, w: width, h: 0.34 },
+    governingMessage: { x: PAGE.left, y: PAGE.takeawayY, w: width, h: 0.34 },
+    content,
+    leftBody: { ...content },
+    rightBody: { ...content },
     footer: { x: PAGE.left, y: PAGE.sourceY, w: width, h: 0.12 },
     source: { x: PAGE.left, y: PAGE.sourceY, w: width, h: 0.12 },
     pageNumber: { x: 9.2, y: PAGE.pageY, w: 0.45, h: 0.12 }
   };
 }
 
-function forMode(mode: LayoutMode): LayoutSlots {
-  const base = baseLayout();
-
-  switch (mode) {
-    case "cover":
-      return {
-        ...base,
-        title: { x: 0.6, y: 1.45, w: 8.8, h: 0.62 },
-        takeaway: { x: 0.6, y: 2.2, w: 8.8, h: 0.38 },
-        governingMessage: { x: 0.6, y: 2.2, w: 8.8, h: 0.38 },
-        content: { x: 0.6, y: 2.72, w: 8.8, h: 2.1 },
-        leftBody: { x: 0.6, y: 2.72, w: 8.8, h: 2.1 },
-        rightBody: { x: 0.6, y: 2.72, w: 8.8, h: 2.1 }
-      };
-    case "roadmap-timeline":
-      return {
-        ...base,
-        leftBody: { x: 0.35, y: PAGE.contentY, w: 9.3, h: 2.0 },
-        rightBody: { x: 0.35, y: 3.05, w: 9.3, h: 2.1 }
-      };
-    case "table-heavy":
-      return {
-        ...base,
-        leftBody: { x: 0.35, y: PAGE.contentY, w: 9.3, h: 4.2 },
-        rightBody: { x: 0.35, y: PAGE.contentY, w: 9.3, h: 4.2 }
-      };
-    case "two-column-compare":
-    case "matrix-2x2":
-      return base;
-    case "one-column-insights":
-    default:
-      return {
-        ...base,
-        leftBody: { x: 0.35, y: PAGE.contentY, w: 9.3, h: 4.2 },
-        rightBody: { x: 0.35, y: PAGE.contentY, w: 9.3, h: 4.2 }
-      };
-  }
+function padBox(box: Box, pad = 0.02): Box {
+  return {
+    x: box.x + pad,
+    y: box.y + pad,
+    w: Math.max(0.1, box.w - pad * 2),
+    h: Math.max(0.1, box.h - pad * 2)
+  };
 }
 
-export function modeBySlideType(type: SlideType): LayoutMode {
+function splitColumns(content: Box, ratio = 0.5, gap = 0.1): [Box, Box] {
+  const leftW = content.w * ratio - gap / 2;
+  const rightW = content.w - leftW - gap;
+  return [
+    { x: content.x, y: content.y, w: leftW, h: content.h },
+    { x: content.x + leftW + gap, y: content.y, w: rightW, h: content.h }
+  ];
+}
+
+function splitRows(content: Box, ratio = 0.5, gap = 0.1): [Box, Box] {
+  const topH = content.h * ratio - gap / 2;
+  const bottomH = content.h - topH - gap;
+  return [
+    { x: content.x, y: content.y, w: content.w, h: topH },
+    { x: content.x, y: content.y + topH + gap, w: content.w, h: bottomH }
+  ];
+}
+
+function areasForTemplate(template: AdaptiveLayoutTemplate, content: Box): Box[] {
+  if (template === "cover-hero") {
+    return [
+      {
+        x: 0.7,
+        y: 2.7,
+        w: 8.6,
+        h: 1.95
+      }
+    ].map((box) => padBox(box, 0));
+  }
+
+  if (template === "single-panel") {
+    return [padBox(content, 0.02)];
+  }
+
+  if (template === "two-column") {
+    const [left, right] = splitColumns(content, 0.5, 0.14);
+    return [padBox(left), padBox(right)];
+  }
+
+  if (template === "top-bottom") {
+    const [top, bottom] = splitRows(content, 0.43, 0.12);
+    return [padBox(top), padBox(bottom)];
+  }
+
+  if (template === "left-focus") {
+    const [left, right] = splitColumns(content, 0.58, 0.14);
+    const [rightTop, rightBottom] = splitRows(right, 0.48, 0.1);
+    return [padBox(left), padBox(rightTop), padBox(rightBottom)];
+  }
+
+  if (template === "right-focus") {
+    const [left, right] = splitColumns(content, 0.42, 0.14);
+    const [leftTop, leftBottom] = splitRows(left, 0.48, 0.1);
+    return [padBox(right), padBox(leftTop), padBox(leftBottom)];
+  }
+
+  if (template === "quad") {
+    const [top, bottom] = splitRows(content, 0.5, 0.12);
+    const [topLeft, topRight] = splitColumns(top, 0.5, 0.12);
+    const [bottomLeft, bottomRight] = splitColumns(bottom, 0.5, 0.12);
+    return [padBox(topLeft), padBox(topRight), padBox(bottomLeft), padBox(bottomRight)];
+  }
+
+  if (template === "timeline") {
+    const [top, bottom] = splitRows(content, 0.36, 0.12);
+    const [bottomLeft, bottomRight] = splitColumns(bottom, 0.5, 0.12);
+    return [padBox(top), padBox(bottomLeft), padBox(bottomRight)];
+  }
+
+  const [top, rest] = splitRows(content, 0.36, 0.12);
+  const [middle, bottom] = splitRows(rest, 0.52, 0.1);
+  const [middleLeft, middleRight] = splitColumns(middle, 0.5, 0.1);
+  return [padBox(top), padBox(middleLeft), padBox(middleRight), padBox(bottom)];
+}
+
+export function defaultTemplateBySlideType(type: SlideType): AdaptiveLayoutTemplate {
   switch (type) {
     case "cover":
-      return "cover";
-    case "benchmark":
-      return "two-column-compare";
-    case "market-landscape":
-      return "table-heavy";
-    case "risks-issues":
-      return "matrix-2x2";
-    case "roadmap":
-      return "roadmap-timeline";
-    case "appendix":
-      return "table-heavy";
+      return "cover-hero";
     case "exec-summary":
+      return "kpi-dashboard";
+    case "market-landscape":
+      return "left-focus";
+    case "benchmark":
+      return "two-column";
+    case "risks-issues":
+      return "quad";
+    case "roadmap":
+      return "timeline";
+    case "appendix":
+      return "single-panel";
     default:
-      return "one-column-insights";
+      return "single-panel";
   }
 }
 
-export function buildLayout(type: SlideType): LayoutSlots {
-  return forMode(modeBySlideType(type));
+export function buildLayout(type: SlideType, template?: AdaptiveLayoutTemplate): LayoutSlots {
+  const base = baseLayout();
+  const selectedTemplate = template ?? defaultTemplateBySlideType(type);
+  const contentAreas = areasForTemplate(selectedTemplate, base.content);
+
+  const leftBody = contentAreas[0] ?? { ...base.content };
+  const rightBody = contentAreas[1] ?? contentAreas[0] ?? { ...base.content };
+
+  return {
+    ...base,
+    template: selectedTemplate,
+    leftBody,
+    rightBody,
+    contentAreas
+  };
 }

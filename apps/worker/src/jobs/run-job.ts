@@ -12,6 +12,8 @@ export interface WorkerJob {
     deterministic?: boolean;
     seed?: string;
     research?: string;
+    layoutProvider?: string;
+    layoutModel?: string;
   };
 }
 
@@ -43,6 +45,14 @@ export async function handleRunJob(job: WorkerJob, workspaceRoot: string): Promi
 
   if (job.payload.research) {
     args.push("--research", quote(path.resolve(workspaceRoot, job.payload.research)));
+  }
+
+  if (job.payload.layoutProvider) {
+    args.push("--layout-provider", quote(job.payload.layoutProvider));
+  }
+
+  if (job.payload.layoutModel) {
+    args.push("--layout-model", quote(job.payload.layoutModel));
   }
 
   const command = args.join(" ");

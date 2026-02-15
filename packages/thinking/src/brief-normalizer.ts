@@ -65,7 +65,7 @@ export function normalizeBrief(input: BriefInput, projectIdOverride?: string): B
     constraints: {
       max_governing_message_chars: toneProfile === "deep" ? 108 : 92,
       min_evidence_per_claim: 2,
-      max_bullets_per_slide: toneProfile === "deep" ? 6 : 5
+      max_bullets_per_slide: 4
     }
   };
 }

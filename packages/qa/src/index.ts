@@ -49,6 +49,10 @@ function deduceFailReasons(report: QAReport): string[] {
     if (issue.rule === "required_visual_missing" || issue.rule === "text_only_slide") {
       reasons.add("슬라이드 필수 시각요소 누락");
     }
+
+    if (issue.rule === "governing_tone_non_consulting") {
+      reasons.add("거버닝 메시지 컨설팅 문체 미흡");
+    }
   }
 
   return Array.from(reasons);

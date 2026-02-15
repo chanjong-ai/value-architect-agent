@@ -22,6 +22,12 @@ program
   .option("--deterministic", "deterministic mode for reproducible output", false)
   .option("--seed <value>", "deterministic seed", "default-seed")
   .option("--research <path>", "optional external research pack json path")
+  .option("--no-web-research", "disable live web research")
+  .option("--web-research-attempts <number>", "minimum live web research attempts (>=30)", "30")
+  .option("--web-research-timeout-ms <number>", "per-request timeout in milliseconds", "12000")
+  .option("--web-research-concurrency <number>", "live web research concurrency", "6")
+  .option("--layout-provider <name>", "layout planner provider (agentic|heuristic|openai|anthropic)", "agentic")
+  .option("--layout-model <name>", "layout planner model name (optional)")
   .action(async (opts: {
     brief: string;
     project?: string;
@@ -29,6 +35,12 @@ program
     deterministic: boolean;
     seed: string;
     research?: string;
+    webResearch?: boolean;
+    webResearchAttempts?: string;
+    webResearchTimeoutMs?: string;
+    webResearchConcurrency?: string;
+    layoutProvider?: string;
+    layoutModel?: string;
   }) => {
     const result = await runCommand(opts);
     logger.info({ result }, "Run command finished");
@@ -41,7 +53,21 @@ program
   .option("--deterministic", "deterministic mode for reproducible output", false)
   .option("--seed <value>", "deterministic seed", "default-seed")
   .option("--research <path>", "optional external research pack json path")
-  .action(async (opts: { brief: string; project?: string; deterministic: boolean; seed: string; research?: string }) => {
+  .option("--no-web-research", "disable live web research")
+  .option("--web-research-attempts <number>", "minimum live web research attempts (>=30)", "30")
+  .option("--web-research-timeout-ms <number>", "per-request timeout in milliseconds", "12000")
+  .option("--web-research-concurrency <number>", "live web research concurrency", "6")
+  .action(async (opts: {
+    brief: string;
+    project?: string;
+    deterministic: boolean;
+    seed: string;
+    research?: string;
+    webResearch?: boolean;
+    webResearchAttempts?: string;
+    webResearchTimeoutMs?: string;
+    webResearchConcurrency?: string;
+  }) => {
     const result = await thinkCommand(opts);
     logger.info({ result }, "Think command finished");
   });
@@ -49,7 +75,9 @@ program
 program
   .command("make")
   .requiredOption("--spec <path>", "slidespec json path")
-  .action(async (opts: { spec: string }) => {
+  .option("--layout-provider <name>", "layout planner provider (agentic|heuristic|openai|anthropic)", "agentic")
+  .option("--layout-model <name>", "layout planner model name (optional)")
+  .action(async (opts: { spec: string; layoutProvider?: string; layoutModel?: string }) => {
     const result = await makeCommand(opts);
     logger.info({ result }, "Make command finished");
   });

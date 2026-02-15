@@ -1,88 +1,23 @@
 # Skill: intake
 
-클라이언트 인테이크 스킬 - 새 프로젝트 시작 시 사용
-
 ## 목적
-새 클라이언트 프로젝트를 시작하고 필요한 정보를 수집합니다.
+새 프로젝트의 입력 초안을 현재 Node 파이프라인 형식(`brief.json`)으로 준비합니다.
 
-## 트리거
-- 사용자가 "새 프로젝트", "새 클라이언트", "새 덱" 등을 언급할 때
-- `/intake <client-name>` 명령어 사용 시
+## 입력
+- 사용자 요청(산업, 주제, 타깃 기업, 경쟁사, 페이지 수)
 
-## 수집 정보
-1. **클라이언트 기본 정보**
-   - 클라이언트명 (영문, 케밥케이스 권장)
-   - 산업 분류
-   - 지역/운영 범위
-
-2. **프로젝트 컨텍스트**
-   - 왜 지금? (트리거, 페인 포인트, 전략 아젠다)
-   - 현재 상태 (프로세스, 시스템, 조직, 제약)
-   - 대상 청중 (CEO/CFO/CIO/사업부장 등)
-   - 타임박스/마일스톤
-
-3. **산출물 요구사항**
-   - 예상 슬라이드 수
-   - 언어 (한국어/영어)
-   - 발표 시간
-
-4. **데이터 및 제약**
-   - 내부 데이터 제공 여부
-   - 기밀 제약
-   - 금기 주제
+## 출력
+- `examples/brief.<project>.ko.json`
 
 ## 절차
+1. `examples/brief.posco.ko.json`를 복사해 새 brief를 생성합니다.
+2. `project_id`, `topic`, `target_company`, `competitors`, `must_include`를 채웁니다.
+3. 아래로 검증합니다.
 
-### Step 1: 클라이언트 팩 생성
 ```bash
-python scripts/deck_cli.py new <client-name>
+pnpm agent think --brief ./examples/brief.<project>.ko.json --project <project_id>
 ```
-
-### Step 2: brief.md 작성
-수집한 정보를 바탕으로 `clients/<client>/brief.md`를 작성합니다.
-
-### Step 3: constraints.md 확인
-기본 제약사항을 확인하고 필요시 클라이언트별 수정사항을 반영합니다.
-
-### Step 4: 다음 단계 안내
-- 리서치 진행 → `/research` 스킬
-- 스토리라인 구축 → `/storyline` 스킬
-- 덱 스펙 생성 → `/slidespec` 스킬
-
-## 질문 템플릿
-
-인테이크 시 아래 질문을 순차적으로 합니다:
-
-1. "클라이언트 이름을 알려주세요. (영문 권장, 예: samsung-electronics)"
-2. "어떤 산업에 속한 기업인가요?"
-3. "이번 프로젝트의 배경과 목적은 무엇인가요?"
-4. "발표 대상은 누구인가요? (예: C-level, 사업부장)"
-5. "예상 슬라이드 수와 발표 시간은 어느 정도인가요?"
-6. "특별히 다뤄야 할 주제나 피해야 할 주제가 있나요?"
 
 ## 완료 기준
-- `clients/<client>/` 디렉토리 생성됨
-- `brief.md`에 핵심 정보 기록됨
-- 다음 스킬(research/storyline)로 넘어갈 준비 완료
-
-## 예시
-
-```
-사용자: 새 프로젝트 시작하려고 해. 삼성전자 AI 전환 전략 덱이야.
-
-Claude: 새 프로젝트를 시작하겠습니다. 먼저 몇 가지 정보를 확인하겠습니다.
-
-1. 클라이언트명: samsung-electronics
-2. 산업: 전자/반도체
-3. 목적: AI 전환 전략 수립
-
-클라이언트 팩을 생성하겠습니다...
-[python scripts/deck_cli.py new samsung-electronics 실행]
-
-brief.md를 작성하겠습니다...
-[파일 작성]
-
-다음 단계:
-- 리서치가 필요하면 "/research" 스킬을 사용하세요
-- 스토리라인 구축은 "/storyline" 스킬을 사용하세요
-```
+- brief 스키마 검증 통과
+- `runs/.../spec/slidespec.json` 생성 확인

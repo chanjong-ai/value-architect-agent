@@ -57,9 +57,9 @@ const DEFAULT_THEME: ThemeTokens = {
   name: "consulting_kr_blue",
   font_family: "Calibri",
   fonts: {
-    title: "Georgia",
+    title: "Calibri",
     body: "Calibri",
-    mono: "Consolas"
+    mono: "Calibri"
   },
   colors: {
     background: "FFFFFF",
@@ -118,6 +118,7 @@ export function loadTheme(themeName: string, cwd = process.cwd()): ThemeTokens {
   return {
     ...DEFAULT_THEME,
     ...parsed,
+    font_family: parsed.font_family ?? DEFAULT_THEME.font_family,
     fonts: {
       ...DEFAULT_THEME.fonts,
       ...(parsed.fonts ?? {})
