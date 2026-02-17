@@ -85,7 +85,10 @@ pnpm agent feedback --run_id <run_id> --file ./examples/feedback.sample.json
 - LLM 레이아웃 호출 실패 시 agentic-local로 fallback (파이프라인은 계속 진행)
 - 웹 리서치 relevance/축 커버리지 기준 미달 시 run/think를 실패로 종료
 
-## Nightly Regression Baseline Check
+## Regression Baseline Check (On-demand)
+
+GitHub Actions `nightly-regression` 워크플로는 현재 스케줄 실행 없이 수동(`workflow_dispatch`)으로만 실행됩니다.
+
 ```bash
 pnpm regression:check
 cat ./artifacts/nightly-regression.md
