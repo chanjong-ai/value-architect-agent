@@ -34,8 +34,11 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Public readiness check
+        run: pnpm public:check
+
       - name: Schema validation
         run: pnpm schema:validate
 
       - name: Smoke run
-        run: pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj
+        run: pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project smoke_energy_materials --deterministic --seed ci_smoke --no-web-research

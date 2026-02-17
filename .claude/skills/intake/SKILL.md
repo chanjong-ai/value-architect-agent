@@ -10,7 +10,7 @@
 - `examples/brief.<project>.ko.json`
 
 ## 절차
-1. `examples/brief.posco.ko.json`를 복사해 새 brief를 생성합니다.
+1. `examples/brief.energy-materials.ko.json`를 복사해 새 brief를 생성합니다.
 2. `project_id`, `topic`, `target_company`, `competitors`, `must_include`를 채웁니다.
 3. 아래로 검증합니다.
 

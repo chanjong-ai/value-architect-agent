@@ -1,13 +1,13 @@
 {
-  "project_id": "energy_materials_cathode_anode",
-  "client_name": "에너지소재전략TF",
+  "project_id": "energy_materials_strategy_ko",
+  "client_name": "고객사A 전략TF",
   "industry": "에너지 소재(양극재/음극재)",
   "topic": "양극재·음극재 시장 종합 분석 및 주요 플레이어 비교",
-  "target_company": "포스코퓨처엠",
+  "target_company": "고객사A",
   "competitors": [
-    "에코프로비엠",
-    "LG화학",
-    "엘앤에프"
+    "경쟁사A",
+    "경쟁사B",
+    "경쟁사C"
   ],
   "report_date": "2026-02",
   "target_audience": "CEO",
@@ -15,9 +15,9 @@
   "page_count": 13,
   "tone": "executive concise",
   "must_include": [
-    "포스코퓨처엠",
-    "에코프로비엠",
-    "LG화학",
+    "고객사A",
+    "경쟁사A",
+    "경쟁사B",
     "핵심 아키텍처",
     "시장 포지셔닝",
     "경쟁 우위",

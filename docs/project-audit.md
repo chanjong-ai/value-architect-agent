@@ -20,8 +20,8 @@
 - `pnpm typecheck` -> 통과
 - `pnpm test` -> 통과
 - `pnpm regression:check` -> 통과
-- `pnpm agent run --brief ./examples/brief.posco_futurem.strategy.ko.json --project design_spec_smoke --deterministic --seed designspec --no-web-research` -> 통과 (QA 100)
-- `pnpm agent run --brief ./examples/brief.posco.ko.json --project design_spec_webcheck --deterministic --seed webcheck --web-research-attempts 30 --web-research-timeout-ms 4000` -> 통과 (QA 100, web attempts completed=30)
+- `pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project design_spec_smoke --deterministic --seed designspec --no-web-research` -> 통과 (QA 100)
+- `pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project design_spec_webcheck --deterministic --seed webcheck --web-research-attempts 30 --web-research-timeout-ms 4000` -> 통과 (QA 100, web attempts completed=30)
 
 샘플 런 경로:
 - `runs/2026-10-10/design_spec_smoke/det_8262a3f4_c8aeb7`
@@ -111,14 +111,14 @@
 현재 코드베이스는 파이프라인 목적(리서치 기반 컨설팅 보고서 자동 생성)에 맞는 구조를 유지하고 있으며,
 이번 점검에서 발견된 실제 품질 이슈(소스 표기/커버 예외/톤 오탐)를 코드와 테스트로 보강해 회귀 가능성을 낮췄습니다.
 
-## 7) 추가 점검 (삼성SDI 시나리오, 2026-02-15)
+## 7) 추가 점검 (범용 시나리오, 2026-02-15)
 
-아래 명령으로 실제 고객사 브리프를 실행해 end-to-end 동작을 재검증했습니다.
+아래 명령으로 범용 브리프를 실행해 end-to-end 동작을 재검증했습니다.
 
-- `pnpm agent run --brief ./examples/brief.samsungsdi.global-batterycell.strategy.ko.json --project samsungsdi_global_batterycell_strategy_2026 --deterministic --seed samsungsdi_v1 --web-research-attempts 30 --layout-provider agentic`
+- `pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project generic_global_battery_strategy_2026 --deterministic --seed generic_v1 --web-research-attempts 30 --layout-provider agentic`
 
 결과:
-- run root: `runs/2026-04-22/samsungsdi_global_batterycell_strategy_2026/det_89c1b5b7_9f574a`
+- run root: `runs/2026-04-22/generic_global_battery_strategy_2026/det_89c1b5b7_9f574a`
 - QA: 100/100 (이슈 0)
 - 웹 리서치: attempts_completed=30, relevant_successes=12, review_rounds=3
 - 산출물: `output/report.pptx`, `spec/slidespec.effective.json`, `output/layout.decisions.json`
@@ -126,3 +126,16 @@
 추가 관찰:
 - 웹 리서치 성공 축 분포에서 `competition`, `finance` 축 성공 건수가 낮을 수 있음(실행 시점 네트워크/검색 결과 영향).
 - 현재 파이프라인은 축 커버리지 부족 시 `research-orchestrator` 보강 로직으로 최종 리서치 팩의 구조적 완전성을 보정하며, QA 게이트를 통과하지 못하면 실패하도록 유지됩니다.
+
+## 8) 퍼블릭 공개 준비 점검 강화 (2026-02-17)
+
+이번 점검에서 공개 저장소 관점의 반복 리스크를 자동 차단하도록 아래를 추가했습니다.
+
+- 신규 스크립트: `scripts/public-readiness-check.mjs`
+  - 추적 파일에서 특정 고객사/기업 실명, 삭제된 사내 샘플 참조, 직접 비교 표현을 탐지하면 즉시 실패(exit 1)
+- `package.json`에 `pnpm public:check` 스크립트 추가
+- CI/Quality Gate 워크플로에 `Public readiness check` 단계 추가
+
+검증:
+- `pnpm public:check` -> 통과
+- `pnpm build && pnpm lint && pnpm typecheck && pnpm test && pnpm schema:validate && pnpm smoke` -> 통과

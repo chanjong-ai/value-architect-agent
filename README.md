@@ -70,9 +70,15 @@ pnpm install
 pnpm build
 ```
 
+### 2-1) 퍼블릭 공개 전 점검 (권장)
+```bash
+pnpm public:check
+```
+- 추적 파일 기준으로 특정 고객사 실명, 삭제된 사내 샘플 참조, 직접 비교 표현을 점검합니다.
+
 ### 3) 기본 실행
 ```bash
-pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj
+pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project energy_materials_strategy_ko
 ```
 - 위 기본 실행은 자동으로 `30회+` 실제 웹 리서치를 수행합니다.
 - 시도 횟수/타임아웃/동시성은 아래 옵션으로 조정 가능합니다.
@@ -96,11 +102,11 @@ pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj
 - 근거 기반 분석이 가능하도록 경쟁사/핵심 이슈 포함
 ```
 
-포스코퓨처엠 예시:
+고객사명 입력 예시:
 
 ```text
 아래 주제에 맞게 이 프로젝트에서 만들어진 파이프라인을 따라 보고서를 작성해주세요
-고객사명: 포스코퓨처엠
+고객사명: 고객사A
 주제: 현재 글로벌 에너지소재 시장 상황에 따른 회사의 비즈니스 전략 방향성
 
 요구사항:
@@ -110,22 +116,22 @@ pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj
 - 근거 기반 분석이 가능하도록 경쟁사/핵심 이슈 포함
 ```
 
-### 4) 에코프로비엠 실전형 실행
+### 4) 실전형 실행 (범용 샘플)
 ```bash
 pnpm agent run \
-  --brief ./examples/brief.ecoprobm.ko.json \
-  --project ecoprobm_consulting_2026 \
-  --research ./examples/research.ecoprobm.ko.json \
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
+  --research ./examples/research.energy-materials.ko.json \
   --threshold 80
 ```
 
 ### 5) 재현 가능한 실행 (Deterministic)
 ```bash
 pnpm agent run \
-  --brief ./examples/brief.ecoprobm.ko.json \
-  --project ecoprobm_consulting_2026 \
-  --research ./examples/research.ecoprobm.ko.json \
-  --deterministic --seed ecoprobm_v1
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
+  --research ./examples/research.energy-materials.ko.json \
+  --deterministic --seed energy_materials_v1
 ```
 
 ---
@@ -139,9 +145,9 @@ API 키 없이 agentic-local 레이아웃으로 실행:
 
 ```bash
 pnpm agent run \
-  --brief ./examples/brief.ecoprobm.ko.json \
-  --project ecoprobm_consulting_2026 \
-  --research ./examples/research.ecoprobm.ko.json \
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
+  --research ./examples/research.energy-materials.ko.json \
   --layout-provider agentic
 ```
 
@@ -154,9 +160,9 @@ export PPT_LAYOUT_MODEL_PROVIDER="anthropic"
 export PPT_LAYOUT_MODEL="claude-3-5-sonnet-20241022"
 
 pnpm agent run \
-  --brief ./examples/brief.ecoprobm.ko.json \
-  --project ecoprobm_consulting_2026 \
-  --research ./examples/research.ecoprobm.ko.json \
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
+  --research ./examples/research.energy-materials.ko.json \
   --layout-provider anthropic
 ```
 
@@ -172,12 +178,12 @@ pnpm agent run \
 
 ```bash
 # Thinking만 실행
-pnpm agent think --brief ./examples/brief.posco.ko.json --project posco_cvj
+pnpm agent think --brief ./examples/brief.energy-materials.ko.json --project energy_materials_strategy_ko
 
 # Thinking + 웹 리서치 강화(예: 36회)
 pnpm agent think \
-  --brief ./examples/brief.posco.ko.json \
-  --project posco_cvj \
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
   --web-research-attempts 36
 
 # Making만 실행
@@ -233,7 +239,7 @@ runs/YYYY-MM-DD/<project>/<run_id>/
 
 ---
 
-## 품질 기준 (McKinsey/BCG 스타일 대응)
+## 품질 기준 (탑티어 전략컨설팅 스타일 대응)
 
 엔진이 자동으로 강제하는 항목:
 - 거버닝 메시지 형식 점검 (`팩트A + 팩트B = So What`)
@@ -280,6 +286,7 @@ pnpm build
 pnpm typecheck
 pnpm test
 pnpm lint
+pnpm public:check
 pnpm schema:validate
 pnpm regression:check
 pnpm smoke

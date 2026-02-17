@@ -15,11 +15,12 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "schema:validate": "pnpm agent think --brief ./examples/brief.posco.ko.json --project schema_check --deterministic --seed schema",
+    "schema:validate": "pnpm agent think --brief ./examples/brief.energy-materials.ko.json --project schema_check --deterministic --seed schema --no-web-research",
+    "public:check": "node ./scripts/public-readiness-check.mjs",
     "regression:check": "node ./scripts/regression-check.mjs",
     "agent": "pnpm --filter @consulting-ppt/cli start",
     "agent:worker": "pnpm --filter @consulting-ppt/worker start",
-    "smoke": "pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj"
+    "smoke": "pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project smoke_energy_materials --deterministic --seed smoke --no-web-research"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

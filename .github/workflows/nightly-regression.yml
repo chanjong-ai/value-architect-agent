@@ -31,13 +31,13 @@ jobs:
         run: pnpm test
 
       - name: Golden brief 1
-        run: pnpm agent run --brief ./examples/brief.posco.ko.json --project regression_posco --deterministic --seed regression_posco
+        run: pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project regression_energy_materials --deterministic --seed regression_energy_materials --no-web-research
 
       - name: Golden brief 2
-        run: pnpm agent run --brief ./examples/brief.commerce.ko.json --project regression_commerce --deterministic --seed regression_commerce
+        run: pnpm agent run --brief ./examples/brief.commerce.ko.json --project regression_commerce --deterministic --seed regression_commerce --no-web-research
 
       - name: Golden brief 3
-        run: pnpm agent run --brief ./examples/brief.posco.ko.json --project regression_posco_alt --deterministic --seed regression_posco_alt
+        run: pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project regression_energy_materials_alt --deterministic --seed regression_energy_materials_alt --no-web-research
 
       - name: Regression gate
         run: pnpm regression:check

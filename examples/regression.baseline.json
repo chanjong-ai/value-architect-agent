@@ -1,5 +1,5 @@
 {
-  "posco_cvj": 90,
-  "commerce_cvj": 88,
-  "energy_materials_cathode_anode": 90
+  "regression_energy_materials": 90,
+  "regression_commerce": 88,
+  "regression_energy_materials_alt": 90
 }

@@ -10,7 +10,19 @@ const MIN_FONT_PT = 7;
 const ICON_CONTAINER = 0.34;
 const ICON_SIZE = 0.28;
 const CHART_GRID = "E8E8E8";
-const COMPANY_HIGHLIGHT = /(포스코|에코프로|LG|SK|삼성|한화|롯데|두산|Korean|한국)/i;
+function isEntityLabelCell(text: string, colIndex: number): boolean {
+  if (colIndex !== 0) {
+    return false;
+  }
+  const normalized = text.trim();
+  if (!normalized || normalized.length > 36) {
+    return false;
+  }
+  if (/^-?\d+(?:[.,]\d+)?%?$/.test(normalized)) {
+    return false;
+  }
+  return /^[\p{L}\p{N}\s()\-&/+.]+$/u.test(normalized);
+}
 
 type SlideVisual = SlideSpecSlide["visuals"][number];
 
@@ -547,7 +559,7 @@ function renderTable(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, con
         const align = numericValue !== undefined ? "right" : "left";
         const positive = numericValue !== undefined && numericValue > 0;
         const negative = numericValue !== undefined && numericValue < 0;
-        const isCompany = COMPANY_HIGHLIGHT.test(rawText) && colIndex === 0;
+        const isCompany = isEntityLabelCell(rawText, colIndex);
         const color = negative
           ? context.theme.colors.red
           : positive

@@ -4,7 +4,8 @@
 ```bash
 pnpm install
 pnpm build
-pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj
+pnpm public:check
+pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project energy_materials_strategy_ko
 ```
 
 참고:
@@ -25,8 +26,8 @@ pnpm agent run --brief ./examples/brief.posco.ko.json --project posco_cvj
 기본(권장):
 ```bash
 pnpm agent run \
-  --brief ./examples/brief.posco.ko.json \
-  --project posco_cvj \
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
   --layout-provider agentic
 ```
 
@@ -37,17 +38,17 @@ export PPT_LAYOUT_MODEL_PROVIDER="anthropic"
 export PPT_LAYOUT_MODEL="claude-3-5-sonnet-20241022"
 
 pnpm agent run \
-  --brief ./examples/brief.posco.ko.json \
-  --project posco_cvj \
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
   --layout-provider anthropic
 ```
 
 ## Reproducible Mode
 ```bash
 pnpm agent run \
-  --brief ./examples/brief.posco.ko.json \
-  --project posco_cvj \
-  --deterministic --seed posco_v1
+  --brief ./examples/brief.energy-materials.ko.json \
+  --project energy_materials_strategy_ko \
+  --deterministic --seed energy_materials_v1
 ```
 
 ## 렌더링 전 다회 검증 강도 조절
@@ -58,9 +59,9 @@ export PPT_PRE_RENDER_REVIEW_ROUNDS=4
 
 ## Stage-by-Stage
 ```bash
-pnpm agent think --brief ./examples/brief.posco.ko.json --project posco_cvj
-pnpm agent think --brief ./examples/brief.posco.ko.json --project posco_cvj --research ./examples/research.pack.sample.json
-pnpm agent think --brief ./examples/brief.posco.ko.json --project posco_cvj --web-research-attempts 36
+pnpm agent think --brief ./examples/brief.energy-materials.ko.json --project energy_materials_strategy_ko
+pnpm agent think --brief ./examples/brief.energy-materials.ko.json --project energy_materials_strategy_ko --research ./examples/research.pack.sample.json
+pnpm agent think --brief ./examples/brief.energy-materials.ko.json --project energy_materials_strategy_ko --web-research-attempts 36
 pnpm agent make --spec ./runs/<date>/<project>/<run_id>/spec/slidespec.raw.json
 pnpm agent make --spec ./runs/<date>/<project>/<run_id>/spec/slidespec.raw.json --layout-provider anthropic
 pnpm agent qa --run ./runs/<date>/<project>/<run_id>
@@ -93,3 +94,15 @@ GitHub Actions `nightly-regression` 워크플로는 현재 스케줄 실행 없�
 pnpm regression:check
 cat ./artifacts/nightly-regression.md
 ```
+
+## Public Readiness Check
+
+공개 전 점검 자동화:
+```bash
+pnpm public:check
+```
+
+검사 범위:
+- 추적 파일 내 특정 고객사/기업 실명
+- 삭제된 기업 특화 샘플 파일 참조
+- 직접 비교 표현(특정 전략컨설팅사 실명)

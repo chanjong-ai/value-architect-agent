@@ -1,13 +1,13 @@
 {
   "project_id": "commerce_growth",
-  "client_name": "가상커머스",
+  "client_name": "고객사B",
   "industry": "유통",
   "topic": "수익성 기반 성장전략 재설계",
-  "target_company": "가상커머스",
+  "target_company": "고객사B",
   "competitors": [
-    "네이버 커머스",
-    "쿠팡",
-    "11번가"
+    "경쟁사D",
+    "경쟁사E",
+    "경쟁사F"
   ],
   "report_date": "2026-02",
   "target_audience": "COO",
