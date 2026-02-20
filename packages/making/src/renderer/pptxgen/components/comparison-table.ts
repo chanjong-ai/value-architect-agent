@@ -10,6 +10,7 @@ export function addComparisonTable(slide: SlideLike, slideSpec: SlideSpecSlide, 
     rows.push([`이슈 ${index + 1}`, claim.text.slice(0, 22), "개선 필요", "우선 조치"]);
   });
 
+  // McKinsey: 테마 색상 토큰 사용 (하드코딩 금지)
   slide.addTable(rows, {
     x: box.x,
     y: box.y,
@@ -18,7 +19,7 @@ export function addComparisonTable(slide: SlideLike, slideSpec: SlideSpecSlide, 
     fontFace: theme.fonts.body,
     fontSize: theme.typography.body_size,
     color: theme.colors.text,
-    border: { type: "solid", pt: 1, color: "C8D2E0" },
-    fill: "FFFFFF"
+    border: { type: "solid", pt: 0.75, color: theme.colors.gray3 },
+    fill: theme.colors.background
   });
 }

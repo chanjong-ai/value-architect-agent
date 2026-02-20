@@ -26,7 +26,7 @@ export type IconCategory =
 export type IconAssetMap = Map<string, string>;
 
 export interface SemanticIcon {
-  shape: "ellipse" | "roundRect" | "diamond" | "triangle";
+  shape: "ellipse" | "rect" | "diamond" | "triangle";
   marker: string;
   color: string;
   assetKey: string;
@@ -83,11 +83,11 @@ function shapeByCategory(category: IconCategory): SemanticIcon["shape"] {
     case "growth":
       return "diamond";
     case "finance":
-      return "roundRect";
+      return "rect";
     case "technology":
       return "ellipse";
     case "regulation":
-      return "roundRect";
+      return "rect";
     case "execution":
       return "diamond";
     case "market":

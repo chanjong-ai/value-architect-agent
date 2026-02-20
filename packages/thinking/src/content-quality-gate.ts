@@ -1,4 +1,5 @@
 import { BriefNormalized, ResearchPack, SlideSpec, SlideType } from "@consulting-ppt/shared";
+import { buildMECEFramework } from "./mece-framework";
 
 export interface ContentQualityRound {
   round: number;
@@ -17,6 +18,10 @@ export interface ContentQualityReport {
   storyline_bridge_repairs: number;
   must_include_covered: number;
   uncovered_must_include: string[];
+  /** MECE 커버리지 점수: 0~100 (6축 × 4레버 기반 문제 분해 완전성) */
+  mece_coverage_score: number;
+  /** MECE 갭: 슬라이드 스펙에서 다루지 않은 연구 축 */
+  mece_gaps: string[];
 }
 
 type ClaimPhase = "diagnosis" | "implication" | "action";
@@ -896,6 +901,9 @@ export function runContentQualityGate(
   const coverage = applyMustIncludeCoverage(working, brief);
   const finalIssues = analyzeQuality(working, brief);
 
+  // MECE 커버리지 검증: 확정된 스펙 기준으로 6축 × 4레버 커버리지 측정
+  const meceResult = buildMECEFramework(brief, research, working);
+
   return {
     spec: working,
     report: {
@@ -907,7 +915,9 @@ export function runContentQualityGate(
       duplicate_claim_repairs: stats.duplicate_claim_repairs,
       storyline_bridge_repairs: stats.storyline_bridge_repairs,
       must_include_covered: coverage.covered,
-      uncovered_must_include: coverage.uncovered
+      uncovered_must_include: coverage.uncovered,
+      mece_coverage_score: meceResult.coverageScore,
+      mece_gaps: meceResult.gaps
     }
   };
 }

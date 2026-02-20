@@ -742,6 +742,12 @@ function buildGoverningMessage(
   const phase = phaseLabel(slideIndex, totalSlides).replace(" 구간", "");
   const axis = decisionAxisByType(item.type);
   const uniquenessAnchor = item.section === "appendix" ? ` [${item.id}]` : "";
+
+  // Phase 1: Executive Summary는 SCQA Answer를 포함하는 특별 거버닝 메시지
+  if (item.type === "exec-summary") {
+    return `[핵심결론] ${metric} 근거: ${target} ${brief.topic} 대응에서 ${focus}/${decisionPhrase}이 ${phase}에 가장 중요하며, 권고안 3가지가 즉시 실행되어야 한다`;
+  }
+
   return `${item.title}${uniquenessAnchor}: ${metric} 기준 ${target} ${focus} 관점의 ${sectionFocus}/${decisionPhrase} 항목을 ${axis} 기준으로 ${phase}에 확정해야 한다`;
 }
 
@@ -774,16 +780,32 @@ function buildClaim(
   const targetAnd = `${brief.target_company}${andParticle(brief.target_company)}`;
 
   let raw = "";
-  if (mode === "diagnosis") {
+
+  // Phase 1+4: Executive Summary 전용 클레임 — Problem Statement + Key Findings + Recommendations + Impact
+  // 맥킨지 표준: 가장 많은 시간이 투입되는 단일 슬라이드의 4요소 구조화
+  if (item.type === "exec-summary") {
+    if (mode === "diagnosis") {
+      // Problem Statement: 왜 이 보고서가 필요한가
+      raw = `[Problem] ${brief.target_company}는 ${brief.topic} 맥락에서 ${metricA} 수준의 ${includeText} 구조적 도전에 직면했다. ${diagnosisFrame}에 따르면 현재 전략 방향을 유지할 경우 ${targetAnd} 경쟁 포지셔닝이 지속 약화될 위험이 있다 (So What: 지금 행동하지 않으면 중기 수익성이 위협받는다)`;
+    } else if (mode === "implication") {
+      // Key Findings: 핵심 발견 사항 (수치 포함)
+      raw = `[Key Finding] ${metricA}/${metricB} 분석 결과: (1) ${brief.industry} 구조 변화가 ${evidenceHintA} 기준으로 확인됨, (2) ${targetAnd} ${competitorHint} 대비 격차가 ${metricB}로 측정됨, (3) ${implicationFrame}에 따른 전략 전환이 시급함 (So What: 3가지 핵심 근거가 권고안의 긴급성을 뒷받침한다)`;
+    } else {
+      // Recommendations + Expected Impact: 실행 권고안 + 기대 효과
+      raw = `[Recommendation] ${owner}가 주도: [What: ${m1}] [Who: ${owner}] [When: ${phase} 내 의사결정→실행] [HowMuch: ${metricA} KPI 기준 목표 달성]. 기대 효과: ${evidenceHintA}/${evidenceHintB} 근거로 ${targetAnd} ${brief.topic} 포지션 강화 및 수익성 개선 (So What: 3가지 권고안이 즉시 실행되어야 한다)`;
+    }
+  } else if (mode === "diagnosis") {
     raw = `진단: ${metricA} 대비 ${metricB} 변동을 보면 ${titleCore}에서 ${includeText} 병목이 확인된다. ${diagnosisFrame} 관점에서 ${focusSummary}를 우선 검증해야 한다 (So What: ${stageSoWhat})`;
-  }
-
-  if (mode === "implication") {
+  } else if (mode === "implication") {
     raw = `해석: ${targetAnd} ${competitorHint} 비교 시 ${metricA}/${metricB} 격차가 확인된다. ${implicationFrame}에 따라 ${titleCore}의 투자·고객 선택 기준을 재정의해야 한다 (So What: 대안별 수익성/리스크 트레이드오프를 명확화한다)`;
-  }
-
-  if (mode === "action") {
-    raw = `실행: 0-6개월(${m1}), 6-18개월(${m2}), 18-36개월(${m3}) 단계로 추진한다. ${owner}가 KPI(${metricA}, ${metricB})를 ${phase} 기준으로 점검하고 ${evidenceHintA}/${evidenceHintB} 근거로 실행 게이트를 운영한다. ${actionFrame} (So What: 실행 속도와 성과 가시성을 동시에 높인다)`;
+  } else if (mode === "action") {
+    // Phase 4: Recommendation Spec 강화 — What/Who/When/How Much 4요소 명시
+    if (item.type === "roadmap") {
+      const whatAction = m1.replace(/^.*?: /, "");
+      raw = `실행[What: ${whatAction}·${m2}·${m3}] [Who: ${owner}] [When: 0-6개월→6-18개월→18-36개월] [HowMuch: KPI(${metricA}, ${metricB}) 기준 투자 규모 확정]. ${owner}가 ${phase} 기준으로 분기별 게이트 점검하고 ${evidenceHintA}/${evidenceHintB} 근거로 실행 결정을 운영한다. ${actionFrame} (So What: 실행 책임·타임라인·ROI가 명확해져 의사결정 속도를 높인다)`;
+    } else {
+      raw = `실행: 0-6개월(${m1}), 6-18개월(${m2}), 18-36개월(${m3}) 단계로 추진한다. ${owner}가 KPI(${metricA}, ${metricB})를 ${phase} 기준으로 점검하고 ${evidenceHintA}/${evidenceHintB} 근거로 실행 게이트를 운영한다. ${actionFrame} (So What: 실행 속도와 성과 가시성을 동시에 높인다)`;
+    }
   }
 
   const sanitized = sanitizeWithAvoidRules(raw, avoidTerms);

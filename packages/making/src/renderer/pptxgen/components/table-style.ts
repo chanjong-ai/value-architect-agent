@@ -9,7 +9,8 @@ export interface CellStyleOverrides {
 export function makeHeaderOpts(theme: ThemeTokens, overrides: CellStyleOverrides = {}): Record<string, unknown> {
   return {
     fill: theme.colors.primary,
-    color: "FFFFFF",
+    // McKinsey 표준: 헤더는 짙은 남색(primary) 위에 흰색(background) 텍스트
+    color: theme.colors.background,
     bold: true,
     fontFace: theme.fonts.body,
     fontSize: 8.5,
@@ -20,7 +21,7 @@ export function makeHeaderOpts(theme: ThemeTokens, overrides: CellStyleOverrides
 
 export function makeCellOpts(theme: ThemeTokens, overrides: CellStyleOverrides = {}): Record<string, unknown> {
   return {
-    fill: "FFFFFF",
+    fill: theme.colors.background,
     color: overrides.color ?? theme.colors.text,
     fontFace: theme.fonts.body,
     fontSize: 7,

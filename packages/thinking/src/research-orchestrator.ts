@@ -16,6 +16,46 @@ interface AxisDefinition {
   strategyClaim: (brief: BriefNormalized) => string;
 }
 
+// Phase 2: 리서치 소스 계층화 (맥킨지 표준)
+export type SourceTier = "tier1_primary" | "tier2_secondary" | "tier3_supplementary";
+
+const SOURCE_TIER_MAP: Record<string, SourceTier> = {
+  // Tier 1: 기업 공시, 산업 DB, 특허/논문
+  DART: "tier1_primary",
+  "한국거래소": "tier1_primary",
+  FactSet: "tier1_primary",
+  "S&P Capital IQ": "tier1_primary",
+  WIPO: "tier1_primary",
+  "특허청": "tier1_primary",
+  // Tier 2: 공신력 있는 산업 보고서, 규제기관
+  IEA: "tier2_secondary",
+  BloombergNEF: "tier2_secondary",
+  "SNE Research": "tier2_secondary",
+  KOTRA: "tier2_secondary",
+  "Benchmark Mineral Intelligence": "tier2_secondary",
+  "EU Commission": "tier2_secondary",
+  "US DOE": "tier2_secondary",
+  "S&P Global": "tier2_secondary",
+  "국가통계포털": "tier2_secondary",
+  IMF: "tier2_secondary",
+  IEEE: "tier2_secondary"
+};
+
+export function getSourceTier(publisher: string): SourceTier {
+  return SOURCE_TIER_MAP[publisher] ?? "tier3_supplementary";
+}
+
+// Phase 2: Synthesis Layer — 팩트 합성 및 So What Chain
+export interface SynthesizedInsight {
+  observation: string;       // 관찰된 사실 (팩트 A + 팩트 B 교차)
+  soWhat: string;            // 1차 시사점
+  soWhatSoWhat: string;      // 2차 시사점
+  implicationForClient: string; // 고객사에 대한 구체적 함의
+  axisA: Axis;
+  axisB: Axis;
+  sourceTier: SourceTier;
+}
+
 const AXIS_ORDER: Axis[] = ["market", "competition", "finance", "technology", "regulation", "risk"];
 const MIN_SOURCES_PER_AXIS = 3;
 const MIN_EVIDENCES_PER_AXIS = 4;
@@ -570,6 +610,84 @@ function harmonizeResearchPack(
     evidences: sortByKey(evidences, (item) => item.evidence_id),
     normalized_tables: sortByKey(tables, (item) => item.table_id)
   };
+}
+
+/**
+ * Phase 2: Synthesis Layer 생성
+ * 단순 팩트 수집에서 교차 합성 → So What Chain → 고객 함의까지 승화
+ * 맥킨지 방법론: 80%는 데이터 합성, 20%가 수집
+ */
+export function buildSynthesisLayer(brief: BriefNormalized, researchPack: ResearchPack): SynthesizedInsight[] {
+  const insights: SynthesizedInsight[] = [];
+  const sourceById = new Map(researchPack.sources.map((s) => [s.source_id, s]));
+
+  // 고신뢰도 evidence 추출 (tier1+tier2 우선)
+  const evidencesByAxis = new Map<Axis, Evidence[]>();
+  for (const axis of AXIS_ORDER) {
+    evidencesByAxis.set(axis, []);
+  }
+  for (const evidence of researchPack.evidences) {
+    const source = sourceById.get(evidence.source_id);
+    if (!source) continue;
+    const bucket = evidencesByAxis.get(source.axis) ?? [];
+    bucket.push(evidence);
+    evidencesByAxis.set(source.axis, bucket);
+  }
+
+  // 축 간 교차 합성 — 핵심 페어: market×competition, competition×finance, finance×technology
+  const axisPairs: Array<[Axis, Axis]> = [
+    ["market", "competition"],
+    ["competition", "finance"],
+    ["finance", "technology"],
+    ["market", "regulation"],
+    ["technology", "risk"]
+  ];
+
+  for (const [axisA, axisB] of axisPairs) {
+    const evA = evidencesByAxis.get(axisA)?.[0];
+    const evB = evidencesByAxis.get(axisB)?.[0];
+    if (!evA || !evB) continue;
+
+    const sourceA = sourceById.get(evA.source_id);
+    const tier = sourceA ? getSourceTier(sourceA.publisher) : "tier3_supplementary";
+
+    const metricA = evA.numeric_values[0] !== undefined ? `${evA.numeric_values[0]}${evA.unit ?? ""}` : "핵심 지표";
+    const metricB = evB.numeric_values[0] !== undefined ? `${evB.numeric_values[0]}${evB.unit ?? ""}` : "보조 지표";
+
+    const observation = `${evA.claim_text} (${metricA}) 동시에 ${evB.claim_text} (${metricB}) 상황이 포착됨`;
+
+    const soWhat = (() => {
+      if (axisA === "market" && axisB === "competition") {
+        return `${brief.industry} 시장 성장에도 불구하고 경쟁 압력이 동시 심화되는 것은 단순 볼륨 경쟁보다 차별화 전략이 중요함을 시사한다`;
+      }
+      if (axisA === "competition" && axisB === "finance") {
+        return `경쟁 구도 재편과 재무 성과 격차가 동시에 확대되고 있어, ${brief.target_company}의 포지셔닝 전략이 수익성 경로를 결정한다`;
+      }
+      if (axisA === "finance" && axisB === "technology") {
+        return `재무 제약과 기술 투자 필요성 사이의 균형점이 ${brief.target_company}의 중기 경쟁력을 좌우한다`;
+      }
+      if (axisA === "market" && axisB === "regulation") {
+        return `시장 성장 기회와 규제 강화가 동시에 진행되어 선제 대응 기업이 고객 신뢰와 수주를 선점한다`;
+      }
+      return `${AXIS_ORDER.indexOf(axisA)}·${AXIS_ORDER.indexOf(axisB)} 축 간 동인이 교차하여 ${brief.target_company}의 전략 선택지를 제약한다`;
+    })();
+
+    const soWhatSoWhat = `따라서 ${brief.target_company}${topicPar(brief.target_company)} 단기 수익성 방어와 중기 포지셔닝 투자를 병행하는 이원화 전략이 필요하다`;
+
+    const implicationForClient = `${brief.target_audience} 관점에서 ${metricA}/${metricB} 기준으로 투자 우선순위를 재배분하고, 분기별 성과 검토 체계를 구축해야 한다`;
+
+    insights.push({ observation, soWhat, soWhatSoWhat, implicationForClient, axisA, axisB, sourceTier: tier });
+  }
+
+  return insights;
+}
+
+function topicPar(word: string): "은" | "는" {
+  const trimmed = word.trim();
+  if (!trimmed) return "은";
+  const code = trimmed.charCodeAt(trimmed.length - 1);
+  if (code < 0xac00 || code > 0xd7a3) return "은";
+  return (code - 0xac00) % 28 !== 0 ? "은" : "는";
 }
 
 export function orchestrateResearch(

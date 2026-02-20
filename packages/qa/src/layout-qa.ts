@@ -153,6 +153,53 @@ export function runLayoutQa(spec: SlideSpec): LayoutQaResult {
         message: "텍스트 오버플로우 위험이 높은 슬라이드입니다"
       });
     }
+
+    // Phase 3 (분석 파일 §2.8): Design Density 체크 — 맥킨지 "Negative Space" 관리
+    if (!isCover) {
+      // 총 claim 텍스트가 매우 많으면 과밀 슬라이드
+      const totalClaimChars = slide.claims.reduce((sum, c) => sum + c.text.length, 0);
+      if (totalClaimChars > 900 && slide.claims.length >= 4) {
+        issues.push({
+          rule: "overcrowded_slide",
+          severity: "medium",
+          slide_id: slide.id,
+          message: `슬라이드 텍스트 밀도 과다(${totalClaimChars}자): 맥킨지 표준에서 각 슬라이드는 하나의 명확한 메시지만 전달해야 합니다 — claim 수 축소 또는 분할 권장`
+        });
+      }
+
+      // 차트/바 시각요소에 annotation이 없을 경우 경고
+      const hasChartVisual = slide.visuals.some((v) => v.kind === "bar-chart" || v.kind === "pie-chart");
+      if (hasChartVisual) {
+        const hasAnnotationHint = slide.visuals.some(
+          (v) => (v.kind === "bar-chart" || v.kind === "pie-chart") && v.options?.annotation
+        );
+        const hasAnnotationInClaims = slide.claims.some((c) =>
+          /(so what|따라서|결론|핵심|시사점|주목|callout)/i.test(c.text)
+        );
+        if (!hasAnnotationHint && !hasAnnotationInClaims) {
+          issues.push({
+            rule: "chart_without_callout",
+            severity: "low",
+            slide_id: slide.id,
+            message: "차트에 Callout/Annotation이 부족합니다 — 맥킨지 표준에서 모든 차트는 주목해야 할 포인트를 화살표/박스로 강조해야 합니다"
+          });
+        }
+      }
+
+      // 표가 5행을 초과하면 분할 권장
+      const tableVisuals = slide.visuals.filter((v) => v.kind === "table");
+      if (tableVisuals.length > 0) {
+        // 표 행 수는 claim 개수로 근사: claim 5개 초과 = 표 5행 초과로 추정
+        if (slide.claims.length > 5 && tableVisuals.length > 0) {
+          issues.push({
+            rule: "table_exceeds_5_rows",
+            severity: "low",
+            slide_id: slide.id,
+            message: "표 데이터가 5행을 초과할 가능성이 높습니다 — 맥킨지 표준에서 슬라이드당 표는 5행 이내로 제한, 초과 시 appendix로 분리 권장"
+          });
+        }
+      }
+    }
   }
 
   const deduction = issues.reduce((acc, issue) => {

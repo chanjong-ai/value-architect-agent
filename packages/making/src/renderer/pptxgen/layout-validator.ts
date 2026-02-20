@@ -46,7 +46,9 @@ type DeckReviewIssueType =
   | "storyline_gap"
   | "icon_imbalance"
   | "template_imbalance"
-  | "layout_content_mismatch";
+  | "layout_content_mismatch"
+  // Phase 3: Vertical Flow — 슬라이드 내 타이틀-본문 정합성 (맥킨지 표준)
+  | "vertical_flow_mismatch";
 
 interface DeckReviewIssue {
   type: DeckReviewIssueType;
@@ -837,6 +839,53 @@ function reviewIconBalance(spec: SlideSpec): DeckReviewIssue[] {
   }));
 }
 
+/**
+ * Phase 3: Vertical Flow 검증 — 맥킨지 피라미드 원칙
+ * 각 슬라이드의 Action Title이 주장한 내용이 claims/body 텍스트로 뒷받침되는지 확인
+ * 타이틀 키워드 중 2/3 이상이 claim 집합에 존재해야 함
+ */
+function reviewVerticalFlow(spec: SlideSpec): DeckReviewIssue[] {
+  const issues: DeckReviewIssue[] = [];
+
+  spec.slides.forEach((slide, slideIndex) => {
+    if (slide.type === "cover" || slide.type === "appendix") {
+      return;
+    }
+
+    const titleTokens = tokenize(slide.title);
+    if (titleTokens.length < 2) {
+      return;
+    }
+
+    const bodyTokens = new Set(
+      tokenize(
+        slide.claims.map((c) => c.text).join(" ") + " " + slide.governing_message
+      )
+    );
+
+    // 타이틀 핵심 토큰 중 body에 몇 개가 매칭되는지 확인
+    let matched = 0;
+    for (const token of titleTokens) {
+      if (bodyTokens.has(token)) {
+        matched += 1;
+      }
+    }
+
+    const coverageRatio = titleTokens.length > 0 ? matched / titleTokens.length : 1;
+
+    // 타이틀 토큰의 33% 미만이 본문에서 다뤄지면 Vertical Flow 약함
+    if (coverageRatio < 0.33 && titleTokens.length >= 3) {
+      issues.push({
+        type: "vertical_flow_mismatch",
+        slideIndex,
+        message: `Vertical Flow 약함(${Math.round(coverageRatio * 100)}%): 타이틀 주장이 본문 claim으로 충분히 뒷받침되지 않음`
+      });
+    }
+  });
+
+  return issues;
+}
+
 function reviewTemplateBalance(decisions: SlideLayoutDecision[]): DeckReviewIssue[] {
   if (decisions.length < 8) {
     return [];
@@ -874,7 +923,9 @@ function runDeckReview(spec: SlideSpec, round: number, decisions: SlideLayoutDec
     ...reviewStorylineContinuity(spec),
     ...reviewIconBalance(spec),
     ...reviewTemplateBalance(decisions),
-    ...reviewLayoutContentMatch(spec, decisions)
+    ...reviewLayoutContentMatch(spec, decisions),
+    // Phase 3: Vertical Flow — 타이틀-본문 정합성 (맥킨지 피라미드 원칙)
+    ...reviewVerticalFlow(spec)
   ];
 
   const deduction = issues.reduce((acc, issue) => {
@@ -886,6 +937,9 @@ function runDeckReview(spec: SlideSpec, round: number, decisions: SlideLayoutDec
     }
     if (issue.type === "storyline_gap") {
       return acc + 4;
+    }
+    if (issue.type === "vertical_flow_mismatch") {
+      return acc + 3;
     }
     if (issue.type === "template_imbalance" || issue.type === "layout_content_mismatch") {
       return acc + 3;
@@ -1077,6 +1131,26 @@ function applyDeckReviewFixes(
       if (claimAdjusted > 0) {
         addNote(issue.slideIndex, `round${round}: 레이아웃 기준 claim 길이 보정(${claimAdjusted}건)`);
       }
+      continue;
+    }
+
+    if (issue.type === "vertical_flow_mismatch") {
+      // Vertical Flow 보정: 타이틀 키워드를 governing_message와 첫 번째 claim에 명시적으로 반영
+      const titleCore = fitTextToCapacity(slide.title, 24).text.replace(/\.\.\.$/, "").trim();
+      if (!slide.governing_message.includes(titleCore.slice(0, 6))) {
+        slide.governing_message = applyUniqueSuffix(
+          slide.governing_message,
+          `${titleCore} 관점의 구체적 근거로 뒷받침한다`
+        );
+      }
+      const firstClaim = slide.claims[0];
+      if (firstClaim && !firstClaim.text.includes(titleCore.slice(0, 6))) {
+        firstClaim.text = normalizeClaimSoWhat(
+          `${firstClaim.text}. (Vertical Flow 보강: ${titleCore} 주장의 핵심 근거를 claim에 명시)`,
+          extractSoWhat(firstClaim.text) ?? "타이틀 논증을 본문 데이터로 직접 연결한다"
+        );
+      }
+      addNote(issue.slideIndex, `round${round}: Vertical Flow 보정 — 타이틀-본문 정합성 강화`);
       continue;
     }
 

@@ -63,36 +63,37 @@ const DEFAULT_THEME: ThemeTokens = {
   },
   colors: {
     background: "FFFFFF",
-    primary: "1B365D",
-    secondary: "00626E",
+    // McKinsey 표준 색상 팔레트: 극도로 제한적, 2-3색 이내
+    primary: "003A70",    // 진한 남색 — 제목, 강조 (McKinsey 기준)
+    secondary: "5A6B7B",  // 회색 — 본문, 보조 (McKinsey 기준)
     text: "2D2D2D",
     muted: "8C8C8C",
-    accent: "00626E",
+    accent: "0077B6",     // 밝은 파란색 — 데이터 강조, 매우 절제적 사용
     gray1: "8C8C8C",
     gray2: "B8B8B8",
-    gray3: "D9D9D9",
-    gray4: "F2F2F4",
-    red: "C0392B",
-    green: "2E7D32",
+    gray3: "D0D5DA",      // McKinsey 테두리 색상
+    gray4: "F5F5F5",      // McKinsey 연한 회색 (표 교대 행)
+    red: "C41E3A",        // McKinsey negative 색상 (적자 등)
+    green: "2E8B57",      // McKinsey positive 색상 (성장 등)
     orange: "E65100",
     yellow: "F57F17",
     purple: "7B1FA2",
-    card_bg: "F8FAFC",
+    card_bg: "F5F5F5",    // McKinsey 카드 배경 (연한 회색)
     warn_bg: "FFF8E1",
     warn_border: "F9A825",
-    blue_bg: "E8EEF7",
+    blue_bg: "EAF1FB",    // McKinsey 파란 배경 (subtle)
     green_bg: "E8F5E9",
-    green_border: "66BB6A",
-    alt_row: "F8F9FA",
-    source: "999999"
+    green_border: "2E8B57",
+    alt_row: "F5F5F5",    // 표 교대 행
+    source: "8C8C8C"      // 출처 주석 — secondary 색상
   },
   typography: {
-    title_size: 20,
+    title_size: 18,       // McKinsey Action Title: 18pt Bold
     takeaway_size: 11,
     section_head_size: 10,
     body_size: 8,
     detail_size: 7,
-    footer_size: 7,
+    footer_size: 8,       // McKinsey Source Footer: 8pt
     kpi_size: 26
   },
   spacing: {

@@ -7,18 +7,19 @@ import {
   SlideSpec
 } from "@consulting-ppt/shared";
 import { normalizeBrief } from "./brief-normalizer";
-import { enrichResearchPack, orchestrateResearch } from "./research-orchestrator";
-import { PlannedSlide, planNarrative } from "./narrative-planner";
+import { enrichResearchPack, orchestrateResearch, buildSynthesisLayer, SynthesizedInsight } from "./research-orchestrator";
+import { PlannedSlide, planNarrative, buildSCQA, validateHorizontalFlow, isPassiveTitle, calcTitleSpecificityScore, SCQAFramework } from "./narrative-planner";
 import { buildSlideSpec } from "./spec-builder";
 import { runSelfCritic } from "./self-critic";
 import { validateSchema } from "./validator";
 import { ContentQualityReport, runContentQualityGate } from "./content-quality-gate";
+import { MECEFrameworkResult, buildMECEFramework, formatMECEReport } from "./mece-framework";
 
 const MIN_NARRATIVE_REVIEW_ROUNDS = 3;
 const MIN_CONTENT_REVIEW_ROUNDS = 3;
 const MAX_NARRATIVE_FOCUS_CHARS = 190;
 
-type NarrativeIssueType = "duplicate_title" | "focus_repetition" | "section_regression" | "focus_overflow";
+type NarrativeIssueType = "duplicate_title" | "focus_repetition" | "section_regression" | "focus_overflow" | "passive_title" | "low_specificity_title";
 type ContentIssueType =
   | "duplicate_gm"
   | "duplicate_claim"
@@ -55,6 +56,12 @@ export interface ThinkingReviewReport {
   rounds: ThinkingReviewRound[];
 }
 
+export interface ActionTitleQualityReport {
+  passiveTitles: string[];
+  titlesWithLowSpecificity: Array<{ title: string; score: number }>;
+  averageSpecificityScore: number;
+}
+
 export interface ThinkingResult {
   brief: BriefNormalized;
   researchPack: ResearchPack;
@@ -63,6 +70,12 @@ export interface ThinkingResult {
   clock: ExecutionClock;
   reviewReport: ThinkingReviewReport;
   contentQualityReport: ContentQualityReport;
+  scqa: SCQAFramework;
+  horizontalFlowReport: ReturnType<typeof validateHorizontalFlow>;
+  actionTitleQualityReport: ActionTitleQualityReport;
+  synthesisInsights: SynthesizedInsight[];
+  /** MECE 프레임워크: 문제 분해·권고안 공간·커버리지 검증 */
+  meceFramework: MECEFrameworkResult;
 }
 
 export interface ThinkingOptions {
@@ -218,6 +231,27 @@ function analyzeNarrativePlan(plan: PlannedSlide[]): NarrativeIssue[] {
         message: `focus overflow ${slide.focus.length}`
       });
     }
+
+    // Passive Title 탐지: "~현황", "~분석", "~개요" 등 명사형 종결 금지
+    if (isPassiveTitle(slide.title) && slide.type !== "cover") {
+      issues.push({
+        type: "passive_title",
+        slideIndex: index,
+        message: `passive title detected: "${slide.title}" — Action Title로 변환 필요`
+      });
+    }
+
+    // Specificity Score: 수치/시간범위/주체/행동 중 2개 미만이면 경고 (cover 제외)
+    if (slide.type !== "cover" && slide.type !== "appendix") {
+      const score = calcTitleSpecificityScore(slide.title);
+      if (score < 50) {
+        issues.push({
+          type: "low_specificity_title",
+          slideIndex: index,
+          message: `low specificity title (score: ${score}): "${slide.title}"`
+        });
+      }
+    }
   }
 
   for (let index = 1; index < plan.length; index += 1) {
@@ -266,6 +300,25 @@ function refineNarrativePlan(plan: PlannedSlide[], issues: NarrativeIssue[], rou
         slide.focus = appendFocusClause(slide.focus, `스토리라인 전개상 ${sectionLabel(slide.section)} 단계의 판단 축을 보강한다`);
       } else if (issue.type === "focus_overflow") {
         slide.focus = fitFocusLength(slide.focus);
+      } else if (issue.type === "passive_title") {
+        // Passive Title을 Action Title로 변환: 결론/So What을 포함하도록
+        const actionSuffix = (() => {
+          switch (slide.type) {
+            case "market-landscape": return "이 시장 선택·투자 우선순위를 재편한다";
+            case "benchmark": return "이 경쟁 포지셔닝 격차를 결정한다";
+            case "risks-issues": return "이 핵심 리스크 대응 우선순위를 결정한다";
+            case "roadmap": return "이 실행 우선순위와 타임라인을 확정한다";
+            case "exec-summary": return "이 전략 전환의 핵심 근거가 된다";
+            default: return "이 핵심 의사결정 기준이 된다";
+          }
+        })();
+        slide.title = `${slide.title.replace(/(현황|개요|분석|검토|소개|정리|요약)$/, "").trim()}: 결론 및 시사점`;
+        slide.focus = appendFocusClause(slide.focus, `Action Title: 이 슬라이드${actionSuffix}`);
+      } else if (issue.type === "low_specificity_title") {
+        // 구체성이 낮은 타이틀에 산업/수치 맥락을 추가
+        if (!slide.title.includes(brief.industry.slice(0, 4)) && brief.industry.length > 2) {
+          slide.focus = appendFocusClause(slide.focus, `${brief.industry} 맥락의 구체적 수치와 결론을 Action Title에 반영한다`);
+        }
       }
     }
 
@@ -530,6 +583,12 @@ export function runThinking(
     : orchestrateResearch(brief, runId, clock);
   validateSchema("research-pack.schema.json", researchPack, "research pack");
 
+  // Phase 1: SCQA 프레임워크 확정 (스토리라인 생성의 최우선 단계)
+  const scqa = buildSCQA(brief, researchPack);
+
+  // Phase 2: Synthesis Layer 생성 (팩트 합성 → So What Chain)
+  const synthesisInsights = buildSynthesisLayer(brief, researchPack);
+
   const rounds: ThinkingReviewRound[] = [];
   let narrativePlan = planNarrative(brief, researchPack);
 
@@ -567,6 +626,32 @@ export function runThinking(
   revisedSpec = contentQuality.spec;
   validateSchema("slidespec.schema.json", revisedSpec, "slidespec");
 
+  // Phase 3: MECE 프레임워크 — 문제 분해·권고안 공간·커버리지 검증
+  // spec 확정 후 실행하여 실제 슬라이드 커버리지를 측정
+  const meceFramework = buildMECEFramework(brief, researchPack, revisedSpec);
+
+  // Phase 1: Horizontal Flow 검증 — Action Title 시퀀스 논리적 완결성 확인
+  const horizontalFlowReport = validateHorizontalFlow(narrativePlan);
+
+  // Phase 1: Action Title 품질 리포트 생성
+  const titleQualityItems = narrativePlan
+    .filter((slide) => slide.type !== "cover" && slide.type !== "appendix")
+    .map((slide) => ({
+      title: slide.title,
+      score: calcTitleSpecificityScore(slide.title),
+      isPassive: isPassiveTitle(slide.title)
+    }));
+  const actionTitleQualityReport: ActionTitleQualityReport = {
+    passiveTitles: titleQualityItems.filter((item) => item.isPassive).map((item) => item.title),
+    titlesWithLowSpecificity: titleQualityItems
+      .filter((item) => item.score < 50)
+      .map((item) => ({ title: item.title, score: item.score })),
+    averageSpecificityScore:
+      titleQualityItems.length > 0
+        ? Math.round(titleQualityItems.reduce((sum, item) => sum + item.score, 0) / titleQualityItems.length)
+        : 0
+  };
+
   const reviewReport: ThinkingReviewReport = {
     narrative_rounds: MIN_NARRATIVE_REVIEW_ROUNDS,
     content_rounds: MIN_CONTENT_REVIEW_ROUNDS,
@@ -580,15 +665,22 @@ export function runThinking(
     slideSpec: revisedSpec,
     clock,
     reviewReport,
-    contentQualityReport: contentQuality.report
+    contentQualityReport: contentQuality.report,
+    scqa,
+    horizontalFlowReport,
+    actionTitleQualityReport,
+    synthesisInsights,
+    meceFramework
   };
 }
 
 export { normalizeBrief } from "./brief-normalizer";
-export { orchestrateResearch } from "./research-orchestrator";
-export { enrichResearchPack } from "./research-orchestrator";
-export { planNarrative } from "./narrative-planner";
-export type { PlannedSlide } from "./narrative-planner";
+export { orchestrateResearch, enrichResearchPack, buildSynthesisLayer, getSourceTier } from "./research-orchestrator";
+export type { SynthesizedInsight, SourceTier } from "./research-orchestrator";
+export { buildMECEFramework, formatMECEReport } from "./mece-framework";
+export type { MECEFrameworkResult, ProblemCategory, RecommendationCategory, ResearchAxis, RecommendationLever } from "./mece-framework";
+export { planNarrative, buildSCQA, validateHorizontalFlow, isPassiveTitle, calcTitleSpecificityScore } from "./narrative-planner";
+export type { PlannedSlide, SCQAFramework } from "./narrative-planner";
 export { buildSlideSpec } from "./spec-builder";
 export { runSelfCritic } from "./self-critic";
 export { validateSchema } from "./validator";

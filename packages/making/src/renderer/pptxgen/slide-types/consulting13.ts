@@ -9,7 +9,25 @@ import { RenderContext, SlideLike } from "../types";
 const MIN_FONT_PT = 7;
 const ICON_CONTAINER = 0.34;
 const ICON_SIZE = 0.28;
-const CHART_GRID = "E8E8E8";
+
+/**
+ * Claim 텍스트에서 McKinsey 컨설팅 레이블 추출 (최대 10자)
+ * KPI 카드, Action 카드 등의 제목에 사용
+ */
+function extractConsultingLabel(text: string, index: number, defaultLabels: readonly string[]): string {
+  const cleaned = text
+    .replace(/\(?\s*So What:.*$/i, "")
+    .replace(/^\s*\[[^\]]*\]\s*/, "")
+    .replace(/^(진단|해석|권고|실행|분석)[:\s]+/i, "")
+    .trim();
+  const words = cleaned.split(/[\s:·,]+/).filter((w) => w.length >= 2);
+  const label = words.slice(0, 2).join(" ");
+  if (label.length >= 2) {
+    return label.length > 10 ? `${label.slice(0, 10)}…` : label;
+  }
+  return defaultLabels[index] ?? defaultLabels[defaultLabels.length - 1] ?? "핵심";
+}
+
 function isEntityLabelCell(text: string, colIndex: number): boolean {
   if (colIndex !== 0) {
     return false;
@@ -105,12 +123,12 @@ function addPanel(
   context: RenderContext,
   options: { fill?: string; border?: string; borderPt?: number } = {}
 ): void {
-  slide.addShape("roundRect", {
+  // McKinsey 디자인 원칙: 직각 박스 (rounded corners 금지)
+  slide.addShape("rect", {
     x: area.x,
     y: area.y,
     w: area.w,
     h: area.h,
-    radius: 0.015,
     fill: { color: options.fill ?? context.theme.colors.card_bg },
     line: { color: options.border ?? context.theme.colors.gray3, pt: options.borderPt ?? 0.5 }
   });
@@ -144,13 +162,13 @@ function addIconBadge(
   const semanticIcon = resolveSemanticIcon(claimText, index, context.theme);
   const color = forcedColor ?? semanticIcon.color;
 
-  slide.addShape("roundRect", {
+  // McKinsey 디자인 원칙: 직각 아이콘 컨테이너 (rounded corners 금지)
+  slide.addShape("rect", {
     x,
     y,
     w: ICON_CONTAINER,
     h: ICON_CONTAINER,
-    radius: 0.03,
-    fill: { color: "FFFFFF" },
+    fill: { color: context.theme.colors.background },
     line: { color, pt: 0.5 }
   });
 
@@ -225,12 +243,12 @@ function renderCover(slide: SlideLike, slideSpec: SlideSpecSlide, context: Rende
     fit: "shrink"
   });
 
-  slide.addShape("roundRect", {
+  // McKinsey 디자인 원칙: 직각 배지 (rounded corners 금지)
+  slide.addShape("rect", {
     x: 0.82,
     y: 3.74,
     w: 3.7,
     h: 0.54,
-    radius: 0.02,
     fill: { color: context.theme.colors.blue_bg },
     line: { color: context.theme.colors.primary, pt: 0.5 }
   });
@@ -388,14 +406,16 @@ function renderKpiCards(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, 
 
     addIconBadge(slide, cardX + 0.08, area.y + 0.1, claimText, i, context, context.theme.colors.primary);
 
-    slide.addText(`KPI ${i + 1}`, {
+    // McKinsey: KPI 레이블을 claim 텍스트에서 추출 (제네릭 "KPI 1/2/3" 금지)
+    const kpiLabel = extractConsultingLabel(claimText, i, ["진단", "분석", "실행"] as const);
+    slide.addText(kpiLabel, {
       x: cardX + 0.48,
       y: area.y + 0.16,
       w: cardW - 0.56,
       h: 0.12,
       fontFace: context.theme.fonts.body,
       fontSize: MIN_FONT_PT,
-      color: context.theme.colors.gray1,
+      color: context.theme.colors.secondary,
       bold: true
     });
 
@@ -433,30 +453,33 @@ function renderKpiCards(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, 
 }
 
 function renderBarChart(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, context: RenderContext): void {
-  addPanel(slide, area, context, { fill: "FFFFFF" });
+  addPanel(slide, area, context, { fill: context.theme.colors.background });
 
   const values = extractNumbersFromClaims(slideSpec.claims.map((claim) => claim.text)).slice(0, 6);
   const chartValues = values.length >= 4 ? values : [18, 22, 25, 29, 33];
   const labels = chartValues.map((_, index) => `P${index + 1}`);
   const maxValue = Math.max(...chartValues, 1);
 
-  const chartX = area.x + 0.32;
-  const chartY = area.y + 0.34;
-  const chartW = Math.max(0.8, area.w - 0.52);
-  const chartH = Math.max(0.7, area.h - 0.78);
-  const axisBottom = chartY + chartH;
-  const colors = [context.theme.colors.primary, context.theme.colors.secondary, context.theme.colors.gray1];
-
-  slide.addText("Data Trend", {
+  // McKinsey 차트 title = 해당 차트가 증명하는 주장 (Action Title의 하위 버전)
+  const chartTitle = slideSpec.title.length > 0 ? fitTextToCapacity(slideSpec.title, 55).text : "Data Trend";
+  slide.addText(chartTitle, {
     x: area.x + 0.08,
     y: area.y + 0.08,
     w: area.w - 0.16,
-    h: 0.14,
+    h: 0.16,
     fontFace: context.theme.fonts.body,
     fontSize: 8,
     bold: true,
     color: context.theme.colors.primary
   });
+
+  const chartX = area.x + 0.32;
+  const chartY = area.y + 0.36;
+  const chartW = Math.max(0.8, area.w - 0.52);
+  const chartH = Math.max(0.7, area.h - 0.82);
+  const axisBottom = chartY + chartH;
+  // McKinsey: 3색 이내 제한
+  const colors = [context.theme.colors.primary, context.theme.colors.accent, context.theme.colors.gray2];
 
   for (let step = 1; step <= 3; step += 1) {
     const gy = chartY + (chartH * step) / 4;
@@ -465,7 +488,7 @@ function renderBarChart(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, 
       y: gy,
       w: chartW,
       h: 0,
-      line: { color: CHART_GRID, pt: 0.5 }
+      line: { color: context.theme.colors.gray3, pt: 0.5 }
     });
   }
 
@@ -478,12 +501,22 @@ function renderBarChart(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, 
   });
 
   const barW = chartW / chartValues.length;
+  let maxBarIndex = 0;
+  let maxBarValue = 0;
+
   chartValues.forEach((value, index) => {
     const normalized = (chartH * value) / maxValue;
     const h = Math.max(0.05, normalized);
     const x = chartX + index * barW + 0.04;
     const y = axisBottom - h;
-    const color = colors[index % colors.length];
+    // McKinsey: 핵심 데이터 포인트를 강조색으로 — 최대값 강조
+    const isHighlight = value === Math.max(...chartValues);
+    const color = isHighlight ? context.theme.colors.primary : colors[index % colors.length];
+
+    if (value > maxBarValue) {
+      maxBarValue = value;
+      maxBarIndex = index;
+    }
 
     slide.addShape("rect", {
       x,
@@ -517,11 +550,51 @@ function renderBarChart(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, 
     });
   });
 
+  // McKinsey Callout/Annotation: 핵심 포인트 강조
+  // "So What" 클레임에서 첫 번째 의미 있는 annotation 추출
+  const annotationSource = slideSpec.claims.find((c) => /so what|따라서|결론|핵심|시사점/i.test(c.text))?.text
+    ?? slideSpec.claims[0]?.text ?? "";
+  if (annotationSource.length > 4) {
+    const annotText = fitTextToCapacity(annotationSource.replace(/^(진단|해석|실행)[:\s]*/i, "").trim(), 45).text;
+    const annotX = chartX + maxBarIndex * barW + 0.04;
+    const annotY = chartY + 0.04;
+    // 수평 리더 라인
+    slide.addShape("line", {
+      x: annotX,
+      y: annotY + 0.08,
+      w: 0.3,
+      h: 0,
+      line: { color: context.theme.colors.primary, pt: 0.6 }
+    });
+    // Callout 텍스트 (직각 박스, McKinsey 스타일)
+    slide.addShape("rect", {
+      x: annotX + 0.32,
+      y: annotY,
+      w: Math.min(1.4, area.w - annotX - 0.36),
+      h: 0.26,
+      fill: { color: context.theme.colors.blue_bg },
+      line: { color: context.theme.colors.primary, pt: 0.5 }
+    });
+    slide.addText(annotText, {
+      x: annotX + 0.36,
+      y: annotY + 0.03,
+      w: Math.min(1.32, area.w - annotX - 0.44),
+      h: 0.2,
+      fontFace: context.theme.fonts.body,
+      fontSize: 6,
+      bold: true,
+      color: context.theme.colors.primary,
+      fit: "shrink",
+      breakLine: false
+    });
+  }
+
+  // McKinsey 범례: 3색 이내
   const legendY = area.y + area.h - 0.2;
   [
     { label: "Primary", color: context.theme.colors.primary },
-    { label: "Secondary", color: context.theme.colors.secondary },
-    { label: "Reference", color: context.theme.colors.gray1 }
+    { label: "Secondary", color: context.theme.colors.accent },
+    { label: "Reference", color: context.theme.colors.gray2 }
   ].forEach((legend, index) => {
     const lx = area.x + 0.18 + index * 1.1;
     slide.addShape("rect", {
@@ -588,12 +661,12 @@ function renderTable(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, con
     w: area.w,
     h: area.h,
     border: { type: "solid", pt: 0.5, color: context.theme.colors.gray3 },
-    fill: "FFFFFF"
+    fill: context.theme.colors.background
   });
 }
 
 function renderMatrix(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, context: RenderContext): void {
-  addPanel(slide, area, context, { fill: "FFFFFF" });
+  addPanel(slide, area, context, { fill: context.theme.colors.background });
 
   const cellW = (area.w - 0.1) / 2;
   const cellH = (area.h - 0.16) / 2;
@@ -615,7 +688,7 @@ function renderMatrix(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, co
         y,
         w: cellW,
         h: cellH,
-        fill: { color: idx % 2 === 0 ? "FFFFFF" : context.theme.colors.alt_row },
+        fill: { color: idx % 2 === 0 ? context.theme.colors.background : context.theme.colors.alt_row },
         line: { color: context.theme.colors.gray3, pt: 0.5 }
       });
 
@@ -654,7 +727,7 @@ function renderMatrix(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, co
 }
 
 function renderTimeline(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, context: RenderContext): void {
-  addPanel(slide, area, context, { fill: "FFFFFF" });
+  addPanel(slide, area, context, { fill: context.theme.colors.background });
 
   const stages = [
     { label: "단기", color: context.theme.colors.primary },
@@ -698,12 +771,12 @@ function renderTimeline(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, 
     });
 
     const claim = slideSpec.claims[i % Math.max(slideSpec.claims.length, 1)]?.text ?? "핵심 실행 과제";
-    slide.addShape("roundRect", {
+    // McKinsey: 직각 카드 (rounded corners 금지)
+    slide.addShape("rect", {
       x: stageX + 0.06,
       y: lineY + 0.26,
       w: stageW - 0.12,
       h: area.h - 0.7,
-      radius: 0.02,
       fill: { color: context.theme.colors.card_bg },
       line: { color: context.theme.colors.gray3, pt: 0.5 }
     });
@@ -728,7 +801,7 @@ function renderTimeline(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, 
 }
 
 function renderFlow(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, context: RenderContext): void {
-  addPanel(slide, area, context, { fill: "FFFFFF" });
+  addPanel(slide, area, context, { fill: context.theme.colors.background });
 
   const rawSteps = slideSpec.claims.slice(0, 4).map((claim) => claim.text);
   while (rawSteps.length < 4) {
@@ -740,14 +813,14 @@ function renderFlow(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, cont
   for (let i = 0; i < rawSteps.length; i += 1) {
     const x = area.x + i * stepW;
     const active = i === 1 || i === 2;
-    const fillColor = active ? context.theme.colors.blue_bg : "FFFFFF";
+    const fillColor = active ? context.theme.colors.blue_bg : context.theme.colors.background;
 
-    slide.addShape("roundRect", {
+    // McKinsey: 직각 스텝 카드 (rounded corners 금지)
+    slide.addShape("rect", {
       x,
       y: area.y + 0.32,
       w: stepW - 0.06,
       h: area.h - 0.52,
-      radius: 0.02,
       fill: { color: fillColor },
       line: { color: context.theme.colors.gray3, pt: 0.5 }
     });
@@ -790,7 +863,7 @@ function renderFlow(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, cont
 }
 
 function renderPie(slide: SlideLike, area: Box, context: RenderContext): void {
-  addPanel(slide, area, context, { fill: "FFFFFF" });
+  addPanel(slide, area, context, { fill: context.theme.colors.background });
 
   const sections = [
     { label: "Premium", value: 42, color: context.theme.colors.primary },
@@ -859,11 +932,13 @@ function renderActionCards(slide: SlideLike, slideSpec: SlideSpecSlide, area: Bo
     const cardX = area.x + i * (cardW + gap);
     const color = i === 0 ? context.theme.colors.primary : context.theme.colors.secondary;
 
-    addPanel(slide, { x: cardX, y: area.y, w: cardW, h: area.h }, context, { fill: "FFFFFF" });
+    addPanel(slide, { x: cardX, y: area.y, w: cardW, h: area.h }, context, { fill: context.theme.colors.background });
     const claim = slideSpec.claims[i % Math.max(slideSpec.claims.length, 1)]?.text ?? "핵심 실행 과제";
     addIconBadge(slide, cardX + 0.08, area.y + 0.1, claim, i, context, color);
 
-    slide.addText(`Action ${i + 1}`, {
+    // McKinsey: 실행 레이블을 claim에서 추출 (제네릭 "Action 1/2/3" 금지)
+    const actionLabel = extractConsultingLabel(claim, i, ["단기 실행", "중기 확장", "장기 전환"] as const);
+    slide.addText(actionLabel, {
       x: cardX + 0.5,
       y: area.y + 0.18,
       w: cardW - 0.58,
@@ -895,18 +970,18 @@ function renderActionCards(slide: SlideLike, slideSpec: SlideSpecSlide, area: Bo
 }
 
 function renderSoWhatGrid(slide: SlideLike, slideSpec: SlideSpecSlide, area: Box, context: RenderContext): void {
-  addPanel(slide, area, context, { fill: "FFFFFF" });
+  addPanel(slide, area, context, { fill: context.theme.colors.background });
 
   const [top, bottom] = splitAreaVertical({ x: area.x + 0.02, y: area.y + 0.06, w: area.w - 0.04, h: area.h - 0.1 }, 2);
 
   renderInsightVariant(slide, slideSpec, top, context, "analysis");
 
-  slide.addShape("roundRect", {
+  // McKinsey: 직각 박스 (rounded corners 금지)
+  slide.addShape("rect", {
     x: bottom.x,
     y: bottom.y,
     w: bottom.w,
     h: bottom.h,
-    radius: 0.02,
     fill: { color: context.theme.colors.green_bg },
     line: { color: context.theme.colors.green_border, pt: 0.5 }
   });
@@ -948,12 +1023,12 @@ function renderInsightVariant(
   variant: InsightVariant
 ): void {
   if (variant === "key") {
-    slide.addShape("roundRect", {
+    // McKinsey: 직각 박스 (rounded corners 금지)
+    slide.addShape("rect", {
       x: area.x,
       y: area.y,
       w: area.w,
       h: area.h,
-      radius: 0.015,
       fill: { color: context.theme.colors.warn_bg },
       line: { color: context.theme.colors.warn_border, pt: 0.5 }
     });
@@ -993,12 +1068,12 @@ function renderInsightVariant(
     return;
   }
 
-  slide.addShape("roundRect", {
+  // McKinsey: 직각 박스 (rounded corners 금지)
+  slide.addShape("rect", {
     x: area.x,
     y: area.y,
     w: area.w,
     h: area.h,
-    radius: 0.015,
     fill: { color: context.theme.colors.blue_bg },
     line: { color: context.theme.colors.primary, pt: 0.5 }
   });
@@ -1119,12 +1194,11 @@ function addLayoutMetaBadge(slide: SlideLike, context: RenderContext): void {
     return;
   }
 
-  slide.addShape("roundRect", {
+  slide.addShape("rect", {
     x: 8.12,
     y: 0.07,
     w: 1.52,
     h: 0.22,
-    radius: 0.02,
     fill: { color: context.theme.colors.gray4 },
     line: { color: context.theme.colors.gray3, pt: 0.3 }
   });

@@ -6,11 +6,13 @@ import { Box } from "../layout-engine";
 export function addRiskMatrix(slide: SlideLike, slideSpec: SlideSpecSlide, box: Box, theme: ThemeTokens): void {
   const cellW = box.w / 2;
   const cellH = box.h / 2;
+
+  // McKinsey 리스크 매트릭스: warn_bg(위험), blue_bg(주의), card_bg(낮음) — 표준 색상 팔레트 사용
   const labels = [
-    { x: 0, y: 0, title: "High Impact / High Likelihood", color: "FCE8E8" },
-    { x: 1, y: 0, title: "High Impact / Low Likelihood", color: "FDF3E2" },
-    { x: 0, y: 1, title: "Low Impact / High Likelihood", color: "EAF4FF" },
-    { x: 1, y: 1, title: "Low Impact / Low Likelihood", color: "EEF7EE" }
+    { x: 0, y: 0, title: "High Impact / High Likelihood", fill: theme.colors.warn_bg, border: theme.colors.warn_border },
+    { x: 1, y: 0, title: "High Impact / Low Likelihood", fill: theme.colors.blue_bg, border: theme.colors.gray3 },
+    { x: 0, y: 1, title: "Low Impact / High Likelihood", fill: theme.colors.blue_bg, border: theme.colors.gray3 },
+    { x: 1, y: 1, title: "Low Impact / Low Likelihood", fill: theme.colors.card_bg, border: theme.colors.gray3 }
   ];
 
   for (const label of labels) {
@@ -22,8 +24,8 @@ export function addRiskMatrix(slide: SlideLike, slideSpec: SlideSpecSlide, box: 
       y,
       w: cellW,
       h: cellH,
-      fill: { color: label.color },
-      line: { color: "CFD8E3", pt: 1 }
+      fill: { color: label.fill },
+      line: { color: label.border, pt: 0.75 }
     });
 
     slide.addText(label.title, {
@@ -32,8 +34,8 @@ export function addRiskMatrix(slide: SlideLike, slideSpec: SlideSpecSlide, box: 
       w: cellW - 0.16,
       h: 0.25,
       fontFace: theme.fonts.body,
-      fontSize: 8,
-      color: theme.colors.gray1,
+      fontSize: theme.typography.detail_size,
+      color: theme.colors.secondary,
       bold: true,
       fit: "shrink"
     });
@@ -50,7 +52,7 @@ export function addRiskMatrix(slide: SlideLike, slideSpec: SlideSpecSlide, box: 
       w: cellW - 0.2,
       h: 0.2,
       fontFace: theme.fonts.body,
-      fontSize: 8,
+      fontSize: theme.typography.detail_size,
       color: theme.colors.text,
       fit: "shrink"
     });

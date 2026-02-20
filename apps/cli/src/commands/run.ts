@@ -402,7 +402,13 @@ export async function runCommand(options: RunCommandOptions): Promise<{ runRoot:
   if (!Number.isFinite(threshold) || threshold <= 0 || threshold > 100) {
     throw new PipelineError(`Invalid threshold value: ${options.threshold}`);
   }
-  let qa = runQa(runId, effectiveSpec, thinking.researchPack, { threshold });
+  // MECE 결과를 QA 옵션으로 전달 (파이프라인 품질 리포트 통합)
+  const meceQaOptions = {
+    threshold,
+    meceCoverageScore: thinking.meceFramework.coverageScore,
+    meceGaps: thinking.meceFramework.gaps
+  };
+  let qa = runQa(runId, effectiveSpec, thinking.researchPack, meceQaOptions);
   let autoFixRulesApplied: string[] = [];
 
   if (!qa.report.passed) {
@@ -419,7 +425,7 @@ export async function runCommand(options: RunCommandOptions): Promise<{ runRoot:
       writeJson(path.join(runPaths.specDir, "slidespec.effective.json"), effectiveSpec);
       writeJson(path.join(runPaths.specDir, "slidespec.json"), effectiveSpec);
       writeProvenance();
-      qa = runQa(runId, effectiveSpec, thinking.researchPack, { threshold });
+      qa = runQa(runId, effectiveSpec, thinking.researchPack, meceQaOptions);
     }
   }
 
