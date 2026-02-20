@@ -1,11 +1,13 @@
 name: ci
 
+# 모든 브랜치 push / PR에서 빠른 검증 (build + typecheck + test)
+# 파이프라인 실행(PPT 생성)은 quality-gate.yml(main 한정)에서만 수행
 on:
   push:
   pull_request:
 
 jobs:
-  build-and-smoke:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,9 +38,3 @@ jobs:
 
       - name: Public readiness check
         run: pnpm public:check
-
-      - name: Schema validation
-        run: pnpm schema:validate
-
-      - name: Smoke run
-        run: pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project smoke_energy_materials --deterministic --seed ci_smoke --no-web-research

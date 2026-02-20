@@ -1,5 +1,7 @@
 name: release
 
+# 수동 트리거 전용: 버전 태그를 생성하고 원격에 푸시
+# 사용 전 quality-gate가 main에서 통과되었음을 확인할 것
 on:
   workflow_dispatch:
     inputs:
@@ -34,8 +36,14 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Typecheck
+        run: pnpm typecheck
+
       - name: Unit tests
         run: pnpm test
+
+      - name: Public readiness check
+        run: pnpm public:check
 
       - name: Create tag
         run: |

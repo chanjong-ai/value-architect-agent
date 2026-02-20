@@ -1,8 +1,14 @@
 name: quality-gate
 
+# main 브랜치 push 또는 main 대상 PR에서만 전체 파이프라인 품질 검증
+# 기능 브랜치 커밋에서는 실행하지 않아 CI 비용·시간을 절감
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   quality-gate:
@@ -37,5 +43,8 @@ jobs:
       - name: Public readiness check
         run: pnpm public:check
 
-      - name: QA smoke
-        run: pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project quality_gate --threshold 85 --deterministic --seed quality_gate --no-web-research
+      - name: Schema validation (thinking pipeline only)
+        run: pnpm schema:validate
+
+      - name: Full pipeline smoke + QA gate (threshold 80)
+        run: pnpm agent run --brief ./examples/brief.energy-materials.ko.json --project quality_gate --threshold 80 --deterministic --seed quality_gate --no-web-research
